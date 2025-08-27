@@ -1,10 +1,10 @@
 // src/app/dashboard/residues/components/data-table-pagination.tsx
 import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
-  DoubleArrowLeftIcon,
-  DoubleArrowRightIcon,
-} from "@radix-ui/react-icons"
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+} from "lucide-react"
 import { Table } from "@tanstack/react-table"
 
 import { Button } from "@/components/ui/button"
@@ -62,7 +62,7 @@ export function DataTablePagination<TData>({
             disabled={!table.getCanPreviousPage()}
           >
             <span className="sr-only">Ir a la primera página</span>
-            <DoubleArrowLeftIcon className="h-4 w-4" />
+            <ChevronsLeft className="h-4 w-4" />
           </Button>
           <Button
             variant="outline"
@@ -71,7 +71,7 @@ export function DataTablePagination<TData>({
             disabled={!table.getCanPreviousPage()}
           >
             <span className="sr-only">Ir a la página anterior</span>
-            <ChevronLeftIcon className="h-4 w-4" />
+            <ChevronLeft className="h-4 w-4" />
           </Button>
           <Button
             variant="outline"
@@ -80,7 +80,7 @@ export function DataTablePagination<TData>({
             disabled={!table.getCanNextPage()}
           >
             <span className="sr-only">Ir a la página siguiente</span>
-            <ChevronRightIcon className="h-4 w-4" />
+            <ChevronRight className="h-4 w-4" />
           </Button>
           <Button
             variant="outline"
@@ -89,7 +89,7 @@ export function DataTablePagination<TData>({
             disabled={!table.getCanNextPage()}
           >
             <span className="sr-only">Ir a la última página</span>
-            <DoubleArrowRightIcon className="h-4 w-4" />
+            <ChevronsRight className="h-4 w-4" />
           </Button>
         </div>
       </div>
