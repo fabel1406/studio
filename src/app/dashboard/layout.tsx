@@ -19,7 +19,7 @@ import { Logo } from "@/components/logo";
 import { BarChart2, Leaf, Recycle, Settings, LogOut, LayoutDashboard, Search, List, PackagePlus } from "lucide-react";
 import type { LucideIcon } from 'lucide-react';
 import { Footer } from "@/components/footer";
-import React, { createContext, useContext, useState, useMemo } from 'react';
+import React, { createContext, useContext, useState, useMemo, useEffect } from 'react';
 
 type UserRole = "GENERATOR" | "TRANSFORMER" | "BOTH";
 
@@ -71,6 +71,11 @@ const settingsNav: NavItem[] = [
 function DashboardContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { role } = useRole();
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const filteredNavItems = navItems.filter(item => item.roles.includes(role));
 
@@ -89,7 +94,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
               </SidebarHeader>
               <SidebarContent>
                   <SidebarMenu>
-                      {filteredNavItems.map((item) => (
+                      {isMounted && filteredNavItems.map((item) => (
                           <SidebarMenuItem key={item.href}>
                               <Link href={item.href}>
                                   <SidebarMenuButton 
