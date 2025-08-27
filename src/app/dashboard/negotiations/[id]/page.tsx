@@ -76,8 +76,12 @@ export default function NegotiationDetailPage() {
     // The negotiation is actionable if it's in 'SENT' state.
     const isActionable = negotiation.status === 'SENT';
 
-    // The user who can accept/reject is the one who DID NOT initiate the negotiation (the recipient).
-    const canAcceptOrReject = !isRequester;
+    // The user who can accept/reject is the one who DID NOT initiate the negotiation (the recipient/supplier).
+    const canAcceptOrReject = isSupplier;
+    const canModifyOrCancel = isRequester;
+    
+    const otherParty = isRequester ? negotiation.supplier : negotiation.requester;
+
 
     return (
         <>
@@ -131,14 +135,20 @@ export default function NegotiationDetailPage() {
                             <CardHeader>
                                 <CardTitle>{isRequester ? 'Proveedor' : 'Solicitante'}</CardTitle>
                             </CardHeader>
-                            <CardContent className="flex items-center gap-4">
-                                <Avatar className="h-12 w-12">
-                                    <AvatarFallback>{isRequester ? negotiation.supplier.name.charAt(0) : negotiation.requester.name.charAt(0)}</AvatarFallback>
-                                </Avatar>
-                                <div>
-                                    <p className="font-semibold">{isRequester ? negotiation.supplier.name : negotiation.requester.name}</p>
-                                    <p className="text-sm text-muted-foreground">{isRequester ? negotiation.supplier.city : negotiation.requester.city}</p>
-                                </div>
+                             <CardContent className="flex items-center gap-4">
+                                {otherParty ? (
+                                    <>
+                                        <Avatar className="h-12 w-12">
+                                            <AvatarFallback>{otherParty.name.charAt(0)}</AvatarFallback>
+                                        </Avatar>
+                                        <div>
+                                            <p className="font-semibold">{otherParty.name}</p>
+                                            <p className="text-sm text-muted-foreground">{otherParty.city}</p>
+                                        </div>
+                                    </>
+                                ) : (
+                                     <p className="text-sm text-muted-foreground">No se encontró la información de la empresa.</p>
+                                )}
                             </CardContent>
                         </Card>
                         <Card>
@@ -158,7 +168,7 @@ export default function NegotiationDetailPage() {
                                                 </Button>
                                             </>
                                         )}
-                                        {isRequester && ( 
+                                        {canModifyOrCancel && ( 
                                             <>
                                                 <Button className="w-full" variant="outline" onClick={() => setIsEditOfferOpen(true)}>
                                                     <Pencil className="mr-2 h-4 w-4" /> Modificar Solicitud
