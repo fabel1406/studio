@@ -15,13 +15,6 @@ export default function NeedsPage() {
             Gestiona las solicitudes de residuos que tu empresa necesita.
           </p>
         </div>
-        <div className="flex items-center space-x-2">
-            <Button asChild>
-                <Link href="#">
-                    <PlusCircle className="mr-2 h-4 w-4" /> Añadir Necesidad
-                </Link>
-            </Button>
-        </div>
       </div>
       
       {hasNeeds ? (
@@ -39,7 +32,7 @@ export default function NeedsPage() {
               Publica qué residuos buscas para que los generadores te encuentren.
             </p>
             <Button className="mt-4" asChild>
-              <Link href="#">
+              <Link href="/dashboard/needs/create">
                 <PlusCircle className="mr-2 h-4 w-4" /> Publicar Necesidad
               </Link>
             </Button>
