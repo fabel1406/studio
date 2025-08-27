@@ -27,7 +27,7 @@ const statusMap: {[key: string]: {text: string, variant: 'default' | 'secondary'
 export default function NegotiationDetailPage() {
     const { id } = useParams<{ id: string }>();
     const router = useRouter();
-    const { role, currentUserId } = useRole();
+    const { currentUserId } = useRole();
     const [negotiation, setNegotiation] = useState<Negotiation | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isEditOfferOpen, setIsEditOfferOpen] = useState(false);
@@ -68,19 +68,18 @@ export default function NegotiationDetailPage() {
         return notFound();
     }
     
-    // The user is the supplier if their ID matches the supplierId in the negotiation.
-    const isSupplier = negotiation.supplierId === currentUserId;
-    // The user is the one who initiated the negotiation if their ID matches the requesterId.
-    const isRequester = negotiation.requesterId === currentUserId;
+    const isCurrentUserTheInitiator = negotiation.requesterId === currentUserId;
+    const isCurrentUserTheSupplier = negotiation.supplierId === currentUserId;
+    
+    // The user who can accept/reject is the one who IS the supplier AND DID NOT initiate the negotiation.
+    const canAcceptOrReject = isCurrentUserTheSupplier && !isCurrentUserTheInitiator;
 
-    // The negotiation is actionable if it's in 'SENT' state.
+    // The user who can modify or cancel is the one who INITIATED the negotiation.
+    const canModifyOrCancel = isCurrentUserTheInitiator;
+
     const isActionable = negotiation.status === 'SENT';
 
-    // The user who can accept/reject is the one who DID NOT initiate the negotiation (the recipient/supplier).
-    const canAcceptOrReject = isSupplier;
-    const canModifyOrCancel = isRequester;
-    
-    const otherParty = isRequester ? negotiation.supplier : negotiation.requester;
+    const otherParty = isCurrentUserTheInitiator ? negotiation.supplier : negotiation.requester;
 
 
     return (
@@ -133,7 +132,7 @@ export default function NegotiationDetailPage() {
                     <div className="space-y-6">
                         <Card>
                             <CardHeader>
-                                <CardTitle>{isRequester ? 'Proveedor' : 'Solicitante'}</CardTitle>
+                                <CardTitle>{isCurrentUserTheInitiator ? 'Proveedor' : 'Solicitante'}</CardTitle>
                             </CardHeader>
                              <CardContent className="flex items-center gap-4">
                                 {otherParty ? (
@@ -191,7 +190,7 @@ export default function NegotiationDetailPage() {
                 </div>
             </div>
 
-            {isRequester && (
+            {isCurrentUserTheInitiator && (
                 <OfferDialog
                     isOpen={isEditOfferOpen}
                     onOpenChange={setIsEditOfferOpen}
