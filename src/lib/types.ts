@@ -1,4 +1,5 @@
 
+
 export type Company = {
   id: string;
   name: string;
@@ -32,6 +33,18 @@ export type Residue = {
   locationLng?: number;
   status: 'ACTIVE' | 'RESERVED' | 'CLOSED';
 };
+
+export type Need = {
+    id: string;
+    companyId: string;
+    residueType: string;
+    category: 'BIOMASS' | 'FOOD' | 'AGRO' | 'OTHERS';
+    quantity: number;
+    unit: 'KG' | 'TON';
+    frequency: 'ONCE' | 'WEEKLY' | 'MONTHLY';
+    specifications?: string;
+    status: 'ACTIVE' | 'PAUSED' | 'CLOSED';
+}
 
 export type Match = {
   residueId: string;
