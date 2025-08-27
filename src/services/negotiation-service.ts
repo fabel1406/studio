@@ -1,6 +1,7 @@
 // src/services/negotiation-service.ts
 import type { Negotiation, Residue, Company, NegotiationMessage } from '@/lib/types';
 import { mockResidues, mockCompanies, mockNeeds } from '@/lib/data';
+import { getAllResidues } from './residue-service';
 
 const getStoredNegotiations = (): Negotiation[] => {
     if (typeof window === 'undefined') {
@@ -10,12 +11,17 @@ const getStoredNegotiations = (): Negotiation[] => {
     if (storedData) {
         const negotiations: Negotiation[] = JSON.parse(storedData);
         // Re-hydrate the objects with full details from mock data
-        return negotiations.map(neg => ({
-            ...neg,
-            residue: mockResidues.find(r => r.id === neg.residueId)!,
-            requester: mockCompanies.find(c => c.id === neg.requesterId)!,
-            supplier: mockCompanies.find(c => c.id === neg.supplierId)!,
-        }));
+        const allResidues = getAllResidues();
+        return negotiations.map(neg => {
+            const residue = allResidues.find(r => r.id === neg.residueId);
+            if (!residue) return null; // If residue doesn't exist, filter it out
+            return {
+                ...neg,
+                residue,
+                requester: mockCompanies.find(c => c.id === neg.requesterId)!,
+                supplier: mockCompanies.find(c => c.id === neg.supplierId)!,
+            }
+        }).filter((neg): neg is Negotiation => neg !== null);
     }
     return [];
 };
@@ -48,9 +54,10 @@ export const addNegotiation = (data: NewNegotiationData): Negotiation => {
     const currentNegotiations = getStoredNegotiations();
 
     const need = mockNeeds.find(n => n.id === data.needId);
-    const residue = mockResidues.find(r => r.id === data.residueId);
     const supplier = mockCompanies.find(c => c.id === data.supplierId);
     const requester = mockCompanies.find(c => c.id === data.requesterId);
+    const residue = getAllResidues().find(r => r.id === data.residueId);
+
 
     if (!need || !supplier || !requester || !residue) {
         throw new Error("Invalid data provided for negotiation.");

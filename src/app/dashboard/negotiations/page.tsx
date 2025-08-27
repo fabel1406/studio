@@ -65,36 +65,39 @@ export default function NegotiationsPage() {
            )
       }
 
-      return negotiations.map((neg) => (
-            <div key={neg.id} className="flex flex-col md:flex-row items-center gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
-                <Avatar className="h-12 w-12 hidden md:flex">
-                    <AvatarImage src={neg.residue.photos?.[0]} alt={neg.residue.type} />
-                    <AvatarFallback>{neg.residue.type.charAt(0)}</AvatarFallback>
-                </Avatar>
-                <div className="flex-grow">
-                    <p className="font-semibold text-lg">{neg.residue.type}</p>
-                    <p className="text-sm text-muted-foreground">
-                        {type === 'sent' 
-                            ? <>Solicitud a <span className="text-primary font-medium">{neg.requester.name}</span></>
-                            : <>Solicitud de <span className="text-primary font-medium">{neg.supplier.name}</span></>
-                        }
-                    </p>
-                </div>
-                <div className="text-center">
-                    <p className="font-bold text-lg">{neg.quantity} {neg.unit}</p>
-                    <p className="text-sm text-muted-foreground">Cantidad</p>
-                </div>
+      return negotiations.map((neg) => {
+            if (!neg.residue) return null; // Defensive check
+            return (
+                <div key={neg.id} className="flex flex-col md:flex-row items-center gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                    <Avatar className="h-12 w-12 hidden md:flex">
+                        <AvatarImage src={neg.residue.photos?.[0]} alt={neg.residue.type} />
+                        <AvatarFallback>{neg.residue.type.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-grow">
+                        <p className="font-semibold text-lg">{neg.residue.type}</p>
+                        <p className="text-sm text-muted-foreground">
+                            {type === 'sent' 
+                                ? <>Solicitud a <span className="text-primary font-medium">{neg.requester.name}</span></>
+                                : <>Solicitud de <span className="text-primary font-medium">{neg.supplier.name}</span></>
+                            }
+                        </p>
+                    </div>
                     <div className="text-center">
-                    <Badge variant={statusMap[neg.status].variant}>{statusMap[neg.status].text}</Badge>
-                    <p className="text-sm text-muted-foreground mt-2">{format(new Date(neg.createdAt), "d MMM, yyyy", { locale: es })}</p>
+                        <p className="font-bold text-lg">{neg.quantity} {neg.unit}</p>
+                        <p className="text-sm text-muted-foreground">Cantidad</p>
+                    </div>
+                        <div className="text-center">
+                        <Badge variant={statusMap[neg.status].variant}>{statusMap[neg.status].text}</Badge>
+                        <p className="text-sm text-muted-foreground mt-2">{format(new Date(neg.createdAt), "d MMM, yyyy", { locale: es })}</p>
+                    </div>
+                    <Button variant="outline" size="sm" asChild>
+                        <Link href={`/dashboard/negotiations/${neg.id}`}>
+                            Ver Negociación <ArrowRight className="ml-2 h-4 w-4" />
+                        </Link>
+                    </Button>
                 </div>
-                <Button variant="outline" size="sm" asChild>
-                    <Link href={`/dashboard/negotiations/${neg.id}`}>
-                        Ver Negociación <ArrowRight className="ml-2 h-4 w-4" />
-                    </Link>
-                </Button>
-            </div>
-      ));
+            )
+      });
   }
 
 
