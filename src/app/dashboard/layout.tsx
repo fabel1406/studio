@@ -20,6 +20,8 @@ import { BarChart2, Leaf, Recycle, Settings, LogOut, LayoutDashboard, Search, Li
 import type { LucideIcon } from 'lucide-react';
 import { Footer } from "@/components/footer";
 import React, { createContext, useContext, useState, useMemo, useEffect } from 'react';
+import { DashboardHeader } from "@/components/dashboard-header";
+import { ScrollToTop } from "@/components/scroll-to-top";
 
 type UserRole = "GENERATOR" | "TRANSFORMER" | "BOTH";
 
@@ -156,12 +158,14 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
               </SidebarFooter>
           </Sidebar>
           <div className="flex-1 flex flex-col md:ml-[var(--sidebar-width-icon)] lg:ml-[var(--sidebar-width)] transition-[margin-left] duration-200">
+            <DashboardHeader />
             <main className="flex-grow">
               {children}
             </main>
             <Footer />
           </div>
         </div>
+        <ScrollToTop />
     </SidebarProvider>
   );
 }

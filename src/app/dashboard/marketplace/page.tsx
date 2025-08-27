@@ -48,21 +48,21 @@ export default function MarketplacePage() {
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-       <div className="flex flex-col md:flex-row items-center justify-between space-y-2">
+       <div className="flex flex-col md:flex-row items-center justify-between space-y-2 md:space-y-0">
         <div>
             <h2 className="text-3xl font-bold tracking-tight">Marketplace</h2>
             <p className="text-muted-foreground">Descubre residuos o encuentra recursos valiosos.</p>
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex w-full md:w-auto items-center space-x-2">
             {(role === "GENERATOR" || role === "BOTH") && (
-              <Button asChild>
+              <Button asChild className="flex-1 md:flex-none">
                   <Link href="/dashboard/residues/create">
                       <PlusCircle className="mr-2 h-4 w-4" /> Añadir Residuo
                   </Link>
               </Button>
             )}
             {(role === "TRANSFORMER" || role === "BOTH") && (
-               <Button asChild variant="outline">
+               <Button asChild variant="outline" className="flex-1 md:flex-none">
                   <Link href="/dashboard/needs/create">
                       <PlusCircle className="mr-2 h-4 w-4" /> Publicar Necesidad
                   </Link>
@@ -72,7 +72,7 @@ export default function MarketplacePage() {
       </div>
       
       <div className="bg-card p-4 rounded-lg border shadow-sm">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <Select onValueChange={setTypeFilter} defaultValue="ALL_TYPES">
                 <SelectTrigger>
                     <SelectValue placeholder="Filtrar por tipo" />
@@ -119,7 +119,7 @@ export default function MarketplacePage() {
           <TabsTrigger value="needs">Necesidades del Mercado ({filteredNeeds.length})</TabsTrigger>
         </TabsList>
         <TabsContent value="residues">
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 mt-6">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 mt-6">
             {filteredResidues.length > 0 ? (
               filteredResidues.map((residue) => (
                 <ResidueCard key={residue.id} residue={residue} />
@@ -133,7 +133,7 @@ export default function MarketplacePage() {
           </div>
         </TabsContent>
         <TabsContent value="needs">
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 mt-6">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 mt-6">
             {filteredNeeds.length > 0 ? (
               filteredNeeds.map((need) => (
                 <NeedCard key={need.id} need={need} />
