@@ -4,12 +4,16 @@ import type { Need } from "@/lib/types";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
-import { Layers, MapPin, Repeat, ArrowRight } from "lucide-react";
+import { Layers, MapPin, Repeat, ArrowRight, PackageCheck } from "lucide-react";
 import { mockCompanies } from "@/lib/data";
+import { useRole } from "@/app/dashboard/layout";
 
 export function NeedCard({ need }: { need: Need }) {
   const company = mockCompanies.find(c => c.id === need.companyId);
   const freqMap: {[key: string]: string} = { 'ONCE': 'una vez', 'WEEKLY': 'semanal', 'MONTHLY': 'mensual' };
+  const { role } = useRole();
+  
+  const canOffer = role === 'GENERATOR' || role === 'BOTH';
 
   return (
     <Card className="flex flex-col h-full overflow-hidden transition-all duration-300 hover:shadow-lg hover:border-primary/50">
@@ -41,9 +45,15 @@ export function NeedCard({ need }: { need: Need }) {
         </div>
       </CardContent>
       <CardFooter className="p-4 pt-0">
-        <Button className="w-full">
-            Contactar Transformador <ArrowRight className="ml-2 h-4 w-4" />
-        </Button>
+        {canOffer ? (
+            <Button className="w-full">
+                <PackageCheck className="mr-2 h-4 w-4" /> Hacer una Oferta
+            </Button>
+        ) : (
+            <Button className="w-full" variant="outline">
+                Ver Necesidad <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+        )}
       </CardFooter>
     </Card>
   );

@@ -21,16 +21,14 @@ import { useToast } from "@/hooks/use-toast"
 import { Send } from "lucide-react"
 import { addNegotiation } from "@/services/negotiation-service"
 import { useRouter } from "next/navigation"
-
-type UserRole = "GENERATOR" | "TRANSFORMER" | "BOTH"
+import { useRole } from "@/app/dashboard/layout"
 
 type ResidueActionPanelProps = {
   residue: Residue
 }
 
 export function ResidueActionPanel({ residue }: ResidueActionPanelProps) {
-  // In a real app, this would come from the user's session or context
-  const currentUserRole: UserRole = "TRANSFORMER"
+  const { role } = useRole();
   const currentUserCompanyId = 'comp-3' // Mocking transformer company
 
   const { toast } = useToast()
@@ -64,8 +62,8 @@ export function ResidueActionPanel({ residue }: ResidueActionPanelProps) {
     router.push('/dashboard/negotiations');
   }
 
-  // A Transformer is viewing a Generator's listing
-  if (currentUserRole === "TRANSFORMER" || currentUserRole === "BOTH") {
+  // A Transformer viewing a Generator's listing
+  if (role === "TRANSFORMER" || role === "BOTH") {
     return (
       <Card>
         <CardHeader>
@@ -88,7 +86,7 @@ export function ResidueActionPanel({ residue }: ResidueActionPanelProps) {
                 )}
               />
               <Button type="submit" className="w-full">
-                <Send className="mr-2" />
+                <Send className="mr-2 h-4 w-4" />
                 Contactar y Solicitar
               </Button>
             </form>
@@ -99,8 +97,7 @@ export function ResidueActionPanel({ residue }: ResidueActionPanelProps) {
   }
 
   // Future cases:
-  // - A Generator viewing a Transformer's "Need"
-  // - A Generator/Transformer viewing their own listing
+  // - A Generator viewing their own listing
 
-  return null // Return null if no action is applicable
+  return null // Return null if user is only a Generator or no action is applicable
 }
