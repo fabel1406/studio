@@ -1,7 +1,7 @@
 export type Company = {
   id: string;
   name: string;
-  type: 'GENERATOR' | 'TRANSFORMER';
+  type: 'GENERATOR' | 'TRANSFORMER' | 'BOTH';
   description?: string;
   phone?: string;
   website?: string;

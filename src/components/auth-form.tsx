@@ -31,7 +31,7 @@ const loginSchema = z.object({
 const registerSchema = z.object({
   email: z.string().email({ message: "Dirección de correo electrónico no válida." }),
   password: z.string().min(8, { message: "La contraseña debe tener al menos 8 caracteres." }),
-  role: z.enum(["GENERATOR", "TRANSFORMER"], {
+  role: z.enum(["GENERATOR", "TRANSFORMER", "BOTH"], {
     required_error: "Debes seleccionar un rol.",
   }),
 });
@@ -112,6 +112,7 @@ export function AuthForm({ mode }: AuthFormProps) {
                   <SelectContent>
                     <SelectItem value="GENERATOR">Generador de Residuos</SelectItem>
                     <SelectItem value="TRANSFORMER">Transformador de Residuos</SelectItem>
+                    <SelectItem value="BOTH">Ambos (Generador y Transformador)</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
