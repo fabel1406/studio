@@ -76,7 +76,7 @@ export default function ResidueFormPage() {
         description: "",
         status: 'ACTIVE',
         unit: 'TON',
-        category: 'AGRO'
+        category: undefined
     },
     mode: "onChange",
   })
@@ -97,7 +97,7 @@ export default function ResidueFormPage() {
           quantity: residue.quantity,
           unit: residue.unit,
           status: residue.status,
-          pricePerUnit: residue.pricePerUnit || undefined,
+          pricePerUnit: residue.pricePerUnit,
           description: residue.description || "",
         });
       }
@@ -189,7 +189,7 @@ export default function ResidueFormPage() {
                             <FormItem>
                             <FormLabel>Especificar tipo de residuo</FormLabel>
                             <FormControl>
-                                <Input placeholder="Ej: Poda de cítricos" {...field} />
+                                <Input placeholder="Ej: Poda de cítricos" {...field} value={field.value ?? ''} />
                             </FormControl>
                             <FormMessage />
                             </FormItem>

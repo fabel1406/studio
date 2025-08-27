@@ -70,7 +70,7 @@ export default function NeedFormPage() {
       customResidueType: "",
       quantity: 1,
       unit: 'TON',
-      category: 'AGRO',
+      category: undefined,
       frequency: 'MONTHLY',
       specifications: "",
       status: 'ACTIVE',
@@ -86,9 +86,14 @@ export default function NeedFormPage() {
       if (need) {
         const isStandardType = uniqueResidueTypes.includes(need.residueType);
         form.reset({
-          ...need,
           residueType: isStandardType ? need.residueType : 'Otro',
           customResidueType: isStandardType ? '' : need.residueType,
+          category: need.category,
+          quantity: need.quantity,
+          unit: need.unit,
+          frequency: need.frequency,
+          status: need.status,
+          specifications: need.specifications || "",
         });
       }
     }
@@ -170,7 +175,7 @@ export default function NeedFormPage() {
                                 <FormItem>
                                 <FormLabel>Especificar otro tipo de residuo</FormLabel>
                                 <FormControl>
-                                    <Input placeholder="Ej: Poda de cítricos" {...field} />
+                                    <Input placeholder="Ej: Poda de cítricos" {...field} value={field.value ?? ''} />
                                 </FormControl>
                                 <FormMessage />
                                 </FormItem>
