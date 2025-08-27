@@ -1,3 +1,4 @@
+
 // src/app/dashboard/residues/create/page.tsx
 "use client"
 
@@ -37,6 +38,7 @@ const residueFormSchema = z.object({
   quantity: z.coerce.number().min(0, { message: "La cantidad no puede ser negativa." }),
   unit: z.enum(['KG', 'TON'], { required_error: "Debes seleccionar una unidad." }),
   pricePerUnit: z.coerce.number().optional(),
+  status: z.enum(['ACTIVE', 'RESERVED', 'CLOSED'], { required_error: "Debes seleccionar un estado." }),
   description: z.string().max(300, { message: "La descripción no puede exceder los 300 caracteres." }).optional(),
 })
 
@@ -55,6 +57,7 @@ export default function ResidueFormPage() {
         quantity: 0,
         pricePerUnit: 0,
         description: "",
+        status: 'ACTIVE',
     },
     mode: "onChange",
   })
@@ -70,9 +73,8 @@ export default function ResidueFormPage() {
           category: existingResidue.category,
           quantity: existingResidue.quantity,
           unit: existingResidue.unit,
-          // pricePerUnit is optional, so handle its potential absence
+          status: existingResidue.status,
           pricePerUnit: existingResidue.pricePerUnit || undefined,
-          // description is optional, so handle its potential absence
           description: existingResidue.description || undefined,
         });
       }
@@ -86,7 +88,6 @@ export default function ResidueFormPage() {
         id: residueId || crypto.randomUUID(),
         companyId: 'comp-1', // Mock companyId
         availabilityDate: new Date().toISOString(),
-        status: 'ACTIVE' as const,
     }
 
     if (residueId) {
@@ -104,6 +105,7 @@ export default function ResidueFormPage() {
     }
 
     router.push('/dashboard/residues');
+    router.refresh(); // Refresh the page to show the new/updated data
   }
 
   return (
@@ -211,6 +213,31 @@ export default function ResidueFormPage() {
                         <FormMessage />
                         </FormItem>
                     )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="status"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Estado</FormLabel>
+                             <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
+                                <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Selecciona un estado" />
+                                </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    <SelectItem value="ACTIVE">Activo</SelectItem>
+                                    <SelectItem value="RESERVED">Reservado</SelectItem>
+                                    <SelectItem value="CLOSED">Cerrado</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <FormDescription>
+                                El estado actual de tu publicación de residuo.
+                            </FormDescription>
+                            <FormMessage />
+                            </FormItem>
+                        )}
                     />
                     <div className="md:col-span-2">
                     <FormField
