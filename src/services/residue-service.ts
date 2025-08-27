@@ -7,7 +7,15 @@ const getStoredResidues = (): Residue[] => {
     if (typeof window === 'undefined') {
         return mockResidues; // Return mock data during server-side rendering
     }
-    // Always start with mock data for a clean slate
+    try {
+        const storedData = localStorage.getItem('residues');
+        if (storedData) {
+            return JSON.parse(storedData) as Residue[];
+        }
+    } catch (e) {
+        console.error("Failed to parse residues from localStorage", e);
+    }
+    // If nothing in storage or parsing fails, initialize with mock data
     setStoredResidues(mockResidues);
     return mockResidues;
 };
@@ -21,7 +29,7 @@ const setStoredResidues = (residues: Residue[]): void => {
     }
 };
 
-// Initialize the storage if it doesn't exist
+// Initialize on first load if not present
 if (typeof window !== 'undefined' && !localStorage.getItem('residues')) {
     setStoredResidues(mockResidues);
 }
@@ -31,6 +39,7 @@ if (typeof window !== 'undefined' && !localStorage.getItem('residues')) {
 
 export const getAllResidues = (): Residue[] => {
     const residues = getStoredResidues();
+    // Rehydrate with company info on every call to ensure it's up-to-date
     return residues.map(residue => ({
         ...residue,
         company: mockCompanies.find(c => c.id === residue.companyId)
@@ -49,7 +58,6 @@ export const addResidue = (residueData: NewResidueData): Residue => {
         ...residueData,
         id: `res-${Date.now()}`, // Simple unique ID
         companyId: 'comp-1', // Mock current user's company
-        company: mockCompanies.find(c => c.id === 'comp-1'),
         availabilityDate: new Date().toISOString(),
         photos: ['https://picsum.photos/seed/new/600/400'],
     };
@@ -73,7 +81,11 @@ export const updateResidue = (updatedResidue: Partial<Residue> & { id: string })
     };
     
     setStoredResidues(currentResidues);
-    return currentResidues[index];
+    // Return the rehydrated object
+    return {
+        ...currentResidues[index],
+        company: mockCompanies.find(c => c.id === currentResidues[index].companyId)
+    };
 };
 
 export const deleteResidue = (id: string): void => {

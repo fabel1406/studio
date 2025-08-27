@@ -1,4 +1,3 @@
-
 // src/services/negotiation-service.ts
 import type { Negotiation, NegotiationMessage, Residue, Company } from '@/lib/types';
 import { mockCompanies } from '@/lib/data';
@@ -8,7 +7,22 @@ const getStoredNegotiations = (): Negotiation[] => {
     if (typeof window === 'undefined') {
         return [];
     }
-    // Always start with no negotiations for a clean slate
+    try {
+        const storedData = localStorage.getItem('negotiations');
+        if (storedData) {
+            const parsedData = JSON.parse(storedData) as Omit<Negotiation, 'residue' | 'requester' | 'supplier'>[];
+            // Rehydrate with full data
+            return parsedData.map(neg => ({
+                ...neg,
+                residue: getAllResidues().find(r => r.id === neg.residueId)!,
+                requester: mockCompanies.find(c => c.id === neg.requesterId),
+                supplier: mockCompanies.find(c => c.id === neg.supplierId),
+            })).filter(neg => neg.residue); // Filter out negotiations with no valid residue
+        }
+    } catch (e) {
+        console.error("Failed to parse negotiations from localStorage", e);
+    }
+    // If nothing in storage or parsing fails, start with empty array
     setStoredNegotiations([]);
     return [];
 };
@@ -20,6 +34,7 @@ const setStoredNegotiations = (negotiations: Negotiation[]): void => {
     }
 };
 
+// Initialize on first load if not present
 if (typeof window !== 'undefined' && !localStorage.getItem('negotiations')) {
     setStoredNegotiations([]);
 }

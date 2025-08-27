@@ -26,6 +26,14 @@ export default function ResiduesPage() {
 
   useEffect(() => {
     fetchResidues();
+    
+    const handleStorageChange = () => {
+      fetchResidues();
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, [fetchResidues]);
 
 

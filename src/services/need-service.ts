@@ -7,7 +7,15 @@ const getStoredNeeds = (): Need[] => {
     if (typeof window === 'undefined') {
         return mockNeeds; // Return mock data during server-side rendering
     }
-    // Always start with mock data for a clean slate
+    try {
+        const storedData = localStorage.getItem('needs');
+        if (storedData) {
+            return JSON.parse(storedData) as Need[];
+        }
+    } catch (e) {
+        console.error("Failed to parse needs from localStorage", e);
+    }
+    // If nothing in storage or parsing fails, initialize with mock data
     setStoredNeeds(mockNeeds);
     return mockNeeds;
 };
@@ -19,7 +27,7 @@ const setStoredNeeds = (needs: Need[]): void => {
     }
 };
 
-// Initialize the storage if it doesn't exist
+// Initialize on first load if not present
 if (typeof window !== 'undefined' && !localStorage.getItem('needs')) {
     setStoredNeeds(mockNeeds);
 }

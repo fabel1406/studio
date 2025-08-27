@@ -126,6 +126,7 @@ export default function ResidueFormPage() {
             })
         }
         router.push('/dashboard/residues');
+        router.refresh();
     } catch(e) {
         console.error("Error submitting form", e);
         toast({
