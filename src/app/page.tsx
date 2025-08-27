@@ -32,7 +32,7 @@ export default function Home() {
             </div>
             <div className="relative h-64 sm:h-80 lg:h-full lg:min-h-[500px] rounded-2xl overflow-hidden shadow-2xl">
                 <Image
-                  src="https://picsum.photos/seed/growth/800/600"
+                  src="https://picsum.photos/800/600"
                   alt="Un par de manos humanas sosteniendo con delicadeza una pequeña planta en crecimiento, simbolizando crecimiento y cuidado ambiental."
                   fill
                   style={{objectFit: 'cover'}}
