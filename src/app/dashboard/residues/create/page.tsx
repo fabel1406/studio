@@ -38,7 +38,10 @@ const residueFormSchema = z.object({
   category: z.enum(['BIOMASS', 'FOOD', 'AGRO', 'OTHERS'], { required_error: "Debes seleccionar una categoría." }),
   quantity: z.coerce.number().min(0, { message: "La cantidad no puede ser negativa." }),
   unit: z.enum(['KG', 'TON'], { required_error: "Debes seleccionar una unidad." }),
-  pricePerUnit: z.coerce.number().optional(),
+  pricePerUnit: z.preprocess(
+    (val) => (val === "" || val === null || val === undefined ? undefined : Number(val)),
+    z.number({ invalid_type_error: 'El precio debe ser un número.' }).optional()
+  ),
   status: z.enum(['ACTIVE', 'RESERVED', 'CLOSED'], { required_error: "Debes seleccionar un estado." }),
   description: z.string().max(300, { message: "La descripción no puede exceder los 300 caracteres." }).optional(),
 })
@@ -57,7 +60,7 @@ export default function ResidueFormPage() {
     defaultValues: {
         type: "",
         quantity: 0,
-        pricePerUnit: 0,
+        pricePerUnit: undefined,
         description: "",
         status: 'ACTIVE',
     },
@@ -78,7 +81,7 @@ export default function ResidueFormPage() {
           unit: residue.unit,
           status: residue.status,
           pricePerUnit: residue.pricePerUnit || undefined,
-          description: residue.description || undefined,
+          description: residue.description || "",
         });
       }
     }
@@ -86,32 +89,43 @@ export default function ResidueFormPage() {
 
 
   function onSubmit(data: ResidueFormValues) {
-    if (residueId && existingResidue) {
-        const updatedResidueData = {
-            ...existingResidue, // Start with all existing data
-            ...data, // Override with form data
-        };
-        updateResidue(updatedResidueData);
-        toast({
-            title: "¡Residuo Actualizado!",
-            description: `El residuo "${data.type}" ha sido actualizado con éxito.`,
-        })
-    } else {
-        const newResidueData = {
-            ...data,
-            id: crypto.randomUUID(),
-            companyId: 'comp-1', // Mock companyId
-            availabilityDate: new Date().toISOString(),
+    try {
+        if (residueId && existingResidue) {
+            const updatedResidueData = {
+                ...existingResidue,
+                ...data,
+                description: data.description || '', // Ensure description is not null/undefined
+            };
+            updateResidue(updatedResidueData);
+            toast({
+                title: "¡Residuo Actualizado!",
+                description: `El residuo "${data.type}" ha sido actualizado con éxito.`,
+            })
+        } else {
+            const newResidueData = {
+                ...data,
+                description: data.description || '', // Ensure description is not null/undefined
+                id: crypto.randomUUID(),
+                companyId: 'comp-1', // Mock companyId
+                availabilityDate: new Date().toISOString(),
+            }
+            addResidue(newResidueData);
+            toast({
+                title: "¡Residuo Guardado!",
+                description: `El residuo "${data.type}" ha sido guardado con éxito.`,
+            })
         }
-        addResidue(newResidueData);
-        toast({
-            title: "¡Residuo Guardado!",
-            description: `El residuo "${data.type}" ha sido guardado con éxito.`,
-        })
-    }
 
-    router.push('/dashboard/residues');
-    router.refresh(); // Refresh the page to show the new/updated data
+        router.push('/dashboard/residues');
+        router.refresh();
+    } catch(e) {
+        console.error("Error submitting form", e);
+        toast({
+            title: "Error al guardar",
+            description: "Hubo un problema al guardar el residuo. Por favor, inténtalo de nuevo.",
+            variant: "destructive",
+        });
+    }
   }
 
   return (
@@ -214,7 +228,7 @@ export default function ResidueFormPage() {
                             <Input type="number" placeholder="15.00" {...field} value={field.value ?? ''} />
                         </FormControl>
                         <FormDescription>
-                            Establece un precio por KG o TON. Déjalo en 0 si es negociable.
+                            Establece un precio por KG o TON. Déjalo en 0 o vacío si es negociable.
                         </FormDescription>
                         <FormMessage />
                         </FormItem>
@@ -279,5 +293,3 @@ export default function ResidueFormPage() {
     </div>
   )
 }
-
-    
