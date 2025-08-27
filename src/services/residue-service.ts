@@ -16,7 +16,10 @@ const getStoredResidues = (): Residue[] => {
             company: mockCompanies.find(c => c.id === residue.companyId)
         }));
     }
-    return mockResidues; // Initialize with mock data if nothing is stored
+    // Initialize with mock data if nothing is stored, and add company info
+    const initialResidues = mockResidues.map(r => ({...r, company: mockCompanies.find(c => c.id === r.companyId)}));
+    setStoredResidues(initialResidues);
+    return initialResidues;
 };
 
 // Helper to save the state to localStorage
@@ -44,7 +47,9 @@ export const getResidueById = (id: string): Residue | undefined => {
     return getStoredResidues().find(r => r.id === id);
 };
 
-export const addResidue = (residueData: Omit<Residue, 'id' | 'companyId' | 'availabilityDate'>): Residue => {
+type NewResidueData = Omit<Residue, 'id' | 'companyId' | 'availabilityDate' | 'photos' | 'company'>;
+
+export const addResidue = (residueData: NewResidueData): Residue => {
     const currentResidues = getStoredResidues();
     const newResidue: Residue = {
         ...residueData,
@@ -59,7 +64,7 @@ export const addResidue = (residueData: Omit<Residue, 'id' | 'companyId' | 'avai
     return newResidue;
 };
 
-export const updateResidue = (updatedResidue: Residue): Residue => {
+export const updateResidue = (updatedResidue: Partial<Residue> & { id: string }): Residue => {
     const currentResidues = getStoredResidues();
     const index = currentResidues.findIndex(r => r.id === updatedResidue.id);
 
@@ -67,9 +72,10 @@ export const updateResidue = (updatedResidue: Residue): Residue => {
         throw new Error("Residue not found");
     }
 
+    // Merge existing data with updated data
     currentResidues[index] = {
-        ...currentResidues[index], // Keep old data
-        ...updatedResidue, // Overwrite with new data
+        ...currentResidues[index],
+        ...updatedResidue,
     };
     
     setStoredResidues(currentResidues);

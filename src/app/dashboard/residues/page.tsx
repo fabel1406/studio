@@ -26,12 +26,7 @@ export default function ResiduesPage() {
 
   useEffect(() => {
     fetchResidues();
-    // This is a workaround to force re-fetching when navigating back to the page
-    const unsubscribe = router.events?.on('routeChangeComplete', fetchResidues);
-    return () => {
-      unsubscribe?.();
-    };
-  }, [fetchResidues, router.events]);
+  }, [fetchResidues]);
 
 
   const deleteResidue = (residueId: string, residueType: string) => {

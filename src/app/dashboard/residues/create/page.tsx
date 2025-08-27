@@ -41,7 +41,7 @@ const residueFormSchema = z.object({
   quantity: z.coerce.number().min(0, { message: "La cantidad no puede ser negativa." }),
   unit: z.enum(['KG', 'TON'], { required_error: "Debes seleccionar una unidad." }),
   pricePerUnit: z.preprocess(
-    (val) => (val === "" || val === null || val === undefined) ? undefined : val,
+    (val) => (val === "" || val === null || val === undefined) ? undefined : Number(val),
     z.coerce.number({ invalid_type_error: "El precio debe ser un número." }).optional()
   ),
   status: z.enum(['ACTIVE', 'RESERVED', 'CLOSED'], { required_error: "Debes seleccionar un estado." }),
@@ -65,7 +65,6 @@ export default function ResidueFormPage() {
   const searchParams = useSearchParams();
   const { toast } = useToast()
   const [residueId, setResidueId] = useState<string | null>(null);
-  const [existingResidue, setExistingResidue] = useState<Residue | null>(null);
 
   const form = useForm<ResidueFormValues>({
     resolver: zodResolver(residueFormSchema),
@@ -90,8 +89,6 @@ export default function ResidueFormPage() {
       setResidueId(id);
       const residue = getResidueById(id);
       if (residue) {
-        setExistingResidue(residue);
-        
         const isStandardType = uniqueResidueTypes.includes(residue.type);
         form.reset({
           type: isStandardType ? residue.type : 'Otro',
@@ -115,32 +112,20 @@ export default function ResidueFormPage() {
           type: data.type === 'Otro' ? data.customType! : data.type,
         }
 
-        if (residueId && existingResidue) {
-            const updatedData: Residue = {
-                ...existingResidue,
-                ...finalData,
-                pricePerUnit: data.pricePerUnit,
-                description: data.description || '',
-            };
-            updateResidue(updatedData);
+        if (residueId) {
+            updateResidue({ ...finalData, id: residueId });
             toast({
                 title: "¡Residuo Actualizado!",
                 description: `El residuo "${finalData.type}" ha sido actualizado con éxito.`,
             })
         } else {
-            const newResidue: Omit<Residue, 'id' | 'companyId' | 'availabilityDate'> = {
-                ...finalData,
-                pricePerUnit: data.pricePerUnit,
-                description: data.description || '',
-            };
-            addResidue(newResidue);
+            addResidue(finalData);
             toast({
                 title: "¡Residuo Guardado!",
                 description: `El residuo "${finalData.type}" ha sido guardado con éxito.`,
             })
         }
         router.push('/dashboard/residues');
-        router.refresh();
     } catch(e) {
         console.error("Error submitting form", e);
         toast({
@@ -345,5 +330,3 @@ export default function ResidueFormPage() {
     </div>
   )
 }
-
-    

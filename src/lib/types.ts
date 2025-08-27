@@ -65,6 +65,12 @@ export type UserResidue = {
     name: string;
 }
 
+export type NegotiationMessage = {
+    senderId: string;
+    content: string;
+    timestamp: string;
+};
+
 export type Negotiation = {
     id: string;
     residueId: string;
@@ -77,9 +83,5 @@ export type Negotiation = {
     unit: 'KG' | 'TON';
     status: 'SENT' | 'REVIEWED' | 'ACCEPTED' | 'REJECTED';
     createdAt: string;
-    messages: {
-        senderId: string;
-        content: string;
-        timestamp: string;
-    }[];
+    messages: NegotiationMessage[];
 }
