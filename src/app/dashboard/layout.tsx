@@ -16,7 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Logo } from "@/components/logo";
-import { BarChart2, Leaf, Recycle, Settings, LogOut, LayoutDashboard, Search, List, PackagePlus } from "lucide-react";
+import { BarChart2, Leaf, Recycle, Settings, LogOut, LayoutDashboard, Search, List, PackagePlus, Handshake } from "lucide-react";
 import type { LucideIcon } from 'lucide-react';
 import { Footer } from "@/components/footer";
 import React, { createContext, useContext, useState, useMemo, useEffect } from 'react';
@@ -59,6 +59,7 @@ const navItems: NavItem[] = [
   { href: "/dashboard/marketplace", label: "Marketplace", icon: Search, roles: ["GENERATOR", "TRANSFORMER", "BOTH"] },
   { href: "/dashboard/residues", label: "Mis Residuos", icon: List, roles: ["GENERATOR", "BOTH"] },
   { href: "/dashboard/needs", label: "Mis Necesidades", icon: PackagePlus, roles: ["TRANSFORMER", "BOTH"] },
+  { href: "/dashboard/negotiations", label: "Negociaciones", icon: Handshake, roles: ["GENERATOR", "TRANSFORMER", "BOTH"] },
   { href: "/dashboard/impact", label: "Impacto", icon: BarChart2, roles: ["GENERATOR", "TRANSFORMER", "BOTH"] },
   { href: "/dashboard/matches", label: "Coincidencias", icon: Recycle, roles: ["GENERATOR", "TRANSFORMER", "BOTH"] },
 ];

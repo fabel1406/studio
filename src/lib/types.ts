@@ -64,3 +64,22 @@ export type UserResidue = {
     id: string;
     name: string;
 }
+
+export type Negotiation = {
+    id: string;
+    residueId: string;
+    residue: Residue;
+    requesterId: string;
+    requester: Company;
+    supplierId: string;
+    supplier: Company;
+    quantity: number;
+    unit: 'KG' | 'TON';
+    status: 'SENT' | 'REVIEWED' | 'ACCEPTED' | 'REJECTED';
+    createdAt: string;
+    messages: {
+        senderId: string;
+        content: string;
+        timestamp: string;
+    }[];
+}
