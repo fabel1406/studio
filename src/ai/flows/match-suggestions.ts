@@ -10,7 +10,7 @@
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import {z} from 'zod';
 import type { Residue, Need, Company } from '@/lib/types';
 import { mockCompanies } from '@/lib/data';
 
@@ -82,12 +82,12 @@ export async function getMatchSuggestions(input: MatchSuggestionsInput): Promise
     let company: Company | undefined;
     if (input.matchType === 'findTransformers') {
         const need = input.availableNeeds.find(n => n.id === suggestion.matchedId);
-        company = mockCompanies.find(c => c.id === need?.companyId);
+        company = need?.company;
     } else { // findGenerators
         const residue = input.availableResidues.find(r => r.id === suggestion.matchedId);
-        company = mockCompanies.find(c => c.id === residue?.companyId);
+        company = residue?.company;
     }
-    return { ...suggestion, company };
+    return { ...suggestion, ...suggestion.company, company };
   });
 
   return { suggestions: hydratedSuggestions };
@@ -117,7 +117,7 @@ const findTransformersPrompt = ai.definePrompt({
       2. Ubicación: Una mayor proximidad (basada en ciudad/país, o lat/lng si están disponibles) resulta en una puntuación más alta.
       3. Cantidad: Una coincidencia cercana entre la cantidad del residuo y la cantidad de la necesidad es mejor.
 
-    Tu respuesta debe incluir el ID del residuo de origen, el ID de la necesidad coincidente, la puntuación y una razón breve y convincente para la coincidencia.
+    Tu respuesta debe incluir el ID del residuo de origen, el ID de la necesidad coincidente, la puntuación, una razón breve y convincente para la coincidencia y la información de la empresa (company) de la necesidad coincidente.
     Destaca en la razón los factores clave que la convierten en una buena coincidencia.
 
     Residuo de Origen:
@@ -152,7 +152,7 @@ const findGeneratorsPrompt = ai.definePrompt({
       2. Ubicación: Una mayor proximidad (basada en ciudad/país, o lat/lng si están disponibles) resulta en una puntuación más alta.
       3. Cantidad: La cantidad disponible del residuo debe ser suficiente para satisfacer la necesidad.
 
-    Tu respuesta debe incluir el ID de la necesidad de origen, el ID del residuo coincidente, la puntuación y una razón breve y convincente para la coincidencia.
+    Tu respuesta debe incluir el ID de la necesidad de origen, el ID del residuo coincidente, la puntuación, una razón breve y convincente para la coincidencia y la información de la empresa (company) del residuo coincidente.
     Destaca en la razón los factores clave que la convierten en una buena coincidencia.
 
     Necesidad de Origen:
