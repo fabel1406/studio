@@ -37,12 +37,19 @@ import { useToast } from "@/hooks/use-toast";
 
 const predefinedResidues = [
     "Alperujo",
+    "Bagazo de cerveza",
     "Cáscaras de frutas",
-    "Hoja de olivo",
-    "Restos de verduras",
-    "Poda",
-    "Sarmientos",
+    "Cáscaras de frutos secos",
     "Estiércol",
+    "Hoja de olivo",
+    "Lodos de depuradora",
+    "Paja",
+    "Poda de viñedos (Sarmientos)",
+    "Poda de frutales",
+    "Posos de café",
+    "Restos de hortalizas",
+    "Serrín y virutas de madera",
+    "Suero lácteo",
 ];
 
 const formSchema = z.object({
