@@ -22,7 +22,9 @@ export function NeedCard({ need }: { need: Need }) {
   const [isOfferDialogOpen, setIsOfferDialogOpen] = useState(false);
   
   const canOffer = role === 'GENERATOR' || role === 'BOTH';
-  const currentUserId = 'comp-1'; // Mock generator user
+  
+  // Mock current user ID based on role. In a real app, this would come from auth.
+  const currentUserId = role === 'GENERATOR' ? 'comp-1' : role === 'BOTH' ? 'comp-1' : 'comp-3';
 
   useEffect(() => {
     setIsMounted(true);
@@ -30,7 +32,7 @@ export function NeedCard({ need }: { need: Need }) {
         // In a real app, this would be the logged-in user's ID
         setUserResidues(getAllResidues().filter(r => r.companyId === currentUserId && r.status === 'ACTIVE'));
     }
-  }, [canOffer]);
+  }, [canOffer, currentUserId]);
 
   if (!isMounted) {
     return null; // or a skeleton loader

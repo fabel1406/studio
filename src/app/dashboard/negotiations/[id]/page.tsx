@@ -31,8 +31,23 @@ export default function NegotiationDetailPage() {
     const [negotiation, setNegotiation] = useState<Negotiation | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
-    // Mocking user IDs based on role
-    const currentUserId = role === 'GENERATOR' ? 'comp-1' : 'comp-3';
+    const getCurrentUserId = () => {
+        // This logic determines the user ID based on the role for mocking purposes.
+        // In a real app, this would come from an authentication context.
+        if (role === 'GENERATOR') return 'comp-1';
+        if (role === 'TRANSFORMER') return 'comp-3';
+        // When role is 'BOTH', we need to decide which identity to use.
+        // For simplicity, we'll assume 'BOTH' users act as generators by default
+        // unless they are the requester in a specific negotiation.
+        // This is a simplification; a real app might need a more complex role-switching mechanism.
+        if (negotiation && negotiation.requesterId === 'comp-1' && role === 'BOTH') {
+            return 'comp-3'; // Acting as transformer in this context
+        }
+        return 'comp-1'; // Default to generator for 'BOTH'
+    };
+
+    const currentUserId = getCurrentUserId();
+
 
     useEffect(() => {
         if (id && role) {
