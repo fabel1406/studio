@@ -8,31 +8,34 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import PublicLayout from "../(public)/layout";
 
 export default function LoginPage() {
   return (
-    <div className="min-h-[calc(100vh-80px)] flex items-center justify-center p-4 bg-gradient-to-br from-primary/10 via-background to-secondary/10">
-      <Card className="w-full max-w-md shadow-2xl">
-        <CardHeader className="text-center">
-            <Link href="/" className="flex items-center justify-center gap-2 mb-4">
-              <Logo className="h-10 w-auto" />
-              <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">EcoConnect</span>
-            </Link>
-          <CardTitle className="text-2xl">¡Bienvenido de nuevo!</CardTitle>
-          <CardDescription>
-            Introduce tus credenciales para acceder a tu cuenta.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <AuthForm mode="login" />
-          <div className="mt-4 text-center text-sm">
-            ¿No tienes una cuenta?{" "}
-            <Link href="/register" className="underline text-primary">
-              Regístrate
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+    <PublicLayout>
+      <div className="min-h-[calc(100vh-80px)] flex items-center justify-center p-4 bg-gradient-to-br from-primary/10 via-background to-secondary/10">
+        <Card className="w-full max-w-md shadow-2xl">
+          <CardHeader className="text-center">
+              <Link href="/" className="flex items-center justify-center gap-2 mb-4">
+                <Logo className="h-10 w-auto" />
+                <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">EcoConnect</span>
+              </Link>
+            <CardTitle className="text-2xl">¡Bienvenido de nuevo!</CardTitle>
+            <CardDescription>
+              Introduce tus credenciales para acceder a tu cuenta.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <AuthForm mode="login" />
+            <div className="mt-4 text-center text-sm">
+              ¿No tienes una cuenta?{" "}
+              <Link href="/register" className="underline text-primary">
+                Regístrate
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </PublicLayout>
   );
 }
