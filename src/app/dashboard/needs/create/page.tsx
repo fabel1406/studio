@@ -5,7 +5,8 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { useEffect, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -29,6 +30,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { mockResidues } from "@/lib/data"
+import { addNeed, getNeedById, updateNeed } from "@/services/need-service"
+import type { Need } from "@/lib/types"
 
 const needFormSchema = z.object({
   residueType: z.string({ required_error: "Debes seleccionar un tipo de residuo." }),
@@ -38,6 +41,7 @@ const needFormSchema = z.object({
   unit: z.enum(['KG', 'TON'], { required_error: "Debes seleccionar una unidad." }),
   frequency: z.enum(['ONCE', 'WEEKLY', 'MONTHLY'], { required_error: "Debes seleccionar una frecuencia." }),
   specifications: z.string().max(500, { message: "La descripción no puede exceder los 500 caracteres." }).optional(),
+  status: z.enum(['ACTIVE', 'PAUSED', 'CLOSED']),
 }).refine(data => {
     if (data.residueType === 'Otro' && (!data.customResidueType || data.customResidueType.trim().length < 2)) {
         return false;
@@ -56,6 +60,8 @@ const uniqueResidueTypes = [...new Set(mockResidues.map(r => r.type))];
 export default function NeedFormPage() {
   const router = useRouter();
   const { toast } = useToast()
+  const searchParams = useSearchParams();
+  const [needId, setNeedId] = useState<string | null>(null);
 
   const form = useForm<NeedFormValues>({
     resolver: zodResolver(needFormSchema),
@@ -66,35 +72,63 @@ export default function NeedFormPage() {
       unit: 'TON',
       category: 'AGRO',
       frequency: 'MONTHLY',
-      specifications: ""
+      specifications: "",
+      status: 'ACTIVE',
     },
     mode: "onChange",
   })
+  
+  useEffect(() => {
+    const id = searchParams.get('id');
+    if (id) {
+      setNeedId(id);
+      const need = getNeedById(id);
+      if (need) {
+        const isStandardType = uniqueResidueTypes.includes(need.residueType);
+        form.reset({
+          ...need,
+          residueType: isStandardType ? need.residueType : 'Otro',
+          customResidueType: isStandardType ? '' : need.residueType,
+        });
+      }
+    }
+  }, [searchParams, form]);
 
   const selectedResidueType = form.watch("residueType");
 
   function onSubmit(data: NeedFormValues) {
     const finalData = {
         ...data,
-        residueType: data.residueType === 'Otro' ? data.customResidueType : data.residueType,
+        residueType: data.residueType === 'Otro' ? data.customResidueType! : data.residueType,
     };
-    // In a real app, this would be sent to a service to be saved.
-    // For now, we'll just log it.
-    console.log(finalData);
-    toast({
-        title: "¡Necesidad Publicada!",
-        description: `Tu solicitud de "${finalData.residueType}" ha sido publicada con éxito.`,
-    })
+
+    if (needId) {
+        updateNeed({ ...finalData, id: needId, companyId: 'comp-1' }); // companyId would be dynamic
+         toast({
+            title: "¡Necesidad Actualizada!",
+            description: `Tu solicitud de "${finalData.residueType}" ha sido actualizada.`,
+        })
+    } else {
+        addNeed(finalData);
+        toast({
+            title: "¡Necesidad Publicada!",
+            description: `Tu solicitud de "${finalData.residueType}" ha sido publicada con éxito.`,
+        })
+    }
     router.push('/dashboard/needs');
+    router.refresh();
   }
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
        <Card>
         <CardHeader>
-          <CardTitle>Publicar Nueva Necesidad</CardTitle>
+          <CardTitle>{needId ? 'Editar Necesidad' : 'Publicar Nueva Necesidad'}</CardTitle>
           <CardDescription>
-            Describe el residuo que tu empresa necesita para que los generadores puedan encontrarte.
+            {needId
+                ? 'Actualiza los detalles de tu solicitud.'
+                : 'Describe el residuo que tu empresa necesita para que los generadores puedan encontrarte.'
+            }
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -224,6 +258,28 @@ export default function NeedFormPage() {
                             </FormItem>
                         )}
                     />
+                     <FormField
+                        control={form.control}
+                        name="status"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Estado</FormLabel>
+                             <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
+                                <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Selecciona un estado" />
+                                </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    <SelectItem value="ACTIVE">Activa</SelectItem>
+                                    <SelectItem value="PAUSED">En Pausa</SelectItem>
+                                    <SelectItem value="CLOSED">Cerrada</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
                     <div className="md:col-span-2">
                     <FormField
                         control={form.control}
@@ -249,7 +305,7 @@ export default function NeedFormPage() {
                     <Button type="button" variant="outline" onClick={() => router.push('/dashboard/needs')}>
                         Cancelar
                     </Button>
-                    <Button type="submit">Publicar Necesidad</Button>
+                    <Button type="submit">{needId ? 'Guardar Cambios' : 'Publicar Necesidad'}</Button>
                 </div>
                 </form>
             </Form>

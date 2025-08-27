@@ -1,4 +1,4 @@
-import type { Residue, Company, ImpactMetric } from './types';
+import type { Residue, Company, ImpactMetric, Need } from './types';
 
 export const mockCompanies: Company[] = [
   {
@@ -288,6 +288,31 @@ export let mockResidues: Residue[] = [
   }
 ];
 
+export let mockNeeds: Need[] = [
+    {
+        id: 'need-1',
+        companyId: 'comp-3',
+        residueType: 'Alperujo',
+        category: 'AGRO',
+        quantity: 100,
+        unit: 'TON',
+        frequency: 'MONTHLY',
+        status: 'ACTIVE',
+        specifications: 'Se requiere un nivel de humedad inferior al 70%.'
+    },
+    {
+        id: 'need-2',
+        companyId: 'comp-3',
+        residueType: 'Bagazo de cerveza',
+        category: 'FOOD',
+        quantity: 20,
+        unit: 'TON',
+        frequency: 'WEEKLY',
+        status: 'ACTIVE',
+        specifications: 'Debe ser fresco, entregado como máximo 48h después de la producción.'
+    }
+];
+
 const MESES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
 
 export const mockImpactMetrics: ImpactMetric[] = [
@@ -298,5 +323,3 @@ export const mockImpactMetrics: ImpactMetric[] = [
   { label: MESES[4], co2Avoided: 550, wasteDiverted: 1100, savings: 1650 },
   { label: MESES[5], co2Avoided: 600, wasteDiverted: 1200, savings: 1800 },
 ];
-
-    
