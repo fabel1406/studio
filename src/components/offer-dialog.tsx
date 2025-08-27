@@ -1,4 +1,3 @@
-
 // src/components/offer-dialog.tsx
 "use client";
 
@@ -36,7 +35,6 @@ import type { Need, Residue, Negotiation } from "@/lib/types";
 import { addNegotiation, updateNegotiationDetails } from "@/services/negotiation-service";
 import { useRouter } from "next/navigation";
 import { useMemo, useEffect } from "react";
-import { getAllResidues } from "@/services/residue-service";
 
 type OfferDialogProps = {
   isOpen: boolean;
@@ -44,6 +42,7 @@ type OfferDialogProps = {
   need?: Need; // For creating a new offer
   negotiationToEdit?: Negotiation; // For editing an existing offer
   onOfferUpdated?: (negotiation: Negotiation) => void;
+  userResidues?: Residue[];
 };
 
 export function OfferDialog({ 
@@ -53,7 +52,7 @@ export function OfferDialog({
   userResidues, 
   negotiationToEdit,
   onOfferUpdated,
-}: OfferDialogProps & { userResidues?: Residue[] }) {
+}: OfferDialogProps) {
   const router = useRouter();
   const { toast } = useToast();
   
@@ -61,8 +60,8 @@ export function OfferDialog({
 
   // In edit mode, the available residue is just the one in the negotiation
   const compatibleResidues = useMemo(() => {
-    if (isEditMode) {
-      return negotiationToEdit.residue ? [negotiationToEdit.residue] : [];
+    if (isEditMode && negotiationToEdit?.residue) {
+      return [negotiationToEdit.residue];
     }
     if (need && userResidues) {
       return userResidues.filter(r => r.type.toLowerCase() === need.residueType.toLowerCase());
@@ -142,7 +141,7 @@ export function OfferDialog({
   };
 
   const title = isEditMode ? "Modificar Oferta" : "Hacer una Oferta";
-  const description = isEditMode
+  const description = isEditMode && negotiationToEdit
     ? `Ajusta los detalles de tu oferta para ${negotiationToEdit.residue.type}.`
     : `Oferta uno de tus residuos publicados para la necesidad de ${need?.residueType}.`;
 
