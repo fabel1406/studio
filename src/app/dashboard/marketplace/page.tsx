@@ -1,3 +1,4 @@
+
 // src/app/dashboard/marketplace/page.tsx
 "use client";
 
@@ -22,20 +23,23 @@ import { useRole } from '../layout';
 export default function MarketplacePage() {
   const { role } = useRole();
   const [searchTerm, setSearchTerm] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('');
-  const [countryFilter, setCountryFilter] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('ALL_CATEGORIES');
+  const [countryFilter, setCountryFilter] = useState('ALL_COUNTRIES');
 
   const filteredResidues = mockResidues.filter(residue => {
+    const companyCountry = residue.company?.country.toLowerCase();
     return (
       (searchTerm === '' || residue.type.toLowerCase().includes(searchTerm.toLowerCase())) &&
-      (categoryFilter === '' || residue.category === categoryFilter)
+      (categoryFilter === 'ALL_CATEGORIES' || residue.category === categoryFilter) &&
+      (countryFilter === 'ALL_COUNTRIES' || (companyCountry && companyCountry.includes(countryFilter)))
     );
   });
 
   const filteredNeeds = mockNeeds.filter(need => {
+    // Assuming needs will also be associated with a company location in the future
     return (
       (searchTerm === '' || need.residueType.toLowerCase().includes(searchTerm.toLowerCase())) &&
-      (categoryFilter === '' || need.category === categoryFilter)
+      (categoryFilter === 'ALL_CATEGORIES' || need.category === categoryFilter)
     );
   });
 
@@ -71,27 +75,27 @@ export default function MarketplacePage() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
-            <Select onValueChange={setCategoryFilter}>
+            <Select onValueChange={setCategoryFilter} defaultValue="ALL_CATEGORIES">
                 <SelectTrigger>
                     <SelectValue placeholder="Filtrar por categoría" />
                 </SelectTrigger>
                 <SelectContent>
-                    <SelectItem value="">Todas las categorías</SelectItem>
+                    <SelectItem value="ALL_CATEGORIES">Todas las categorías</SelectItem>
                     <SelectItem value="AGRO">Agroindustrial</SelectItem>
                     <SelectItem value="FOOD">Residuos alimentarios</SelectItem>
                     <SelectItem value="BIOMASS">Biomasa</SelectItem>
                     <SelectItem value="OTHERS">Otros</SelectItem>
                 </SelectContent>
             </Select>
-            <Select onValueChange={setCountryFilter}>
+            <Select onValueChange={setCountryFilter} defaultValue="ALL_COUNTRIES">
                 <SelectTrigger>
                     <SelectValue placeholder="Filtrar por país" />
                 </SelectTrigger>
                 <SelectContent>
-                    <SelectItem value="">Todos los países</SelectItem>
-                    <SelectItem value="spain">España</SelectItem>
+                    <SelectItem value="ALL_COUNTRIES">Todos los países</SelectItem>
+                    <SelectItem value="españa">España</SelectItem>
                     <SelectItem value="portugal">Portugal</SelectItem>
-                    <SelectItem value="france">Francia</SelectItem>
+                    <SelectItem value="francia">Francia</SelectItem>
                 </SelectContent>
             </Select>
              <Button variant="outline">
