@@ -23,8 +23,8 @@ export function Footer() {
               <ul className="mt-4 space-y-4">
                 <li><Link href="/dashboard/marketplace" className="text-sm text-muted-foreground hover:text-primary">Marketplace</Link></li>
                 <li><Link href="/dashboard/impact" className="text-sm text-muted-foreground hover:text-primary">Seguimiento de Impacto</Link></li>
-                <li><Link href="#" className="text-sm text-muted-foreground hover:text-primary">Para Generadores</Link></li>
-                <li><Link href="#" className="text-sm text-muted-foreground hover:text-primary">Para Transformadores</Link></li>
+                <li><Link href="/for-generators" className="text-sm text-muted-foreground hover:text-primary">Para Generadores</Link></li>
+                <li><Link href="/for-transformers" className="text-sm text-muted-foreground hover:text-primary">Para Transformadores</Link></li>
               </ul>
             </div>
             <div>
