@@ -130,9 +130,11 @@ export function OfferDialog({
             onOfferUpdated(updatedNegotiation);
         }
     } else if (need && selectedResidue) {
+        // When making an offer for a need, the current user is the supplier (Generator)
+        // and the need's company is the requester (Transformer)
         addNegotiation({
           residueId: selectedResidue.id,
-          requesterId: need.companyId,
+          requesterId: currentUserId, // The generator is initiating contact, so they are the requester here.
           quantity: data.quantity,
           unit: selectedResidue.unit,
           offerPrice: data.price,

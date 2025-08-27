@@ -2,26 +2,29 @@
 import type { Residue } from '@/lib/types';
 import { mockResidues, mockCompanies } from '@/lib/data';
 
-// --- Service Functions ---
-
-// Let's treat mockResidues as an in-memory database
+// --- In-memory "database" ---
+// Let's treat mockResidues as an in-memory database that can be modified
 let residuesDB = [...mockResidues];
+
+// Helper to rehydrate residue with full company object
+const rehydrateResidue = (residue: Residue): Residue => {
+    return {
+        ...residue,
+        company: mockCompanies.find(c => c.id === residue.companyId)
+    };
+};
+
+// --- Service Functions ---
 
 export const getAllResidues = (): Residue[] => {
     // Rehydrate with company info on every call to ensure it's up-to-date
-    return residuesDB.map(residue => ({
-        ...residue,
-        company: mockCompanies.find(c => c.id === residue.companyId)
-    }));
+    return residuesDB.map(rehydrateResidue);
 };
 
 export const getResidueById = (id: string): Residue | undefined => {
     const residue = residuesDB.find(r => r.id === id);
     if (!residue) return undefined;
-    return {
-        ...residue,
-        company: mockCompanies.find(c => c.id === residue.companyId)
-    };
+    return rehydrateResidue(residue);
 };
 
 type NewResidueData = Omit<Residue, 'id' | 'companyId' | 'availabilityDate' | 'photos' | 'company'>;
@@ -36,7 +39,7 @@ export const addResidue = (residueData: NewResidueData): Residue => {
     };
     
     residuesDB.push(newResidue);
-    return newResidue;
+    return rehydrateResidue(newResidue);
 };
 
 export const updateResidue = (updatedResidueData: Partial<Residue> & { id: string }): Residue => {
@@ -52,10 +55,7 @@ export const updateResidue = (updatedResidueData: Partial<Residue> & { id: strin
 
     residuesDB[index] = updatedResidue;
     
-    return {
-        ...updatedResidue,
-        company: mockCompanies.find(c => c.id === updatedResidue.companyId)
-    };
+    return rehydrateResidue(updatedResidue);
 };
 
 export const deleteResidue = (id: string): void => {

@@ -52,7 +52,6 @@ export function ResidueActionPanel({ residue }: ResidueActionPanelProps) {
       return;
     }
     // When a user requests a residue, they are the requester.
-    // The service will find the supplier from the residue object.
     addNegotiation({
       residueId: residue.id,
       requesterId: currentUserId,
