@@ -18,6 +18,7 @@ import { mockCompanies } from '@/lib/data';
 const CompanySchema = z.object({
   id: z.string(),
   name: z.string(),
+  address: z.string().optional(),
   city: z.string().optional(),
   country: z.string(),
   lat: z.number().optional(),
@@ -114,7 +115,7 @@ const findTransformersPrompt = ai.definePrompt({
     - Para cada coincidencia, proporciona una puntuación de 0.0 (peor) a 1.0 (mejor).
     - La puntuación debe basarse en:
       1. Tipo/Categoría de Residuo: Debe ser una coincidencia muy cercana o exacta. Este es el factor más importante.
-      2. Ubicación: Una mayor proximidad (basada en ciudad/país, o lat/lng si están disponibles) resulta en una puntuación más alta.
+      2. Ubicación: Una mayor proximidad geográfica (basada en país, ciudad, o dirección si están disponibles) resulta en una puntuación más alta. Valora más las coincidencias en la misma ciudad, luego en el mismo país.
       3. Cantidad: Una coincidencia cercana entre la cantidad del residuo y la cantidad de la necesidad es mejor.
 
     Tu respuesta debe incluir el ID del residuo de origen, el ID de la necesidad coincidente, la puntuación, una razón breve y convincente para la coincidencia y la información de la empresa (company) de la necesidad coincidente.
@@ -149,7 +150,7 @@ const findGeneratorsPrompt = ai.definePrompt({
     - Para cada coincidencia, proporciona una puntuación de 0.0 (peor) a 1.0 (mejor).
     - La puntuación debe basarse en:
       1. Tipo/Categoría de Residuo: Debe ser una coincidencia muy cercana o exacta. Este es el factor más importante.
-      2. Ubicación: Una mayor proximidad (basada en ciudad/país, o lat/lng si están disponibles) resulta en una puntuación más alta.
+      2. Ubicación: Una mayor proximidad geográfica (basada en país, ciudad, o dirección si están disponibles) resulta en una puntuación más alta. Valora más las coincidencias en la misma ciudad, luego en el mismo país.
       3. Cantidad: La cantidad disponible del residuo debe ser suficiente para satisfacer la necesidad.
 
     Tu respuesta debe incluir el ID de la necesidad de origen, el ID del residuo coincidente, la puntuación, una razón breve y convincente para la coincidencia y la información de la empresa (company) del residuo coincidente.

@@ -32,6 +32,9 @@ const profileSchema = z.object({
   email: z.string().email("El correo electrónico no es válido."),
   role: z.enum(["GENERATOR", "TRANSFORMER", "BOTH"]),
   description: z.string().max(200, "La descripción no puede exceder los 200 caracteres.").optional(),
+  country: z.string().min(1, "El país es obligatorio."),
+  city: z.string().min(1, "La ciudad es obligatoria."),
+  address: z.string().min(1, "La dirección es obligatoria."),
   contactEmail: z.string().email("El correo de contacto no es válido.").optional().or(z.literal('')),
   phone: z.string().max(20, "El teléfono no puede exceder los 20 caracteres.").optional(),
   website: z.string().url("La URL del sitio web no es válida.").optional().or(z.literal('')),
@@ -51,6 +54,9 @@ export default function SettingsPage() {
             companyName: "Usuario Admin",
             email: "admin@ecoconnect.com",
             description: "Productora de aceite de oliva con residuos de alperujo",
+            country: "España",
+            city: "Jaén",
+            address: "Polígono Industrial Los Olivares, Calle B, Parcela 23",
             contactEmail: "contacto@ecooliva.es",
             phone: "+34 953 123 456",
             website: "https://www.ecooliva.es",
@@ -117,7 +123,7 @@ export default function SettingsPage() {
                                         )}
                                     />
                                 </div>
-                                 <FormField
+                                <FormField
                                     control={form.control}
                                     name="description"
                                     render={({ field }) => (
@@ -127,6 +133,47 @@ export default function SettingsPage() {
                                             <Textarea placeholder="Describe brevemente tu empresa..." {...field} />
                                         </FormControl>
                                         <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <FormField
+                                        control={form.control}
+                                        name="country"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>País</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="Ej: España" {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                     <FormField
+                                        control={form.control}
+                                        name="city"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Ciudad</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="Ej: Madrid" {...field} />
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                                <FormField
+                                    control={form.control}
+                                    name="address"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Dirección</FormLabel>
+                                            <FormControl>
+                                                <Input placeholder="Calle, número, código postal" {...field} />
+                                            </FormControl>
+                                            <FormMessage />
                                         </FormItem>
                                     )}
                                 />
