@@ -132,8 +132,7 @@ export function OfferDialog({
     } else if (need && selectedResidue) {
         addNegotiation({
           residueId: selectedResidue.id,
-          supplierId: currentUserId, // The user making the offer is the supplier.
-          requesterId: need.companyId, // The user who created the need is the requester.
+          requesterId: need.companyId,
           quantity: data.quantity,
           unit: selectedResidue.unit,
           offerPrice: data.price,

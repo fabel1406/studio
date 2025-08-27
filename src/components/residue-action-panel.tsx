@@ -51,10 +51,10 @@ export function ResidueActionPanel({ residue }: ResidueActionPanelProps) {
       toast({ title: "Error", description: "Usuario no identificado.", variant: "destructive" });
       return;
     }
-    // When a user requests a residue, they are the requester, and the residue owner is the supplier.
+    // When a user requests a residue, they are the requester.
+    // The service will find the supplier from the residue object.
     addNegotiation({
       residueId: residue.id,
-      supplierId: residue.companyId,
       requesterId: currentUserId,
       quantity: values.quantity,
       unit: residue.unit

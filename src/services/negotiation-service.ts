@@ -1,9 +1,9 @@
 // src/services/negotiation-service.ts
-import type { Negotiation, NegotiationMessage } from '@/lib/types';
+import type { Negotiation, NegotiationMessage, Residue, Company } from '@/lib/types';
 import { mockCompanies, mockResidues } from '@/lib/data';
-import { getResidueById } from './residue-service';
+import { getResidueById, updateResidue, addResidue, deleteResidue as serviceDeleteResidue } from './residue-service';
 
-// Treat data as an in-memory database
+// In-memory array to act as a database, initialized with an empty array.
 let negotiationsDB: Negotiation[] = [];
 
 /**
@@ -13,7 +13,8 @@ let negotiationsDB: Negotiation[] = [];
  */
 const rehydrateNegotiation = (negotiation: Negotiation): Negotiation => {
     const residue = getResidueById(negotiation.residueId);
-    // Even if residue is deleted, we create a placeholder to avoid crashes.
+    
+    // Create a placeholder for deleted residues to avoid crashes.
     const hydratedResidue = residue || {
         id: negotiation.residueId,
         type: 'Residuo eliminado',
@@ -35,8 +36,7 @@ const rehydrateNegotiation = (negotiation: Negotiation): Negotiation => {
 
 type NewNegotiationData = {
     residueId: string;
-    supplierId: string; // The one providing the residue (Generator)
-    requesterId: string; // The one initiating the contact (can be Generator or Transformer)
+    requesterId: string; // The one initiating the contact
     quantity: number;
     unit: 'KG' | 'TON';
     offerPrice?: number;
@@ -45,12 +45,13 @@ type NewNegotiationData = {
 export const addNegotiation = (data: NewNegotiationData): Negotiation => {
     const residue = getResidueById(data.residueId);
     if (!residue) throw new Error("Residue not found for negotiation");
-    
+    if (!residue.companyId) throw new Error("Residue is missing a company ID");
+
     const newNegotiation: Negotiation = {
         id: `neg-${Date.now()}`,
         residueId: data.residueId,
         residue: residue, // Include full object at creation
-        supplierId: data.supplierId,
+        supplierId: residue.companyId, // The supplier is the owner of the residue
         requesterId: data.requesterId,
         quantity: data.quantity,
         unit: data.unit,
@@ -68,17 +69,18 @@ export const addNegotiation = (data: NewNegotiationData): Negotiation => {
     return rehydrateNegotiation(newNegotiation);
 };
 
+
 export const getAllNegotiationsForUser = (userId: string): { sent: Negotiation[], received: Negotiation[] } => {
     const allNegotiations = negotiationsDB.map(rehydrateNegotiation);
     
-    // "Sent" are negotiations the user initiated.
+    // "Sent" are negotiations the user initiated (they are the requester).
     const sent = allNegotiations
       .filter(n => n.requesterId === userId)
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       
-    // "Received" are negotiations initiated by others, where the user is the supplier.
+    // "Received" are negotiations initiated by others for a residue the user supplies.
     const received = allNegotiations
-      .filter(n => n.supplierId === userId && n.requesterId !== userId)
+      .filter(n => n.supplierId === userId)
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       
     return { sent, received };
