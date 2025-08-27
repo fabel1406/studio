@@ -48,10 +48,10 @@ export default function AboutPage() {
                         <div className="grid md:grid-cols-1 gap-12 items-center">
                             <div className="order-2 md:order-1">
                                 <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">La Historia de EcoConnect</h2>
-                                <p className="mt-4 text-muted-foreground">
+                                <p className="mt-4 text-muted-foreground text-justify">
                                     Nacimos de la simple observación de una ineficiencia masiva: por un lado, empresas generando toneladas de residuos orgánicos con un alto coste de gestión; por otro, industrias buscando materias primas sostenibles y asequibles. Vimos una desconexión, y la tecnología nos dio la herramienta para construir el puente.
                                 </p>
-                                <p className="mt-4 text-muted-foreground">
+                                <p className="mt-4 text-muted-foreground text-justify">
                                     EcoConnect comenzó como un proyecto para optimizar la logística de residuos en la industria agroalimentaria. Rápidamente, nos dimos cuenta del potencial para crear un verdadero marketplace B2B, un ecosistema donde la economía circular no fuera solo un concepto, sino una realidad rentable y escalable. Hoy, nuestra plataforma impulsa la innovación y la sostenibilidad en múltiples sectores.
                                 </p>
                             </div>
