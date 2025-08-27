@@ -11,9 +11,7 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarProvider,
-  SidebarInset,
   SidebarFooter,
-  SidebarTrigger
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -52,7 +50,7 @@ export default function DashboardLayout({
       <div className="flex min-h-screen">
         <Sidebar>
             <SidebarHeader>
-                 <div className="flex items-center gap-1 p-2">
+                 <div className="flex items-center gap-2 p-2">
                     <Logo className="size-12 shrink-0" />
                     <span className="text-xl font-semibold group-data-[collapsible=icon]:hidden bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">
                         EcoConnect
@@ -104,7 +102,7 @@ export default function DashboardLayout({
                 </div>
             </SidebarFooter>
         </Sidebar>
-        <SidebarInset>{children}</SidebarInset>
+        <main className="flex-1">{children}</main>
       </div>
     </SidebarProvider>
   );
