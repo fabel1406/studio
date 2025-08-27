@@ -170,7 +170,7 @@ export default function MatchesPage() {
                                 <p className="text-sm text-muted-foreground mb-4">{match.reason}</p>
                                 <Button size="sm" onClick={() => handleContact(sourceType, match)}>
                                     <Send className="mr-2 h-4 w-4" />
-                                    Contactar
+                                    Iniciar Negociación
                                 </Button>
                             </div>
                         )})}
