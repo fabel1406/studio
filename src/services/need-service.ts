@@ -4,20 +4,16 @@ import { mockNeeds } from '@/lib/data';
 
 // Helper to get the current state from localStorage
 const getStoredNeeds = (): Need[] => {
-    if (typeof window === 'undefined') {
-        return mockNeeds; // Return mock data during server-side rendering
+     if (typeof window === 'undefined') {
+        return mockNeeds;
     }
     try {
         const storedData = localStorage.getItem('needs');
-        if (storedData) {
-            return JSON.parse(storedData) as Need[];
-        }
+        return storedData ? JSON.parse(storedData) as Need[] : mockNeeds;
     } catch (e) {
         console.error("Failed to parse needs from localStorage", e);
+        return mockNeeds;
     }
-    // If nothing in storage or parsing fails, initialize with mock data
-    setStoredNeeds(mockNeeds);
-    return mockNeeds;
 };
 
 // Helper to save the state to localStorage

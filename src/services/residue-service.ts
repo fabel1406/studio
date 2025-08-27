@@ -5,19 +5,15 @@ import { mockResidues, mockCompanies } from '@/lib/data';
 // Helper to get the current state from localStorage
 const getStoredResidues = (): Residue[] => {
     if (typeof window === 'undefined') {
-        return mockResidues; // Return mock data during server-side rendering
+        return mockResidues;
     }
     try {
         const storedData = localStorage.getItem('residues');
-        if (storedData) {
-            return JSON.parse(storedData) as Residue[];
-        }
+        return storedData ? JSON.parse(storedData) as Residue[] : mockResidues;
     } catch (e) {
         console.error("Failed to parse residues from localStorage", e);
+        return mockResidues;
     }
-    // If nothing in storage or parsing fails, initialize with mock data
-    setStoredResidues(mockResidues);
-    return mockResidues;
 };
 
 // Helper to save the state to localStorage
