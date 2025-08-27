@@ -25,6 +25,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { PlusCircle } from "lucide-react";
+import { useState } from "react";
 
 const profileSchema = z.object({
   companyName: z.string().min(1, "El nombre de la empresa es obligatorio."),
@@ -32,10 +33,15 @@ const profileSchema = z.object({
   role: z.enum(["GENERATOR", "TRANSFORMER", "BOTH"]),
 });
 
+type ProfileFormValues = z.infer<typeof profileSchema>;
+
 export default function SettingsPage() {
     const { toast } = useToast();
+    
+    // State to hold the current role to control UI visibility
+    const [currentRole, setCurrentRole] = useState<ProfileFormValues['role']>('GENERATOR');
 
-    const form = useForm<z.infer<typeof profileSchema>>({
+    const form = useForm<ProfileFormValues>({
         resolver: zodResolver(profileSchema),
         defaultValues: {
             companyName: "Usuario Admin",
@@ -44,13 +50,19 @@ export default function SettingsPage() {
         },
     });
 
-    function onSubmit(values: z.infer<typeof profileSchema>) {
+    const watchedRole = form.watch("role");
+
+    function onSubmit(values: ProfileFormValues) {
         console.log(values);
+        setCurrentRole(values.role); // Update role state on successful submission
         toast({
             title: "Perfil Actualizado",
             description: "Tu información ha sido guardada con éxito.",
         });
     }
+
+    const canGenerate = watchedRole === 'GENERATOR' || watchedRole === 'BOTH';
+    const canTransform = watchedRole === 'TRANSFORMER' || watchedRole === 'BOTH';
 
     return (
         <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -129,39 +141,33 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="md:col-span-2 space-y-8">
-                     <Card>
-                        <CardHeader className="flex flex-row items-center justify-between">
-                            <div>
+                    {canGenerate && (
+                        <Card>
+                            <CardHeader>
                                 <CardTitle>Residuos que Genero</CardTitle>
                                 <CardDescription>
                                     Añade o edita los tipos de residuos que tu empresa produce.
                                 </CardDescription>
-                            </div>
-                            <Button>
-                                <PlusCircle className="mr-2 h-4 w-4" /> Añadir Tipo
-                            </Button>
-                        </CardHeader>
-                        <CardContent>
-                            <p className="text-sm text-muted-foreground">Aún no has añadido ningún tipo de residuo.</p>
-                        </CardContent>
-                    </Card>
+                            </CardHeader>
+                            <CardContent>
+                                <p className="text-sm text-muted-foreground">Aún no has añadido ningún tipo de residuo.</p>
+                            </CardContent>
+                        </Card>
+                    )}
 
-                     <Card>
-                        <CardHeader className="flex flex-row items-center justify-between">
-                            <div>
+                    {canTransform && (
+                        <Card>
+                            <CardHeader>
                                 <CardTitle>Residuos que Transformo</CardTitle>
                                 <CardDescription>
                                     Especifica los residuos que tu empresa puede procesar.
                                 </CardDescription>
-                            </div>
-                             <Button>
-                                <PlusCircle className="mr-2h-4 w-4" /> Añadir Tipo
-                            </Button>
-                        </CardHeader>
-                        <CardContent>
-                             <p className="text-sm text-muted-foreground">Aún no has añadido ninguna capacidad de transformación.</p>
-                        </CardContent>
-                    </Card>
+                            </CardHeader>
+                            <CardContent>
+                                <p className="text-sm text-muted-foreground">Aún no has añadido ninguna capacidad de transformación.</p>
+                            </CardContent>
+                        </Card>
+                    )}
                 </div>
             </div>
 
