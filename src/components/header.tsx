@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { Menu, Sun, Moon } from "lucide-react";
 import { Logo } from "./logo";
 import { useState, useEffect } from "react";
@@ -82,10 +82,11 @@ export function Header() {
                 <SheetContent side="right">
                   <div className="flex flex-col h-full">
                     <div className="flex items-center justify-between border-b pb-4">
-                      <Link href="/" className="flex items-center gap-2">
+                       <Link href="/" className="flex items-center gap-2">
                         <Logo className="h-10 w-auto" />
                         <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">EcoConnect</span>
                       </Link>
+                      <SheetTitle className="sr-only">Menú Principal</SheetTitle>
                     </div>
                     <nav className="flex flex-col gap-6 mt-8">
                       {navLinks.map((link) => (
