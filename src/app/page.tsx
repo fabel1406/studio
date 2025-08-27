@@ -33,7 +33,7 @@ export default function Home() {
             <div className="relative h-64 sm:h-80 lg:h-full lg:min-h-[500px] rounded-2xl overflow-hidden shadow-2xl">
                 <Image
                   src="https://picsum.photos/seed/growth/800/600"
-                  alt="Manos sosteniendo una planta en crecimiento"
+                  alt="Un par de manos humanas sosteniendo con delicadeza una pequeña planta en crecimiento, simbolizando crecimiento y cuidado ambiental."
                   fill
                   style={{objectFit: 'cover'}}
                   className="transform hover:scale-105 transition-transform duration-500"

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Logo } from "./logo";
-import { Github, Twitter, Linkedin } from "lucide-react";
+import { Github, Twitter, Linkedin, Instagram } from "lucide-react";
 import { Button } from "./ui/button";
 
 export function Footer() {
@@ -57,6 +57,9 @@ export function Footer() {
             </Button>
             <Button variant="ghost" size="icon" asChild>
                 <Link href="#" aria-label="LinkedIn"><Linkedin className="h-5 w-5 text-muted-foreground hover:text-primary" /></Link>
+            </Button>
+            <Button variant="ghost" size="icon" asChild>
+                <Link href="https://www.instagram.com/ecoconnectlab" target="_blank" aria-label="Instagram"><Instagram className="h-5 w-5 text-muted-foreground hover:text-primary" /></Link>
             </Button>
           </div>
         </div>
