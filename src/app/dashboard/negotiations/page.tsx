@@ -22,7 +22,7 @@ const statusMap: {[key: string]: {text: string, variant: 'default' | 'secondary'
     SENT: { text: 'Enviado', variant: 'outline' },
     ACCEPTED: { text: 'Aceptado', variant: 'default' },
     REJECTED: { text: 'Rechazado', variant: 'destructive' },
-}
+};
 
 export default function NegotiationsPage() {
   const { role } = useRole();
@@ -34,6 +34,7 @@ export default function NegotiationsPage() {
   const fetchNegotiations = useCallback(() => {
     let currentUserId: string;
     
+    // Determine user ID based on role for mock purposes
     if (role === 'TRANSFORMER') {
         currentUserId = 'comp-3';
     } else { // GENERATOR or BOTH
@@ -93,6 +94,7 @@ export default function NegotiationsPage() {
             if (!neg.residue) return null; // Defensive check
             const otherParty = type === 'sent' ? neg.requester : neg.supplier;
             const isFinalStatus = neg.status === 'ACCEPTED' || neg.status === 'REJECTED';
+            const statusInfo = statusMap[neg.status];
 
             return (
                 <div key={neg.id} className="flex flex-col md:flex-row items-center gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
@@ -104,8 +106,8 @@ export default function NegotiationsPage() {
                         <p className="font-semibold text-lg">{neg.residue.type}</p>
                          <p className="text-sm text-muted-foreground">
                             {type === 'sent' 
-                                ? <>Oferta para <span className="text-primary font-medium">{otherParty?.name}</span></>
-                                : <>Solicitud de <span className="text-primary font-medium">{otherParty?.name}</span></>
+                                ? <>Oferta para <span className="text-primary font-medium">{otherParty?.name || 'empresa desconocida'}</span></>
+                                : <>Solicitud de <span className="text-primary font-medium">{otherParty?.name || 'empresa desconocida'}</span></>
                             }
                         </p>
                     </div>
@@ -114,7 +116,7 @@ export default function NegotiationsPage() {
                         <p className="text-sm text-muted-foreground">Cantidad</p>
                     </div>
                         <div className="text-center">
-                        <Badge variant={statusMap[neg.status].variant}>{statusMap[neg.status].text}</Badge>
+                        {statusInfo && <Badge variant={statusInfo.variant}>{statusInfo.text}</Badge>}
                         <p className="text-sm text-muted-foreground mt-2">{format(new Date(neg.createdAt), "d MMM, yyyy", { locale: es })}</p>
                     </div>
                     <div className="flex items-center gap-2">
