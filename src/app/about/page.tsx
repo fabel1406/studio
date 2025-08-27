@@ -6,13 +6,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { CheckCircle } from "lucide-react";
 import Image from "next/image";
 
-const teamMembers = [
-    { name: 'Ana García', role: 'CEO y Fundadora', image: 'https://i.pravatar.cc/150?u=a042581f4e29026704d' },
-    { name: 'Carlos Rodríguez', role: 'Director de Tecnología (CTO)', image: 'https://i.pravatar.cc/150?u=a042581f4e29026705d' },
-    { name: 'Laura Martínez', role: 'Directora de Sostenibilidad', image: 'https://i.pravatar.cc/150?u=a042581f4e29026706d' },
-    { name: 'David Fernández', role: 'Jefe de Desarrollo de Negocio', image: 'https://i.pravatar.cc/150?u=a042581f4e29026707d' },
-];
-
 const values = [
     { title: 'Sostenibilidad', description: 'Creemos en un futuro donde los negocios prosperan respetando el planeta.' },
     { title: 'Innovación', description: 'Aplicamos la tecnología para resolver desafíos ambientales complejos.' },
@@ -77,34 +70,6 @@ export default function AboutPage() {
                                     <h3 className="text-xl font-semibold">{value.title}</h3>
                                     <p className="mt-2 text-muted-foreground">{value.description}</p>
                                 </div>
-                            ))}
-                        </div>
-                    </div>
-                </section>
-
-                {/* Team Section */}
-                <section className="py-20 sm:py-28">
-                    <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="text-center max-w-3xl mx-auto">
-                            <h2 className="text-3xl sm:text-4xl font-bold">Conoce al Equipo</h2>
-                            <p className="mt-4 text-lg text-muted-foreground">
-                                Somos un grupo de ingenieros, ecologistas y emprendedores apasionados por crear un impacto positivo.
-                            </p>
-                        </div>
-                        <div className="mt-16 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
-                            {teamMembers.map((member) => (
-                                <Card key={member.name} className="text-center overflow-hidden transform transition-all duration-300 hover:scale-105 hover:shadow-xl">
-                                    <CardContent className="p-0">
-                                        <Avatar className="w-full h-48 rounded-none">
-                                            <AvatarImage src={member.image} alt={member.name} className="object-cover" />
-                                            <AvatarFallback>{member.name.substring(0, 2)}</AvatarFallback>
-                                        </Avatar>
-                                        <div className="p-4">
-                                            <h3 className="text-lg font-semibold text-foreground">{member.name}</h3>
-                                            <p className="text-sm text-primary">{member.role}</p>
-                                        </div>
-                                    </CardContent>
-                                </Card>
                             ))}
                         </div>
                     </div>
