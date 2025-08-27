@@ -1,5 +1,5 @@
 // src/services/residue-service.ts
-import { mockResidues } from "@/lib/data";
+import { mockResidues, mockCompanies } from "@/lib/data";
 import type { Residue } from "@/lib/types";
 
 const RESIDUE_STORAGE_KEY = 'eco-connect-residues';
@@ -33,7 +33,7 @@ export const addResidue = (residue: Omit<Residue, 'company'>) => {
   const newResidue: Residue = {
     ...residue,
     // In a real app, you would fetch company data based on companyId
-    company: mockResidues.find(r => r.companyId === residue.companyId)?.company,
+    company: mockCompanies.find(c => c.id === residue.companyId),
   }
   const updatedResidues = [...residues, newResidue];
   localStorage.setItem(RESIDUE_STORAGE_KEY, JSON.stringify(updatedResidues));
@@ -42,7 +42,13 @@ export const addResidue = (residue: Omit<Residue, 'company'>) => {
 // Function to update an existing residue
 export const updateResidue = (updatedResidue: Omit<Residue, 'company'>) => {
   let residues = getAllResidues();
-  residues = residues.map(r => r.id === updatedResidue.id ? { ...r, ...updatedResidue } : r);
+  residues = residues.map(r => {
+    if (r.id === updatedResidue.id) {
+      // Merge the existing residue with the updated fields
+      return { ...r, ...updatedResidue };
+    }
+    return r;
+  });
   localStorage.setItem(RESIDUE_STORAGE_KEY, JSON.stringify(residues));
 };
 
