@@ -35,6 +35,7 @@ import type { Need, Residue, Negotiation } from "@/lib/types";
 import { addNegotiation, updateNegotiationDetails } from "@/services/negotiation-service";
 import { useRouter } from "next/navigation";
 import { useMemo, useEffect } from "react";
+import { useRole } from "@/app/dashboard/layout";
 
 type OfferDialogProps = {
   isOpen: boolean;
@@ -55,6 +56,7 @@ export function OfferDialog({
 }: OfferDialogProps) {
   const router = useRouter();
   const { toast } = useToast();
+  const { role } = useRole();
   
   const isEditMode = !!negotiationToEdit;
 
@@ -68,6 +70,18 @@ export function OfferDialog({
     }
     return [];
   }, [userResidues, need, negotiationToEdit, isEditMode]);
+  
+  const getSupplierId = () => {
+    // This logic determines the user ID based on the role for mocking purposes.
+    // In a real app, this would come from an authentication context.
+    if (isEditMode) return negotiationToEdit!.supplierId;
+
+    if (role === 'GENERATOR' || role === 'BOTH') {
+        return 'comp-1'; // User is acting as the generator/supplier
+    }
+    return ''; // Should not happen if dialog is opened correctly
+  };
+
 
   const FormSchema = z.object({
     residueId: z.string({ required_error: "Debes seleccionar un residuo para ofertar." }),
@@ -124,7 +138,7 @@ export function OfferDialog({
     } else if (need && selectedResidue) {
         addNegotiation({
           residueId: selectedResidue.id,
-          supplierId: selectedResidue.companyId, // Generator
+          supplierId: getSupplierId(), // Generator
           requesterId: need.companyId, // Transformer
           quantity: data.quantity,
           unit: selectedResidue.unit,

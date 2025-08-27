@@ -1,4 +1,3 @@
-
 // src/app/dashboard/negotiations/page.tsx
 "use client";
 
@@ -42,9 +41,9 @@ export default function NegotiationsPage() {
     }
     
     setIsLoading(true);
-    const { sent, received } = getAllNegotiationsForUser(currentUserId);
-    setSentNegotiations(sent);
-    setReceivedNegotiations(received);
+    const { sentOffers, receivedOffers } = getAllNegotiationsForUser(currentUserId);
+    setSentNegotiations(sentOffers);
+    setReceivedNegotiations(receivedOffers);
     setIsLoading(false);
   }, [role]);
 
@@ -61,40 +60,35 @@ export default function NegotiationsPage() {
     });
   }
 
-  const renderNegotiationList = (negotiations: Negotiation[], type: 'sent' | 'received') => {
+  const renderNegotiationList = (negotiations: Negotiation[], listType: 'sent' | 'received') => {
       if (isLoading) return <p>Cargando negociaciones...</p>;
-      if (negotiations.length === 0) {
+      
+      const isEmpty = negotiations.length === 0;
+
+      if (isEmpty) {
            return (
                 <div className="text-center py-16 text-muted-foreground">
-                    {type === 'sent' ? (
-                        <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed rounded-lg">
-                             <Handshake className="h-16 w-16 text-muted-foreground" />
-                             <h3 className="mt-4 text-xl font-semibold">Aún no has enviado ofertas</h3>
-                             <p className="mt-2 text-sm text-muted-foreground">
-                                Cuando envíes una oferta por un residuo que necesites, aparecerá aquí.
-                             </p>
-                             <Button variant="link" asChild className="mt-2">
-                                <Link href="/dashboard/marketplace">Explora el marketplace para empezar.</Link>
-                            </Button>
-                        </div>
-                    ) : (
-                         <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed rounded-lg">
-                            <Handshake className="h-16 w-16 text-muted-foreground" />
-                            <h3 className="mt-4 text-xl font-semibold">Aún no has recibido solicitudes</h3>
-                            <p className="mt-2 text-sm text-muted-foreground">
-                                Cuando un transformador solicite uno de tus residuos, aparecerá aquí.
-                            </p>
-                        </div>
-                    )}
+                    <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed rounded-lg">
+                         <Handshake className="h-16 w-16 text-muted-foreground" />
+                         <h3 className="mt-4 text-xl font-semibold">No hay negociaciones aquí</h3>
+                          {listType === 'sent' && role !== 'TRANSFORMER' && <p className="mt-2 text-sm text-muted-foreground">Cuando envíes una oferta, aparecerá aquí.</p>}
+                          {listType === 'sent' && role === 'TRANSFORMER' && <p className="mt-2 text-sm text-muted-foreground">Cuando solicites un residuo, tu solicitud aparecerá aquí.</p>}
+                          {listType === 'received' && role !== 'TRANSFORMER' && <p className="mt-2 text-sm text-muted-foreground">Cuando un transformador solicite uno de tus residuos, aparecerá aquí.</p>}
+                          {listType === 'received' && role === 'TRANSFORMER' && <p className="mt-2 text-sm text-muted-foreground">Cuando un generador te envíe una oferta, aparecerá aquí.</p>}
+                         <Button variant="link" asChild className="mt-2">
+                            <Link href="/dashboard/marketplace">Explora el marketplace para empezar.</Link>
+                        </Button>
+                    </div>
                 </div>
            )
       }
 
       return negotiations.map((neg) => {
-            if (!neg.residue) return null; // Defensive check
-            const otherParty = type === 'sent' ? neg.requester : neg.supplier;
+            const otherParty = listType === 'sent' ? neg.requester : neg.supplier;
             const isFinalStatus = neg.status === 'ACCEPTED' || neg.status === 'REJECTED';
             const statusInfo = statusMap[neg.status];
+
+            if (!neg.residue || !otherParty || !statusInfo) return null; // Defensive check for bad data
 
             return (
                 <div key={neg.id} className="flex flex-col md:flex-row items-center gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
@@ -105,9 +99,9 @@ export default function NegotiationsPage() {
                     <div className="flex-grow">
                         <p className="font-semibold text-lg">{neg.residue.type}</p>
                          <p className="text-sm text-muted-foreground">
-                            {type === 'sent' 
-                                ? <>Oferta para <span className="text-primary font-medium">{otherParty?.name || 'empresa desconocida'}</span></>
-                                : <>Solicitud de <span className="text-primary font-medium">{otherParty?.name || 'empresa desconocida'}</span></>
+                            {listType === 'sent' 
+                                ? <>Oferta para <span className="text-primary font-medium">{otherParty.name}</span></>
+                                : <>Oferta de <span className="text-primary font-medium">{otherParty.name}</span></>
                             }
                         </p>
                     </div>
@@ -116,7 +110,7 @@ export default function NegotiationsPage() {
                         <p className="text-sm text-muted-foreground">Cantidad</p>
                     </div>
                         <div className="text-center">
-                        {statusInfo && <Badge variant={statusInfo.variant}>{statusInfo.text}</Badge>}
+                        <Badge variant={statusInfo.variant}>{statusInfo.text}</Badge>
                         <p className="text-sm text-muted-foreground mt-2">{format(new Date(neg.createdAt), "d MMM, yyyy", { locale: es })}</p>
                     </div>
                     <div className="flex items-center gap-2">
@@ -135,7 +129,53 @@ export default function NegotiationsPage() {
             )
       });
   }
-
+  
+  const TABS_CONFIG = {
+    GENERATOR: {
+      received: {
+        value: "received",
+        label: "Solicitudes Recibidas",
+        title: "Solicitudes de Transformadores",
+        description: "Empresas interesadas en tus residuos. ¡Respóndeles!",
+      },
+      sent: {
+        value: "sent",
+        label: "Mis Ofertas Enviadas",
+        title: "Ofertas Enviadas a Transformadores",
+        description: "Estas son las ofertas que has enviado para cubrir las necesidades de los transformadores.",
+      },
+    },
+    TRANSFORMER: {
+      received: {
+        value: "received",
+        label: "Ofertas Recibidas",
+        title: "Ofertas de Generadores",
+        description: "Generadores han ofertado sus residuos para cubrir tus necesidades.",
+      },
+      sent: {
+        value: "sent",
+        label: "Mis Solicitudes Enviadas",
+        title: "Solicitudes a Generadores",
+        description: "Aquí están las solicitudes que has iniciado para adquirir residuos.",
+      },
+    },
+    BOTH: { // Same as GENERATOR for simplicity, can be customized
+      received: {
+        value: "received",
+        label: "Solicitudes Recibidas",
+        title: "Solicitudes de Transformadores",
+        description: "Empresas interesadas en tus residuos. ¡Respóndeles!",
+      },
+      sent: {
+        value: "sent",
+        label: "Mis Ofertas Enviadas",
+        title: "Ofertas Enviadas a Transformadores",
+        description: "Estas son las ofertas que has enviado para cubrir las necesidades de los transformadores.",
+      },
+    }
+  };
+  
+  const currentTabs = TABS_CONFIG[role];
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -150,25 +190,25 @@ export default function NegotiationsPage() {
       
       <Tabs defaultValue="received" className="w-full">
         <TabsList className="grid w-full grid-cols-2 max-w-lg mx-auto">
-          <TabsTrigger value="received">Solicitudes Recibidas</TabsTrigger>
-          <TabsTrigger value="sent">Mis Ofertas Enviadas</TabsTrigger>
+          <TabsTrigger value={currentTabs.received.value}>{currentTabs.received.label}</TabsTrigger>
+          <TabsTrigger value={currentTabs.sent.value}>{currentTabs.sent.label}</TabsTrigger>
         </TabsList>
-        <TabsContent value="received">
+        <TabsContent value={currentTabs.received.value}>
              <Card>
                 <CardHeader>
-                    <CardTitle>Solicitudes Recibidas</CardTitle>
-                    <CardDescription>Otros usuarios están interesados en tus residuos. ¡Respóndeles!</CardDescription>
+                    <CardTitle>{currentTabs.received.title}</CardTitle>
+                    <CardDescription>{currentTabs.received.description}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                    {renderNegotiationList(receivedNegotiations, 'received')}
                 </CardContent>
              </Card>
         </TabsContent>
-        <TabsContent value="sent">
+        <TabsContent value={currentTabs.sent.value}>
             <Card>
                 <CardHeader>
-                    <CardTitle>Mis Ofertas Enviadas</CardTitle>
-                    <CardDescription>Aquí están las ofertas que has enviado a los transformadores para cubrir sus necesidades.</CardDescription>
+                    <CardTitle>{currentTabs.sent.title}</CardTitle>
+                    <CardDescription>{currentTabs.sent.description}</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     {renderNegotiationList(sentNegotiations, 'sent')}

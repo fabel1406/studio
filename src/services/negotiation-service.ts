@@ -1,7 +1,7 @@
 // src/services/negotiation-service.ts
 import type { Negotiation, NegotiationMessage, Residue, Company } from '@/lib/types';
-import { mockCompanies } from '@/lib/data';
-import { getResidueById } from './residue-service';
+import { mockCompanies, mockResidues } from '@/lib/data';
+import { getResidueById, getAllResidues } from './residue-service';
 
 
 const getStoredNegotiations = (): Negotiation[] => {
@@ -22,13 +22,9 @@ const setStoredNegotiations = (negotiations: Negotiation[]): void => {
          // To avoid storing redundant nested data, just store the IDs.
         const dataToStore = negotiations.map(neg => {
             const { residue, requester, supplier, ...rest } = neg;
-            if (!residue) {
-              console.error("Attempted to store negotiation without residue", neg);
-              return rest;
-            }
             return {
                 ...rest,
-                residueId: residue.id, // ensure residueId is stored
+                residueId: neg.residueId,
             };
         });
         localStorage.setItem('negotiations', JSON.stringify(dataToStore));
@@ -36,7 +32,7 @@ const setStoredNegotiations = (negotiations: Negotiation[]): void => {
 };
 
 
-const rehydrateNegotiations = (negotiations: (Omit<Negotiation, 'residue' | 'requester' | 'supplier'> & {residueId: string})[]): Negotiation[] => {
+const rehydrateNegotiations = (negotiations: (Omit<Negotiation, 'residue' | 'requester' | 'supplier'>)[]): Negotiation[] => {
     return negotiations
         .map(neg => {
             const residue = getResidueById(neg.residueId);
@@ -86,7 +82,7 @@ export const addNegotiation = (data: NewNegotiationData): Negotiation => {
         status: 'SENT',
         createdAt: new Date().toISOString(),
         messages: [{
-            senderId: data.supplierId,
+            senderId: data.supplierId, // The one making the offer starts the chat
             content: `He enviado una oferta de ${data.quantity} ${data.unit}.`,
             timestamp: new Date().toISOString()
         }],
@@ -97,11 +93,13 @@ export const addNegotiation = (data: NewNegotiationData): Negotiation => {
 };
 
 
-export const getAllNegotiationsForUser = (userId: string): { sent: Negotiation[], received: Negotiation[] } => {
+export const getAllNegotiationsForUser = (userId: string): { sentOffers: Negotiation[], receivedOffers: Negotiation[] } => {
     const allNegotiations = rehydrateNegotiations(getStoredNegotiations());
-    const sent = allNegotiations.filter(n => n.supplierId === userId).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    const received = allNegotiations.filter(n => n.requesterId === userId).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    return { sent, received };
+    // Sent offers are those where the user is the supplier (Generator)
+    const sentOffers = allNegotiations.filter(n => n.supplierId === userId).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    // Received offers are those where the user is the requester (Transformer)
+    const receivedOffers = allNegotiations.filter(n => n.requesterId === userId).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return { sentOffers, receivedOffers };
 };
 
 export const getNegotiationById = (id: string): Negotiation | undefined => {
