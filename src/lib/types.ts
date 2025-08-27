@@ -5,6 +5,7 @@ export type Company = {
   name: string;
   type: 'GENERATOR' | 'TRANSFORMER' | 'BOTH';
   description?: string;
+  contactEmail?: string;
   phone?: string;
   website?: string;
   address?: string;

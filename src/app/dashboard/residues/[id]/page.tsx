@@ -1,11 +1,13 @@
 import { mockResidues, mockCompanies } from "@/lib/data";
 import Image from "next/image";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, Droplets, MapPin, Scale, TestTube2, DollarSign } from "lucide-react";
+import { Calendar, Droplets, MapPin, Scale, TestTube2, DollarSign, Mail, Phone, Globe } from "lucide-react";
 import { ResidueDetails } from "@/components/residue-details";
 import { ResidueActionPanel } from "@/components/residue-action-panel";
+import { Button } from "@/components/ui/button";
 
 export default function ResiduePage({ params }: { params: { id: string } }) {
   const residue = mockResidues.find((r) => r.id === params.id);
@@ -75,14 +77,38 @@ export default function ResiduePage({ params }: { params: { id: string } }) {
             {company && (
                  <Card>
                     <CardHeader>
-                        <CardTitle>Generador</CardTitle>
+                        <CardTitle>Información del Generador</CardTitle>
                     </CardHeader>
-                    <CardContent>
-                        <h3 className="font-semibold text-primary">{company.name}</h3>
-                        <p className="text-sm text-muted-foreground">{company.description}</p>
-                        <Badge variant={company.verificationStatus === 'VERIFIED' ? 'default' : 'destructive'} className="mt-2">
-                           {company.verificationStatus === 'VERIFIED' ? 'VERIFICADO' : 'PENDIENTE'}
-                        </Badge>
+                    <CardContent className="space-y-4">
+                        <div>
+                            <h3 className="font-semibold text-primary">{company.name}</h3>
+                            <p className="text-sm text-muted-foreground">{company.description}</p>
+                             <Badge variant={company.verificationStatus === 'VERIFIED' ? 'default' : 'destructive'} className="mt-2">
+                                {company.verificationStatus === 'VERIFIED' ? 'VERIFICADO' : 'PENDIENTE'}
+                            </Badge>
+                        </div>
+                        <div className="space-y-2">
+                           {company.contactEmail && (
+                                <div className="flex items-center gap-2">
+                                    <Mail className="h-4 w-4 text-muted-foreground" />
+                                    <a href={`mailto:${company.contactEmail}`} className="text-sm text-primary hover:underline">{company.contactEmail}</a>
+                                </div>
+                            )}
+                             {company.phone && (
+                                <div className="flex items-center gap-2">
+                                    <Phone className="h-4 w-4 text-muted-foreground" />
+                                    <span className="text-sm">{company.phone}</span>
+                                </div>
+                            )}
+                            {company.website && (
+                                <div className="flex items-center gap-2">
+                                    <Globe className="h-4 w-4 text-muted-foreground" />
+                                    <a href={company.website} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline">
+                                       Sitio Web
+                                    </a>
+                                </div>
+                            )}
+                        </div>
                     </CardContent>
                 </Card>
             )}
