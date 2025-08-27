@@ -31,7 +31,7 @@ const navItems: NavItem[] = [
   { href: "/dashboard", label: "Resumen", icon: LayoutDashboard },
   { href: "/dashboard/marketplace", label: "Marketplace", icon: Search },
   { href: "/dashboard/impact", label: "Impacto", icon: BarChart2 },
-  { href: "/dashboard/residues", label: "Mis Residuos", icon: Leaf },
+  { href: "/dashboard/settings", label: "Mis Residuos", icon: Leaf },
   { href: "/dashboard/matches", label: "Coincidencias", icon: Recycle },
 ];
 
@@ -66,7 +66,7 @@ export default function DashboardLayout({
                           <SidebarMenuItem key={item.href}>
                               <Link href={item.href}>
                                   <SidebarMenuButton 
-                                      isActive={pathname === item.href}
+                                      isActive={pathname.startsWith(item.href) && (item.href !== '/dashboard' || pathname === '/dashboard')}
                                       tooltip={item.label}
                                   >
                                       <item.icon />
@@ -83,7 +83,7 @@ export default function DashboardLayout({
                           <SidebarMenuItem key={item.href}>
                              <Link href={item.href}>
                                   <SidebarMenuButton 
-                                      isActive={pathname === item.href}
+                                      isActive={pathname.startsWith(item.href)}
                                       tooltip={item.label}
                                   >
                                       <item.icon />

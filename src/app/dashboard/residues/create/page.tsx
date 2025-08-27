@@ -1,4 +1,3 @@
-
 // src/app/dashboard/residues/create/page.tsx
 "use client"
 
@@ -29,8 +28,8 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { addResidue, getResidueById, updateResidue } from "@/services/residue-service"
 import type { Residue } from "@/lib/types"
+import { mockResidues } from "@/lib/data"
 
 
 const residueFormSchema = z.object({
@@ -39,8 +38,8 @@ const residueFormSchema = z.object({
   quantity: z.coerce.number().min(0, { message: "La cantidad no puede ser negativa." }),
   unit: z.enum(['KG', 'TON'], { required_error: "Debes seleccionar una unidad." }),
   pricePerUnit: z.preprocess(
-    (val) => (val === "" || val === null || val === undefined ? undefined : Number(val)),
-    z.number({ invalid_type_error: 'El precio debe ser un número.' }).optional()
+    (val) => val === "" ? undefined : val,
+    z.coerce.number({ invalid_type_error: "El precio debe ser un número." }).optional()
   ),
   status: z.enum(['ACTIVE', 'RESERVED', 'CLOSED'], { required_error: "Debes seleccionar un estado." }),
   description: z.string().max(300, { message: "La descripción no puede exceder los 300 caracteres." }).optional(),
@@ -53,7 +52,6 @@ export default function ResidueFormPage() {
   const searchParams = useSearchParams();
   const { toast } = useToast()
   const [residueId, setResidueId] = useState<string | null>(null);
-  const [existingResidue, setExistingResidue] = useState<Residue | null>(null);
 
   const form = useForm<ResidueFormValues>({
     resolver: zodResolver(residueFormSchema),
@@ -71,9 +69,8 @@ export default function ResidueFormPage() {
     const id = searchParams.get('id');
     if (id) {
       setResidueId(id);
-      const residue = getResidueById(id);
+      const residue = mockResidues.find(r => r.id === id); // Using mockResidues for now
       if (residue) {
-        setExistingResidue(residue);
         form.reset({
           type: residue.type,
           category: residue.category,
@@ -90,33 +87,24 @@ export default function ResidueFormPage() {
 
   function onSubmit(data: ResidueFormValues) {
     try {
-        if (residueId && existingResidue) {
-            const updatedResidueData = {
-                ...existingResidue,
-                ...data,
-                description: data.description || '', // Ensure description is not null/undefined
-            };
-            updateResidue(updatedResidueData);
+        if (residueId) {
+            console.log("Updating residue:", { id: residueId, ...data });
             toast({
                 title: "¡Residuo Actualizado!",
                 description: `El residuo "${data.type}" ha sido actualizado con éxito.`,
             })
         } else {
-            const newResidueData = {
-                ...data,
-                description: data.description || '', // Ensure description is not null/undefined
-                id: crypto.randomUUID(),
-                companyId: 'comp-1', // Mock companyId
-                availabilityDate: new Date().toISOString(),
-            }
-            addResidue(newResidueData);
+            console.log("Adding new residue:", data);
             toast({
                 title: "¡Residuo Guardado!",
                 description: `El residuo "${data.type}" ha sido guardado con éxito.`,
             })
         }
 
-        router.push('/dashboard/residues');
+        // In a real app, we would call our service here to persist data.
+        // For now, we just log and notify.
+
+        router.push('/dashboard/marketplace');
         router.refresh();
     } catch(e) {
         console.error("Error submitting form", e);
@@ -132,11 +120,11 @@ export default function ResidueFormPage() {
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
        <Card>
         <CardHeader>
-          <CardTitle>{residueId ? "Editar Residuo" : "Publicar Nuevo Residuo"}</CardTitle>
+          <CardTitle>{residueId ? "Editar Publicación" : "Publicar Nuevo Residuo"}</CardTitle>
           <CardDescription>
             {residueId
-              ? "Actualiza los detalles de tu residuo."
-              : "Completa los detalles a continuación para añadir un nuevo residuo a tu inventario."
+              ? "Actualiza los detalles de tu publicación en el marketplace."
+              : "Completa los detalles a continuación para añadir un nuevo residuo al marketplace."
             }
           </CardDescription>
         </CardHeader>
@@ -194,7 +182,7 @@ export default function ResidueFormPage() {
                             <FormLabel>Cantidad y Unidad</FormLabel>
                             <div className="flex items-center gap-2">
                                 <FormControl>
-                                <Input type="number" placeholder="100" {...field} className="flex-1"/>
+                                <Input type="number" placeholder="100" {...field} />
                                 </FormControl>
                                 <FormField
                                     control={form.control}
@@ -228,7 +216,7 @@ export default function ResidueFormPage() {
                             <Input type="number" placeholder="15.00" {...field} value={field.value ?? ''} />
                         </FormControl>
                         <FormDescription>
-                            Establece un precio por KG o TON. Déjalo en 0 o vacío si es negociable.
+                            Establece un precio por KG o TON. Déjalo vacío si es negociable.
                         </FormDescription>
                         <FormMessage />
                         </FormItem>
