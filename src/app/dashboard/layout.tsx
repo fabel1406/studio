@@ -107,69 +107,70 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   const filteredNavItems = navItems.filter(item => item.roles.includes(role));
 
   return (
-    <div className="flex min-h-screen">
-        <Sidebar>
-            <SidebarHeader>
-                 <div className="flex items-center gap-2 p-2">
-                    <Logo className="size-12 shrink-0" />
-                    <span className="text-xl font-semibold group-data-[collapsible=icon]:hidden bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">
-                        EcoConnect
-                    </span>
-                </div>
-            </SidebarHeader>
-            <SidebarContent>
-                <SidebarMenu>
-                    {isMounted && filteredNavItems.map((item) => (
-                        <SidebarMenuItem key={item.href}>
-                            <Link href={item.href} onClick={handleLinkClick}>
-                                <SidebarMenuButton 
-                                    isActive={pathname === item.href}
-                                    tooltip={item.label}
-                                >
-                                    <item.icon />
-                                    <span>{item.label}</span>
-                                </SidebarMenuButton>
-                            </Link>
-                        </SidebarMenuItem>
-                    ))}
-                </SidebarMenu>
-            </SidebarContent>
-            <SidebarFooter>
-                <SidebarMenu>
-                    {settingsNav.map((item) => (
-                        <SidebarMenuItem key={item.href}>
-                           <Link href={item.href} onClick={handleLinkClick}>
-                                <SidebarMenuButton 
-                                    isActive={pathname.startsWith(item.href)}
-                                    tooltip={item.label}
-                                >
-                                    <item.icon />
-                                    <span>{item.label}</span>
-                                </SidebarMenuButton>
-                            </Link>
-                        </SidebarMenuItem>
-                    ))}
-                </SidebarMenu>
-                <div className="flex items-center gap-3 p-2 group-data-[collapsible=icon]:justify-center">
-                    <Avatar className="size-9">
-                        <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
-                        <AvatarFallback>CN</AvatarFallback>
-                    </Avatar>
-                    <div className="flex flex-col group-data-[collapsible=icon]:hidden">
-                        <span className="text-sm font-medium text-foreground">Usuario Admin</span>
-                        <span className="text-xs text-muted-foreground">admin@ecoconnect.com</span>
-                    </div>
-                </div>
-            </SidebarFooter>
-        </Sidebar>
-        <div className="flex-1 flex flex-col md:ml-[var(--sidebar-width-icon)] lg:ml-[var(--sidebar-width)] transition-[margin-left] duration-200">
-          <DashboardHeader />
-          <main className="flex-grow">
-            {children}
-          </main>
-          <Footer />
+      <div className="flex min-h-screen">
+          <Sidebar>
+              <SidebarHeader>
+                   <div className="flex items-center gap-2 p-2">
+                      <Logo className="size-12 shrink-0" />
+                      <span className="text-xl font-semibold group-data-[collapsible=icon]:hidden bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">
+                          EcoConnect
+                      </span>
+                  </div>
+              </SidebarHeader>
+              <SidebarContent>
+                  <SidebarMenu>
+                      {isMounted && filteredNavItems.map((item) => (
+                          <SidebarMenuItem key={item.href}>
+                              <Link href={item.href} onClick={handleLinkClick}>
+                                  <SidebarMenuButton 
+                                      isActive={pathname === item.href}
+                                      tooltip={item.label}
+                                  >
+                                      <item.icon />
+                                      <span>{item.label}</span>
+                                  </SidebarMenuButton>
+                              </Link>
+                          </SidebarMenuItem>
+                      ))}
+                  </SidebarMenu>
+              </SidebarContent>
+              <SidebarFooter>
+                  <SidebarMenu>
+                      {settingsNav.map((item) => (
+                          <SidebarMenuItem key={item.href}>
+                             <Link href={item.href} onClick={handleLinkClick}>
+                                  <SidebarMenuButton 
+                                      isActive={pathname.startsWith(item.href)}
+                                      tooltip={item.label}
+                                  >
+                                      <item.icon />
+                                      <span>{item.label}</span>
+                                  </SidebarMenuButton>
+                              </Link>
+                          </SidebarMenuItem>
+                      ))}
+                  </SidebarMenu>
+                  <div className="flex items-center gap-3 p-2 group-data-[collapsible=icon]:justify-center">
+                      <Avatar className="size-9">
+                          <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
+                          <AvatarFallback>CN</AvatarFallback>
+                      </Avatar>
+                      <div className="flex flex-col group-data-[collapsible=icon]:hidden">
+                          <span className="text-sm font-medium text-foreground">Usuario Admin</span>
+                          <span className="text-xs text-muted-foreground">admin@ecoconnect.com</span>
+                      </div>
+                  </div>
+              </SidebarFooter>
+          </Sidebar>
+          <div className="flex-1 flex flex-col md:ml-[var(--sidebar-width-icon)] lg:ml-[var(--sidebar-width)] transition-[margin-left] duration-200">
+            <DashboardHeader />
+            <main className="flex-grow">
+              {children}
+            </main>
+            <Footer />
+            <ScrollToTop />
+          </div>
         </div>
-      </div>
   );
 }
 
