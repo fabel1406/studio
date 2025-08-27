@@ -54,7 +54,7 @@ export default function Home() {
             </p>
           </div>
           <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
-            <Card className="text-center shadow-lg hover:shadow-primary/20 transition-shadow duration-300">
+            <Card className="text-center shadow-lg hover:shadow-primary/20 transition-all duration-300 transform hover:-translate-y-2">
               <CardHeader>
                 <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-primary/10 text-primary">
                   <DollarSign className="h-8 w-8" />
@@ -65,7 +65,7 @@ export default function Home() {
                 Convierte los costes de eliminación de residuos en beneficios. Accede a un nuevo mercado de compradores para tus residuos orgánicos y descubre materias primas a precios competitivos.
               </CardContent>
             </Card>
-            <Card className="text-center shadow-lg hover:shadow-primary/20 transition-shadow duration-300">
+            <Card className="text-center shadow-lg hover:shadow-primary/20 transition-all duration-300 transform hover:-translate-y-2">
               <CardHeader>
                 <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-primary/10 text-primary">
                   <Globe className="h-8 w-8" />
@@ -76,7 +76,7 @@ export default function Home() {
                 Contribuye a una economía circular desviando los residuos de los vertederos. Reduce las emisiones de CO₂ y promueve la valorización de los recursos para un planeta más saludable.
               </CardContent>
             </Card>
-            <Card className="text-center shadow-lg hover:shadow-primary/20 transition-shadow duration-300">
+            <Card className="text-center shadow-lg hover:shadow-primary/20 transition-all duration-300 transform hover:-translate-y-2">
               <CardHeader>
                 <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-primary/10 text-primary">
                   <Users className="h-8 w-8" />
