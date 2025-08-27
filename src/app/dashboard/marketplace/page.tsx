@@ -19,16 +19,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Link from "next/link";
 import { useRole } from '../layout';
 
+const uniqueResidueTypes = [...new Set(mockResidues.map(r => r.type))];
+
 export default function MarketplacePage() {
   const { role } = useRole();
-  const [searchTerm, setSearchTerm] = useState('');
+  const [typeFilter, setTypeFilter] = useState('ALL_TYPES');
   const [categoryFilter, setCategoryFilter] = useState('ALL_CATEGORIES');
   const [countryFilter, setCountryFilter] = useState('ALL_COUNTRIES');
 
   const filteredResidues = mockResidues.filter(residue => {
     const companyCountry = residue.company?.country.toLowerCase();
     return (
-      (searchTerm === '' || residue.type.toLowerCase().includes(searchTerm.toLowerCase())) &&
+      (typeFilter === 'ALL_TYPES' || residue.type === typeFilter) &&
       (categoryFilter === 'ALL_CATEGORIES' || residue.category === categoryFilter) &&
       (countryFilter === 'ALL_COUNTRIES' || (companyCountry && companyCountry.includes(countryFilter)))
     );
@@ -37,7 +39,7 @@ export default function MarketplacePage() {
   const filteredNeeds = mockNeeds.filter(need => {
     // Assuming needs will also be associated with a company location in the future
     return (
-      (searchTerm === '' || need.residueType.toLowerCase().includes(searchTerm.toLowerCase())) &&
+      (typeFilter === 'ALL_TYPES' || need.residueType === typeFilter) &&
       (categoryFilter === 'ALL_CATEGORIES' || need.category === categoryFilter)
     );
   });
@@ -69,11 +71,17 @@ export default function MarketplacePage() {
       
       <div className="bg-card p-4 rounded-lg border shadow-sm">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Input 
-              placeholder="Buscar por tipo (ej. Alperujo...)" 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+            <Select onValueChange={setTypeFilter} defaultValue="ALL_TYPES">
+                <SelectTrigger>
+                    <SelectValue placeholder="Filtrar por tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="ALL_TYPES">Todos los tipos</SelectItem>
+                    {uniqueResidueTypes.map(type => (
+                        <SelectItem key={type} value={type}>{type}</SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
             <Select onValueChange={setCategoryFilter} defaultValue="ALL_CATEGORIES">
                 <SelectTrigger>
                     <SelectValue placeholder="Filtrar por categoría" />
