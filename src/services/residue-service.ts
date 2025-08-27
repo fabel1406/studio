@@ -5,11 +5,17 @@ import { mockResidues, mockCompanies } from '@/lib/data';
 // Helper to get the current state from localStorage
 const getStoredResidues = (): Residue[] => {
     if (typeof window === 'undefined') {
+        // On the server, always use the in-memory mockResidues
         return mockResidues;
     }
     try {
         const storedData = localStorage.getItem('residues');
-        return storedData ? JSON.parse(storedData) as Residue[] : mockResidues;
+        // If localStorage is empty, initialize it with mock data
+        if (!storedData) {
+            setStoredResidues(mockResidues);
+            return mockResidues;
+        }
+        return JSON.parse(storedData) as Residue[];
     } catch (e) {
         console.error("Failed to parse residues from localStorage", e);
         return mockResidues;
@@ -24,11 +30,6 @@ const setStoredResidues = (residues: Residue[]): void => {
         localStorage.setItem('residues', JSON.stringify(dataToStore));
     }
 };
-
-// Initialize on first load if not present
-if (typeof window !== 'undefined' && !localStorage.getItem('residues')) {
-    setStoredResidues(mockResidues);
-}
 
 
 // --- Service Functions ---
@@ -49,7 +50,6 @@ export const getResidueById = (id: string): Residue | undefined => {
 type NewResidueData = Omit<Residue, 'id' | 'companyId' | 'availabilityDate' | 'photos' | 'company'>;
 
 export const addResidue = (residueData: NewResidueData): Residue => {
-    const currentResidues = getStoredResidues();
     const newResidue: Residue = {
         ...residueData,
         id: `res-${Date.now()}`, // Simple unique ID
@@ -57,35 +57,55 @@ export const addResidue = (residueData: NewResidueData): Residue => {
         availabilityDate: new Date().toISOString(),
         photos: ['https://picsum.photos/seed/new/600/400'],
     };
-    const updatedResidues = [...currentResidues, newResidue];
-    setStoredResidues(updatedResidues);
+    
+    // Update the in-memory array for server-side access
+    mockResidues.push(newResidue);
+
+    // Update localStorage for client-side persistence
+    if (typeof window !== 'undefined') {
+        const currentResidues = getStoredResidues();
+        const updatedResidues = [...currentResidues, newResidue];
+        setStoredResidues(updatedResidues);
+    }
+    
     return newResidue;
 };
 
 export const updateResidue = (updatedResidue: Partial<Residue> & { id: string }): Residue => {
-    const currentResidues = getStoredResidues();
-    const index = currentResidues.findIndex(r => r.id === updatedResidue.id);
-
-    if (index === -1) {
-        throw new Error("Residue not found");
+    // Update the in-memory array for server-side access
+    const mockIndex = mockResidues.findIndex(r => r.id === updatedResidue.id);
+    if (mockIndex === -1) {
+        throw new Error("Residue not found in mock data");
     }
+    mockResidues[mockIndex] = { ...mockResidues[mockIndex], ...updatedResidue };
 
-    // Merge existing data with updated data
-    currentResidues[index] = {
-        ...currentResidues[index],
-        ...updatedResidue,
-    };
+    // Update localStorage for client-side persistence
+     if (typeof window !== 'undefined') {
+        const currentResidues = getStoredResidues();
+        const index = currentResidues.findIndex(r => r.id === updatedResidue.id);
+        if (index !== -1) {
+             currentResidues[index] = { ...currentResidues[index], ...updatedResidue };
+             setStoredResidues(currentResidues);
+        }
+    }
     
-    setStoredResidues(currentResidues);
-    // Return the rehydrated object
     return {
-        ...currentResidues[index],
-        company: mockCompanies.find(c => c.id === currentResidues[index].companyId)
+        ...mockResidues[mockIndex],
+        company: mockCompanies.find(c => c.id === mockResidues[mockIndex].companyId)
     };
 };
 
 export const deleteResidue = (id: string): void => {
-    const currentResidues = getStoredResidues();
-    const updatedResidues = currentResidues.filter(r => r.id !== id);
-    setStoredResidues(updatedResidues);
+    // Remove from the in-memory array
+    const mockIndex = mockResidues.findIndex(r => r.id === id);
+    if (mockIndex !== -1) {
+        mockResidues.splice(mockIndex, 1);
+    }
+
+    // Remove from localStorage
+    if (typeof window !== 'undefined') {
+        const currentResidues = getStoredResidues();
+        const updatedResidues = currentResidues.filter(r => r.id !== id);
+        setStoredResidues(updatedResidues);
+    }
 };
