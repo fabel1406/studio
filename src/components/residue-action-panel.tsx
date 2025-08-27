@@ -49,7 +49,7 @@ export function ResidueActionPanel({ residue }: ResidueActionPanelProps) {
 
   const onSubmit = (values: z.infer<typeof actionSchema>) => {
     addNegotiation({
-      residueId: residue.id,
+      residue: residue, // Pass the whole residue object
       supplierId: residue.companyId,
       requesterId: currentUserCompanyId,
       quantity: values.quantity,

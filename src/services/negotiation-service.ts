@@ -3,9 +3,10 @@ import type { Negotiation, NegotiationMessage, Residue, Company } from '@/lib/ty
 import { mockCompanies } from '@/lib/data';
 import { getAllResidues } from './residue-service';
 
+
 const getStoredNegotiations = (): Negotiation[] => {
     if (typeof window === 'undefined') {
-        return [];
+        return []; // Server-side fallback
     }
     try {
         const storedData = localStorage.getItem('negotiations');
@@ -18,22 +19,38 @@ const getStoredNegotiations = (): Negotiation[] => {
 
 const setStoredNegotiations = (negotiations: Negotiation[]): void => {
     if (typeof window !== 'undefined') {
-        localStorage.setItem('negotiations', JSON.stringify(negotiations));
+         // To avoid storing redundant nested data, just store the IDs.
+        const dataToStore = negotiations.map(neg => {
+            const { residue, requester, supplier, ...rest } = neg;
+            return {
+                ...rest,
+                residueId: residue.id, // ensure residueId is stored
+            };
+        });
+        localStorage.setItem('negotiations', JSON.stringify(dataToStore));
     }
 };
 
-const rehydrateNegotiations = (negotiations: Negotiation[]): Negotiation[] => {
+
+const rehydrateNegotiations = (negotiations: (Negotiation | {residueId: string})[]): Negotiation[] => {
     const allResidues = getAllResidues();
     return negotiations
         .map(neg => {
+            if ('residue' in neg) {
+                 return {
+                    ...neg,
+                    requester: mockCompanies.find(c => c.id === neg.requesterId),
+                    supplier: mockCompanies.find(c => c.id === neg.supplierId),
+                 } as Negotiation
+            }
             const residue = allResidues.find(r => r.id === neg.residueId);
             if (!residue) return null;
             return {
                 ...neg,
                 residue,
-                requester: mockCompanies.find(c => c.id === neg.requesterId),
-                supplier: mockCompanies.find(c => c.id === neg.supplierId),
-            };
+                requester: mockCompanies.find(c => c.id === (neg as Negotiation).requesterId),
+                supplier: mockCompanies.find(c => c.id === (neg as Negotiation).supplierId),
+            } as Negotiation;
         })
         .filter((neg): neg is Negotiation => neg !== null);
 };
@@ -45,7 +62,7 @@ if (typeof window !== 'undefined' && !localStorage.getItem('negotiations')) {
 }
 
 type NewNegotiationData = {
-    residueId: string;
+    residue: Residue;
     supplierId: string; 
     requesterId: string; 
     quantity: number;
@@ -56,13 +73,10 @@ type NewNegotiationData = {
 export const addNegotiation = (data: NewNegotiationData): Negotiation => {
     const currentNegotiations = getStoredNegotiations();
     
-    const residue = getAllResidues().find(r => r.id === data.residueId);
-    if (!residue) throw new Error("Residue not found for negotiation");
-    
     const newNegotiation: Negotiation = {
         id: `neg-${Date.now()}`,
-        residueId: data.residueId,
-        residue: residue, // Include full residue object
+        residueId: data.residue.id,
+        residue: data.residue,
         supplierId: data.supplierId,
         supplier: mockCompanies.find(c => c.id === data.supplierId),
         requesterId: data.requesterId,
