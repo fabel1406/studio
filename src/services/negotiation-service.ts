@@ -1,6 +1,7 @@
+
 // src/services/negotiation-service.ts
-import type { Negotiation, Residue, Company, NegotiationMessage } from '@/lib/types';
-import { mockResidues, mockCompanies, mockNeeds } from '@/lib/data';
+import type { Negotiation, NegotiationMessage } from '@/lib/types';
+import { mockCompanies } from '@/lib/data';
 import { getAllResidues } from './residue-service';
 
 const getStoredNegotiations = (): Negotiation[] => {
@@ -64,14 +65,18 @@ export const addNegotiation = (data: NewNegotiationData): Negotiation => {
         createdAt: new Date().toISOString(),
         messages: [{
             senderId: data.supplierId,
-            content: `He enviado una oferta de ${data.quantity} ${data.unit} para tu necesidad.`,
+            content: `He enviado una oferta de ${data.quantity} ${data.unit}.`,
             timestamp: new Date().toISOString()
         }],
     };
     
-    const allNegotiations = [...currentNegotiations, newNegotiationData].map(({ residue, requester, supplier, ...rest }) => rest);
+    setStoredNegotiations([...currentNegotiations, {
+        ...newNegotiationData,
+        residue: getAllResidues().find(r => r.id === data.residueId)!,
+        requester: mockCompanies.find(c => c.id === data.requesterId)!,
+        supplier: mockCompanies.find(c => c.id === data.supplierId)!,
+    }] as Negotiation[]);
 
-    localStorage.setItem('negotiations', JSON.stringify(allNegotiations));
 
     const newNegotiation = {
         ...newNegotiationData,

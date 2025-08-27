@@ -1,3 +1,4 @@
+
 // src/app/dashboard/negotiations/[id]/page.tsx
 "use client";
 
@@ -7,11 +8,10 @@ import { getNegotiationById, updateNegotiationStatus, addMessageToNegotiation } 
 import { useRole } from "../../layout";
 import type { Negotiation } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Send } from "lucide-react";
+import { ArrowLeft, Send, Pencil, XCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { NegotiationChat } from "@/components/negotiation-chat";
@@ -31,15 +31,22 @@ export default function NegotiationDetailPage() {
     const [negotiation, setNegotiation] = useState<Negotiation | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
+    // Mocking user IDs based on role
     const currentUserId = role === 'GENERATOR' ? 'comp-1' : 'comp-3';
 
     useEffect(() => {
         if (id && role) {
             const fetchedNegotiation = getNegotiationById(id);
-            setNegotiation(fetchedNegotiation || null);
+            // Simulate marking as reviewed if the requester views it
+            if (fetchedNegotiation && fetchedNegotiation.status === 'SENT' && fetchedNegotiation.requesterId === currentUserId) {
+                const updated = updateNegotiationStatus(fetchedNegotiation.id, 'REVIEWED');
+                setNegotiation(updated);
+            } else {
+                setNegotiation(fetchedNegotiation || null);
+            }
             setIsLoading(false);
         }
-    }, [id, role]);
+    }, [id, role, currentUserId]);
 
     const handleUpdateStatus = (status: Negotiation['status']) => {
         if (!negotiation) return;
@@ -65,7 +72,9 @@ export default function NegotiationDetailPage() {
         return notFound();
     }
     
+    const isSupplier = negotiation.supplierId === currentUserId;
     const isRequester = negotiation.requesterId === currentUserId;
+    const isActionable = negotiation.status === 'SENT' || negotiation.status === 'REVIEWED';
 
     return (
         <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -116,15 +125,15 @@ export default function NegotiationDetailPage() {
                 <div className="space-y-6">
                      <Card>
                         <CardHeader>
-                            <CardTitle>{isRequester ? 'Generador' : 'Solicitante'}</CardTitle>
+                            <CardTitle>{isSupplier ? 'Solicitante' : 'Proveedor'}</CardTitle>
                         </CardHeader>
                         <CardContent className="flex items-center gap-4">
                             <Avatar className="h-12 w-12">
-                                <AvatarFallback>{isRequester ? negotiation.supplier.name.charAt(0) : negotiation.requester.name.charAt(0)}</AvatarFallback>
+                                <AvatarFallback>{isSupplier ? negotiation.requester.name.charAt(0) : negotiation.supplier.name.charAt(0)}</AvatarFallback>
                             </Avatar>
                             <div>
-                                <p className="font-semibold">{isRequester ? negotiation.supplier.name : negotiation.requester.name}</p>
-                                <p className="text-sm text-muted-foreground">{isRequester ? negotiation.supplier.city : negotiation.requester.city}</p>
+                                <p className="font-semibold">{isSupplier ? negotiation.requester.name : negotiation.supplier.name}</p>
+                                <p className="text-sm text-muted-foreground">{isSupplier ? negotiation.requester.city : negotiation.supplier.city}</p>
                             </div>
                         </CardContent>
                     </Card>
@@ -133,21 +142,31 @@ export default function NegotiationDetailPage() {
                             <CardTitle>Acciones</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-2">
-                             {negotiation.status !== 'ACCEPTED' && negotiation.status !== 'REJECTED' && (
+                            {isActionable ? (
                                 <>
-                                    {!isRequester && (
+                                    {isRequester && ( // Actions for the Transformer
                                         <>
                                             <Button className="w-full" onClick={() => handleUpdateStatus('ACCEPTED')}>Aceptar Oferta</Button>
                                             <Button className="w-full" variant="destructive" onClick={() => handleUpdateStatus('REJECTED')}>Rechazar Oferta</Button>
                                         </>
                                     )}
-                                     {isRequester && (
-                                          <Button className="w-full" variant="outline" disabled>Esperando respuesta</Button>
-                                     )}
+                                    {isSupplier && ( // Actions for the Generator
+                                        <>
+                                            <Button className="w-full" variant="outline" disabled>
+                                                <Pencil className="mr-2 h-4 w-4" /> Modificar Oferta (Próximamente)
+                                            </Button>
+                                            <Button className="w-full" variant="destructive" onClick={() => handleUpdateStatus('REJECTED')}>
+                                                <XCircle className="mr-2 h-4 w-4" /> Cancelar Oferta
+                                            </Button>
+                                        </>
+                                    )}
+                                </>
+                            ) : (
+                                <>
+                                    {negotiation.status === 'ACCEPTED' && <p className="text-center text-green-600 font-semibold">¡Negociación Aceptada!</p>}
+                                    {negotiation.status === 'REJECTED' && <p className="text-center text-red-600 font-semibold">Negociación Rechazada/Cancelada</p>}
                                 </>
                             )}
-                             {negotiation.status === 'ACCEPTED' && <p className="text-center text-green-600 font-semibold">¡Negociación Aceptada!</p>}
-                             {negotiation.status === 'REJECTED' && <p className="text-center text-red-600 font-semibold">Negociación Rechazada</p>}
                         </CardContent>
                     </Card>
                 </div>
