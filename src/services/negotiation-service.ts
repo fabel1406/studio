@@ -1,6 +1,6 @@
 
 // src/services/negotiation-service.ts
-import type { Negotiation, NegotiationMessage } from '@/lib/types';
+import type { Negotiation, NegotiationMessage, Residue, Company } from '@/lib/types';
 import { mockCompanies } from '@/lib/data';
 import { getAllResidues } from './residue-service';
 
@@ -11,16 +11,15 @@ const getStoredNegotiations = (): Negotiation[] => {
     const storedData = localStorage.getItem('negotiations');
     if (storedData) {
         const negotiations: Omit<Negotiation, 'residue' | 'requester' | 'supplier'>[] = JSON.parse(storedData);
-        // Re-hydrate the objects with full details from mock data
         const allResidues = getAllResidues();
         return negotiations.map(neg => {
             const residue = allResidues.find(r => r.id === neg.residueId);
-            if (!residue) return null; // If residue doesn't exist, filter it out
+            if (!residue) return null; 
             return {
                 ...neg,
                 residue,
-                requester: mockCompanies.find(c => c.id === neg.requesterId)!,
-                supplier: mockCompanies.find(c => c.id === neg.supplierId)!,
+                requester: mockCompanies.find(c => c.id === neg.requesterId),
+                supplier: mockCompanies.find(c => c.id === neg.supplierId),
             }
         }).filter((neg): neg is Negotiation => neg !== null);
     }
@@ -29,7 +28,6 @@ const getStoredNegotiations = (): Negotiation[] => {
 
 const setStoredNegotiations = (negotiations: Negotiation[]): void => {
     if (typeof window !== 'undefined') {
-        // We only store IDs, not the full objects
         const dataToStore = negotiations.map(({ residue, requester, supplier, ...rest }) => rest);
         localStorage.setItem('negotiations', JSON.stringify(dataToStore));
     }
@@ -39,12 +37,10 @@ if (typeof window !== 'undefined' && !localStorage.getItem('negotiations')) {
     setStoredNegotiations([]);
 }
 
-// --- Service Functions ---
-
 type NewNegotiationData = {
-    residueId: string; // The actual residue being offered by the generator
-    supplierId: string; // The generator's company ID
-    requesterId: string; // The transformer's company ID (who created the need)
+    residueId: string;
+    supplierId: string; 
+    requesterId: string; 
     quantity: number;
     unit: 'KG' | 'TON';
     offerPrice?: number;
@@ -53,14 +49,13 @@ type NewNegotiationData = {
 export const addNegotiation = (data: NewNegotiationData): Negotiation => {
     const currentNegotiations = getStoredNegotiations();
     
-    const newNegotiationData: Omit<Negotiation, 'residue' | 'requester' | 'supplier'> = {
+    const residue = getAllResidues().find(r => r.id === data.residueId);
+    if (!residue) throw new Error("Residue not found for negotiation");
+    
+    const newNegotiationData: Omit<Negotiation, 'requester' | 'supplier'> = {
         id: `neg-${Date.now()}`,
-        residueId: data.residueId,
-        supplierId: data.supplierId,
-        requesterId: data.requesterId,
-        quantity: data.quantity,
-        unit: data.unit,
-        offerPrice: data.offerPrice,
+        ...data,
+        residue,
         status: 'SENT',
         createdAt: new Date().toISOString(),
         messages: [{
@@ -70,15 +65,13 @@ export const addNegotiation = (data: NewNegotiationData): Negotiation => {
         }],
     };
     
-    const newNegotiation = {
+    const newNegotiation: Negotiation = {
         ...newNegotiationData,
-        residue: getAllResidues().find(r => r.id === data.residueId)!,
-        requester: mockCompanies.find(c => c.id === data.requesterId)!,
-        supplier: mockCompanies.find(c => c.id === data.supplierId)!,
+        requester: mockCompanies.find(c => c.id === data.requesterId),
+        supplier: mockCompanies.find(c => c.id === data.supplierId),
     }
     
     setStoredNegotiations([...currentNegotiations, newNegotiation]);
-
     return newNegotiation;
 };
 
@@ -97,10 +90,7 @@ export const getNegotiationById = (id: string): Negotiation | undefined => {
 export const updateNegotiationStatus = (id: string, status: Negotiation['status']): Negotiation => {
     const currentNegotiations = getStoredNegotiations();
     const index = currentNegotiations.findIndex(n => n.id === id);
-
-    if (index === -1) {
-        throw new Error("Negotiation not found");
-    }
+    if (index === -1) throw new Error("Negotiation not found");
 
     currentNegotiations[index].status = status;
     setStoredNegotiations(currentNegotiations);
@@ -110,10 +100,7 @@ export const updateNegotiationStatus = (id: string, status: Negotiation['status'
 export const updateNegotiationDetails = (id: string, quantity: number, price?: number): Negotiation => {
     const currentNegotiations = getStoredNegotiations();
     const index = currentNegotiations.findIndex(n => n.id === id);
-
-    if (index === -1) {
-        throw new Error("Negotiation not found");
-    }
+    if (index === -1) throw new Error("Negotiation not found");
 
     const originalQuantity = currentNegotiations[index].quantity;
     const originalPrice = currentNegotiations[index].offerPrice;
@@ -135,7 +122,6 @@ export const updateNegotiationDetails = (id: string, quantity: number, price?: n
         timestamp: new Date().toISOString(),
     });
 
-
     setStoredNegotiations(currentNegotiations);
     return currentNegotiations[index];
 };
@@ -144,12 +130,15 @@ export const updateNegotiationDetails = (id: string, quantity: number, price?: n
 export const addMessageToNegotiation = (id: string, message: NegotiationMessage): Negotiation => {
     const currentNegotiations = getStoredNegotiations();
     const index = currentNegotiations.findIndex(n => n.id === id);
-
-    if (index === -1) {
-        throw new Error("Negotiation not found");
-    }
+    if (index === -1) throw new Error("Negotiation not found");
     
     currentNegotiations[index].messages.push(message);
     setStoredNegotiations(currentNegotiations);
     return currentNegotiations[index];
 }
+
+export const deleteNegotiation = (id: string): void => {
+    const currentNegotiations = getStoredNegotiations();
+    const updatedNegotiations = currentNegotiations.filter(n => n.id !== id);
+    setStoredNegotiations(updatedNegotiations);
+};

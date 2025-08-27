@@ -6,14 +6,15 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Handshake, ArrowRight } from "lucide-react";
+import { Handshake, ArrowRight, X } from "lucide-react";
 import Link from "next/link";
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { useEffect, useState } from "react";
-import { getAllNegotiationsForUser } from "@/services/negotiation-service";
+import { useEffect, useState, useCallback } from "react";
+import { getAllNegotiationsForUser, deleteNegotiation } from "@/services/negotiation-service";
 import type { Negotiation } from "@/lib/types";
 import { useRole } from "../layout";
+import { useToast } from "@/hooks/use-toast";
 
 
 const statusMap: {[key: string]: {text: string, variant: 'default' | 'secondary' | 'outline' | 'destructive'}} = {
@@ -25,21 +26,32 @@ const statusMap: {[key: string]: {text: string, variant: 'default' | 'secondary'
 
 export default function NegotiationsPage() {
   const { role } = useRole();
+  const { toast } = useToast();
   const [sentNegotiations, setSentNegotiations] = useState<Negotiation[]>([]);
   const [receivedNegotiations, setReceivedNegotiations] = useState<Negotiation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
-  useEffect(() => {
-    // In a real app, this would come from an auth context.
-    // comp-1 is Generator/Both, comp-3 is Transformer
+  const fetchNegotiations = useCallback(() => {
     const currentUserId = (role === 'TRANSFORMER') ? 'comp-3' : 'comp-1';
-    
     setIsLoading(true);
     const { sent, received } = getAllNegotiationsForUser(currentUserId);
     setSentNegotiations(sent);
     setReceivedNegotiations(received);
     setIsLoading(false);
   }, [role]);
+
+  useEffect(() => {
+    fetchNegotiations();
+  }, [fetchNegotiations]);
+
+  const handleHideNegotiation = (id: string) => {
+    deleteNegotiation(id);
+    fetchNegotiations(); // Re-fetch to update the list
+    toast({
+        title: "Negociación Ocultada",
+        description: "La negociación ha sido eliminada de tu historial."
+    });
+  }
 
   const renderNegotiationList = (negotiations: Negotiation[], type: 'sent' | 'received') => {
       if (isLoading) return <p>Cargando negociaciones...</p>;
@@ -69,6 +81,7 @@ export default function NegotiationsPage() {
       return negotiations.map((neg) => {
             if (!neg.residue) return null; // Defensive check
             const otherParty = type === 'sent' ? neg.requester : neg.supplier;
+            const isFinalStatus = neg.status === 'ACCEPTED' || neg.status === 'REJECTED';
 
             return (
                 <div key={neg.id} className="flex flex-col md:flex-row items-center gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
@@ -93,11 +106,18 @@ export default function NegotiationsPage() {
                         <Badge variant={statusMap[neg.status].variant}>{statusMap[neg.status].text}</Badge>
                         <p className="text-sm text-muted-foreground mt-2">{format(new Date(neg.createdAt), "d MMM, yyyy", { locale: es })}</p>
                     </div>
-                    <Button variant="outline" size="sm" asChild>
-                        <Link href={`/dashboard/negotiations/${neg.id}`}>
-                            Ver Negociación <ArrowRight className="ml-2 h-4 w-4" />
-                        </Link>
-                    </Button>
+                    <div className="flex items-center gap-2">
+                         <Button variant="outline" size="sm" asChild>
+                            <Link href={`/dashboard/negotiations/${neg.id}`}>
+                                Ver Negociación <ArrowRight className="ml-2 h-4 w-4" />
+                            </Link>
+                        </Button>
+                        {isFinalStatus && (
+                             <Button variant="ghost" size="icon" onClick={() => handleHideNegotiation(neg.id)} title="Ocultar negociación">
+                                <X className="h-4 w-4" />
+                            </Button>
+                        )}
+                    </div>
                 </div>
             )
       });
