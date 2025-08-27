@@ -22,7 +22,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
-  DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { residueSchema } from "../data/schema"
@@ -48,53 +47,53 @@ export function DataTableRowActions<TData>({
    }
 
   return (
-    <>
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="ghost"
-          className="flex h-8 w-8 p-0 data-[state=open]:bg-muted"
-        >
-          <MoreHorizontal className="h-4 w-4" />
-          <span className="sr-only">Abrir menú</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-[160px]">
-        <DropdownMenuItem asChild>
-           <Link href={`/dashboard/residues/edit/${residue.id}`}>
-            <Edit className="mr-2 h-4 w-4" />
-            Editar
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-         <AlertDialogTrigger asChild>
-            <DropdownMenuItem
-                onSelect={(e) => e.preventDefault()}
-                className="text-destructive focus:bg-destructive/10 focus:text-destructive"
-              >
-              <Trash className="mr-2 h-4 w-4" />
-              Eliminar
-            </DropdownMenuItem>
-          </AlertDialogTrigger>
-      </DropdownMenuContent>
-    </DropdownMenu>
-     <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-          <AlertDialogDescription>
-            Esta acción no se puede deshacer. Esto eliminará permanentemente el residuo de nuestros servidores.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-          <AlertDialogAction
-             onClick={handleDelete}
-             className="bg-destructive hover:bg-destructive/90"
+    <AlertDialog>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            className="flex h-8 w-8 p-0 data-[state=open]:bg-muted"
           >
-            Eliminar
-          </AlertDialogAction>
-        </AlertDialogFooter>
-    </AlertDialogContent>
-    </>
+            <MoreHorizontal className="h-4 w-4" />
+            <span className="sr-only">Abrir menú</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-[160px]">
+          <DropdownMenuItem asChild>
+             <Link href={`/dashboard/residues/create`}>
+              <Edit className="mr-2 h-4 w-4" />
+              Editar
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+           <AlertDialogTrigger asChild>
+              <DropdownMenuItem
+                  onSelect={(e) => e.preventDefault()}
+                  className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+                >
+                <Trash className="mr-2 h-4 w-4" />
+                Eliminar
+              </DropdownMenuItem>
+            </AlertDialogTrigger>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. Esto eliminará permanentemente el residuo de nuestros servidores.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+               onClick={handleDelete}
+               className="bg-destructive hover:bg-destructive/90"
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   )
 }
