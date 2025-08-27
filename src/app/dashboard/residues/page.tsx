@@ -52,7 +52,26 @@ export default function ResiduesPage() {
             </Button>
         </div>
       </div>
-      <DataTable data={residues} columns={dynamicColumns} />
+      
+      {residues.length > 0 ? (
+        <DataTable data={residues} columns={dynamicColumns} />
+      ) : (
+         <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed shadow-sm h-96">
+          <div className="flex flex-col items-center gap-2 text-center">
+            <h3 className="text-2xl font-bold tracking-tight">
+              Aún no has publicado ningún residuo
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              ¡Empieza a convertir tus residuos en recursos!
+            </p>
+            <Button className="mt-4" asChild>
+              <Link href="/dashboard/residues/create">
+                <PlusCircle className="mr-2 h-4 w-4" /> Publicar Residuo
+              </Link>
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

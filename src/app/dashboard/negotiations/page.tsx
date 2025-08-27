@@ -94,7 +94,7 @@ export default function NegotiationsPage() {
             const isFinalStatus = neg.status === 'ACCEPTED' || neg.status === 'REJECTED';
             const statusInfo = statusMap[neg.status];
 
-            if (!neg.residue || !otherParty || !statusInfo) return null;
+            if (!otherParty || !statusInfo) return null;
 
             return (
                 <div key={neg.id} className="flex flex-col md:flex-row items-center gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors">

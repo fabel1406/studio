@@ -43,6 +43,13 @@ export function DataTableViewOptions<TData>({
               typeof column.accessorFn !== "undefined" && column.getCanHide()
           )
           .map((column) => {
+             // A more user-friendly mapping for column IDs
+            const columnIdMap: { [key: string]: string } = {
+              type: "Tipo",
+              category: "Categoría",
+              quantity: "Cantidad",
+              status: "Estado"
+            };
             return (
               <DropdownMenuCheckboxItem
                 key={column.id}
@@ -50,7 +57,7 @@ export function DataTableViewOptions<TData>({
                 checked={column.getIsVisible()}
                 onCheckedChange={(value) => column.toggleVisibility(!!value)}
               >
-                {column.id}
+                {columnIdMap[column.id] || column.id}
               </DropdownMenuCheckboxItem>
             )
           })}

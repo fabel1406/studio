@@ -15,19 +15,21 @@ import { useRole } from '../layout';
 export default function NeedsPage() {
   const [needs, setNeeds] = useState<Need[]>([]);
   const { toast } = useToast();
-  const { role } = useRole();
+  const { role, currentUserId } = useRole();
 
   useEffect(() => {
     // In a real app, this would fetch data for the current user.
     // We filter by a mock company ID based on role.
-    const currentUserCompanyId = role === 'GENERATOR' ? 'comp-1' : 'comp-3';
-    setNeeds(getAllNeeds().filter(n => n.companyId === currentUserCompanyId));
-  }, [role]);
+    if(currentUserId) {
+        setNeeds(getAllNeeds().filter(n => n.companyId === currentUserId));
+    }
+  }, [role, currentUserId]);
 
   const deleteNeed = (needId: string, residueType: string) => {
     deleteNeedService(needId);
-    const currentUserCompanyId = role === 'GENERATOR' ? 'comp-1' : 'comp-3';
-    setNeeds(getAllNeeds().filter(n => n.companyId === currentUserCompanyId));
+    if(currentUserId) {
+        setNeeds(getAllNeeds().filter(n => n.companyId === currentUserId));
+    }
     toast({
       title: "Necesidad Eliminada",
       description: `Tu solicitud para "${residueType}" ha sido eliminada.`,

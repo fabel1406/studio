@@ -101,14 +101,14 @@ export function OfferDialog({
         quantity: negotiationToEdit.quantity,
         price: negotiationToEdit.offerPrice,
       });
-    } else {
+    } else if (isOpen) { // Reset form when opening for creation
       form.reset({
         residueId: undefined,
         quantity: undefined,
         price: undefined,
       });
     }
-  }, [isEditMode, negotiationToEdit, form]);
+  }, [isEditMode, negotiationToEdit, isOpen, form]);
   
   const selectedResidueId = form.watch("residueId");
   const selectedResidue = compatibleResidues.find(r => r.id === selectedResidueId);
@@ -131,8 +131,9 @@ export function OfferDialog({
     } else if (need && selectedResidue) {
         addNegotiation({
           type: 'offer',
-          residue: selectedResidue,
+          residueId: selectedResidue.id,
           need: need,
+          requesterId: need.companyId,
           initiatorId: currentUserId,
           quantity: data.quantity,
           offerPrice: data.price,
@@ -151,7 +152,7 @@ export function OfferDialog({
   const title = isEditMode ? "Modificar Oferta" : "Hacer una Oferta";
   const description = isEditMode && negotiationToEdit
     ? `Ajusta los detalles de tu oferta para ${negotiationToEdit.residue.type}.`
-    : `Oferta uno de tus residuos publicados para la necesidad de ${need?.residueType}.`;
+    : `Oferta uno de tus residuos publicados para la necesidad de "${need?.residueType}".`;
 
 
   return (
