@@ -1,3 +1,6 @@
+// src/components/residue-card.tsx
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
 import type { Residue } from "@/lib/types";
@@ -7,9 +10,16 @@ import { Button } from "./ui/button";
 import { MapPin, Calendar, ArrowRight } from "lucide-react";
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { useState, useEffect } from "react";
 
 
 export function ResidueCard({ residue }: { residue: Residue }) {
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   return (
     <Card className="flex flex-col h-full overflow-hidden transition-all duration-300 hover:shadow-lg hover:border-primary/50">
       <CardHeader className="p-0">
@@ -44,7 +54,9 @@ export function ResidueCard({ residue }: { residue: Residue }) {
             </div>
             <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-primary" />
-                <span>Disponible {formatDistanceToNow(new Date(residue.availabilityDate), { addSuffix: true, locale: es })}</span>
+                <span>
+                  {isMounted ? `Disponible ${formatDistanceToNow(new Date(residue.availabilityDate), { addSuffix: true, locale: es })}` : `Disponible...`}
+                </span>
             </div>
             <div className="flex items-center justify-between pt-2">
                 <span className="font-bold text-lg text-foreground">{residue.quantity} {residue.unit}</span>
