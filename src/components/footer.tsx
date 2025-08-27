@@ -19,7 +19,7 @@ export function Footer() {
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 md:col-span-3 gap-8">
             <div>
-              <h3 className="text-sm font-semibold text-foreground tracking-wider uppercase">Soluciones</h3>
+              <h3 className="text-base font-semibold text-foreground tracking-wider uppercase">Soluciones</h3>
               <ul className="mt-4 space-y-4">
                 <li><Link href="/dashboard/marketplace" className="text-sm text-muted-foreground hover:text-primary">Marketplace</Link></li>
                 <li><Link href="/dashboard/impact" className="text-sm text-muted-foreground hover:text-primary">Seguimiento de Impacto</Link></li>
@@ -28,7 +28,7 @@ export function Footer() {
               </ul>
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-foreground tracking-wider uppercase">Compañía</h3>
+              <h3 className="text-base font-semibold text-foreground tracking-wider uppercase">Compañía</h3>
               <ul className="mt-4 space-y-4">
                 <li><Link href="#" className="text-sm text-muted-foreground hover:text-primary">Sobre Nosotros</Link></li>
                 <li><Link href="#" className="text-sm text-muted-foreground hover:text-primary">Empleo</Link></li>
@@ -36,7 +36,7 @@ export function Footer() {
               </ul>
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-foreground tracking-wider uppercase">Legal</h3>
+              <h3 className="text-base font-semibold text-foreground tracking-wider uppercase">Legal</h3>
               <ul className="mt-4 space-y-4">
                 <li><Link href="#" className="text-sm text-muted-foreground hover:text-primary">Política de Privacidad</Link></li>
                 <li><Link href="#" className="text-sm text-muted-foreground hover:text-primary">Términos de Servicio</Link></li>

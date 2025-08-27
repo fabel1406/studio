@@ -28,7 +28,7 @@ export function ResidueCard({ residue }: { residue: Residue }) {
                 </Badge>
            </div>
         </div>
-        <div className="p-4">
+        <div className="p-4 min-h-[7rem]">
             <CardTitle className="text-xl leading-snug">
                 <Link href={`/dashboard/residues/${residue.id}`} className="hover:text-primary transition-colors">
                     {residue.type}
