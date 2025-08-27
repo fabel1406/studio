@@ -22,11 +22,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useEffect } from "react";
-import type { UserResidue } from "@/lib/types";
-import { ResidueList } from "@/components/residue-list";
+import { useState } from "react";
 
 const profileSchema = z.object({
   companyName: z.string().min(1, "El nombre de la empresa es obligatorio."),
@@ -48,28 +45,13 @@ export default function SettingsPage() {
         },
     });
 
-    const [currentRole, setCurrentRole] = useState<ProfileFormValues['role']>(form.getValues("role"));
-    const [generatedResidues, setGeneratedResidues] = useState<UserResidue[]>([]);
-    const [transformedResidues, setTransformedResidues] = useState<UserResidue[]>([]);
-
-    const watchedRole = form.watch("role");
-
-    useEffect(() => {
-        setCurrentRole(watchedRole);
-    }, [watchedRole]);
-
-
     function onSubmit(values: ProfileFormValues) {
         console.log(values);
-        setCurrentRole(values.role);
         toast({
             title: "Perfil Actualizado",
             description: "Tu información ha sido guardada con éxito.",
         });
     }
-
-    const canGenerate = currentRole === 'GENERATOR' || currentRole === 'BOTH';
-    const canTransform = currentRole === 'TRANSFORMER' || currentRole === 'BOTH';
 
     return (
         <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -78,114 +60,71 @@ export default function SettingsPage() {
                 Gestiona la configuración de tu cuenta y empresa.
             </p>
 
-            <Separator className="my-6"/>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div className="md:col-span-1">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Perfil de la Empresa</CardTitle>
-                            <CardDescription>
-                                Actualiza la información de tu empresa.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <Form {...form}>
-                                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                                    <FormField
-                                    control={form.control}
-                                    name="companyName"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                        <FormLabel>Nombre de la Empresa</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="Tu empresa" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                        </FormItem>
-                                    )}
-                                    />
-                                    <FormField
-                                    control={form.control}
-                                    name="email"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                        <FormLabel>Correo Electrónico</FormLabel>
-                                        <FormControl>
-                                            <Input type="email" placeholder="nombre@ejemplo.com" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                        </FormItem>
-                                    )}
-                                    />
-                                    <FormField
-                                    control={form.control}
-                                    name="role"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                        <FormLabel>Rol Principal</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                            <FormControl>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Selecciona tu rol" />
-                                                </SelectTrigger>
-                                            </FormControl>
-                                            <SelectContent>
-                                                <SelectItem value="GENERATOR">Generador</SelectItem>
-                                                <SelectItem value="TRANSFORMER">Transformador</SelectItem>
-                                                <SelectItem value="BOTH">Ambos</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                        </FormItem>
-                                    )}
-                                    />
-                                    <Button type="submit">Guardar Cambios</Button>
-                                </form>
-                            </Form>
-                        </CardContent>
-                    </Card>
-                </div>
-
-                <div className="md:col-span-2 space-y-8">
-                    {canGenerate && (
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Residuos que Genero</CardTitle>
-                                <CardDescription>
-                                    Añade o edita los tipos de residuos que tu empresa produce.
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                               <ResidueList
-                                    residues={generatedResidues}
-                                    setResidues={setGeneratedResidues}
-                                    residueType="generated"
-                               />
-                            </CardContent>
-                        </Card>
-                    )}
-
-                    {canTransform && (
-                        <Card>
-                             <CardHeader>
-                                <CardTitle>Residuos que Transformo</CardTitle>
-                                <CardDescription>
-                                    Especifica los residuos que tu empresa puede procesar.
-                                </CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <ResidueList
-                                     residues={transformedResidues}
-                                     setResidues={setTransformedResidues}
-                                     residueType="transformed"
+            <div className="mt-6 flex justify-center">
+                <Card className="w-full max-w-lg">
+                    <CardHeader>
+                        <CardTitle>Perfil de la Empresa</CardTitle>
+                        <CardDescription>
+                            Actualiza la información de tu empresa.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <Form {...form}>
+                            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                                <FormField
+                                control={form.control}
+                                name="companyName"
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <FormLabel>Nombre de la Empresa</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="Tu empresa" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
                                 />
-                            </CardContent>
-                        </Card>
-                    )}
-                </div>
+                                <FormField
+                                control={form.control}
+                                name="email"
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <FormLabel>Correo Electrónico</FormLabel>
+                                    <FormControl>
+                                        <Input type="email" placeholder="nombre@ejemplo.com" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                                />
+                                <FormField
+                                control={form.control}
+                                name="role"
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <FormLabel>Rol Principal</FormLabel>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Selecciona tu rol" />
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            <SelectItem value="GENERATOR">Generador</SelectItem>
+                                            <SelectItem value="TRANSFORMER">Transformador</SelectItem>
+                                            <SelectItem value="BOTH">Ambos</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                                />
+                                <Button type="submit">Guardar Cambios</Button>
+                            </form>
+                        </Form>
+                    </CardContent>
+                </Card>
             </div>
-
         </div>
     );
 }
