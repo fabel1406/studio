@@ -8,21 +8,8 @@ const getStoredNegotiations = (): Negotiation[] => {
     if (typeof window === 'undefined') {
         return [];
     }
-    const storedData = localStorage.getItem('negotiations');
-    if (storedData) {
-        const negotiations: Omit<Negotiation, 'residue' | 'requester' | 'supplier'>[] = JSON.parse(storedData);
-        const allResidues = getAllResidues();
-        return negotiations.map(neg => {
-            const residue = allResidues.find(r => r.id === neg.residueId);
-            if (!residue) return null; 
-            return {
-                ...neg,
-                residue,
-                requester: mockCompanies.find(c => c.id === neg.requesterId),
-                supplier: mockCompanies.find(c => c.id === neg.supplierId),
-            }
-        }).filter((neg): neg is Negotiation => neg !== null);
-    }
+    // Always start with no negotiations for a clean slate
+    setStoredNegotiations([]);
     return [];
 };
 
@@ -52,10 +39,14 @@ export const addNegotiation = (data: NewNegotiationData): Negotiation => {
     const residue = getAllResidues().find(r => r.id === data.residueId);
     if (!residue) throw new Error("Residue not found for negotiation");
     
-    const newNegotiationData: Omit<Negotiation, 'requester' | 'supplier'> = {
+    const newNegotiationData: Omit<Negotiation, 'requester' | 'supplier' | 'residue'> = {
         id: `neg-${Date.now()}`,
-        ...data,
-        residue,
+        residueId: data.residueId,
+        supplierId: data.supplierId,
+        requesterId: data.requesterId,
+        quantity: data.quantity,
+        unit: data.unit,
+        offerPrice: data.offerPrice,
         status: 'SENT',
         createdAt: new Date().toISOString(),
         messages: [{
@@ -67,6 +58,7 @@ export const addNegotiation = (data: NewNegotiationData): Negotiation => {
     
     const newNegotiation: Negotiation = {
         ...newNegotiationData,
+        residue,
         requester: mockCompanies.find(c => c.id === data.requesterId),
         supplier: mockCompanies.find(c => c.id === data.supplierId),
     }

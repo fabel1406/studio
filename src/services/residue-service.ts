@@ -7,19 +7,9 @@ const getStoredResidues = (): Residue[] => {
     if (typeof window === 'undefined') {
         return mockResidues; // Return mock data during server-side rendering
     }
-    const storedData = localStorage.getItem('residues');
-    if (storedData) {
-        // Parse and add company object back to each residue
-        const residues: Residue[] = JSON.parse(storedData);
-        return residues.map(residue => ({
-            ...residue,
-            company: mockCompanies.find(c => c.id === residue.companyId)
-        }));
-    }
-    // Initialize with mock data if nothing is stored, and add company info
-    const initialResidues = mockResidues.map(r => ({...r, company: mockCompanies.find(c => c.id === r.companyId)}));
-    setStoredResidues(initialResidues);
-    return initialResidues;
+    // Always start with mock data for a clean slate
+    setStoredResidues(mockResidues);
+    return mockResidues;
 };
 
 // Helper to save the state to localStorage
@@ -40,11 +30,15 @@ if (typeof window !== 'undefined' && !localStorage.getItem('residues')) {
 // --- Service Functions ---
 
 export const getAllResidues = (): Residue[] => {
-    return getStoredResidues();
+    const residues = getStoredResidues();
+    return residues.map(residue => ({
+        ...residue,
+        company: mockCompanies.find(c => c.id === residue.companyId)
+    }));
 };
 
 export const getResidueById = (id: string): Residue | undefined => {
-    return getStoredResidues().find(r => r.id === id);
+    return getAllResidues().find(r => r.id === id);
 };
 
 type NewResidueData = Omit<Residue, 'id' | 'companyId' | 'availabilityDate' | 'photos' | 'company'>;

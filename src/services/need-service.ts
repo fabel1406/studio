@@ -7,11 +7,9 @@ const getStoredNeeds = (): Need[] => {
     if (typeof window === 'undefined') {
         return mockNeeds; // Return mock data during server-side rendering
     }
-    const storedData = localStorage.getItem('needs');
-    if (storedData) {
-        return JSON.parse(storedData);
-    }
-    return mockNeeds; // Initialize with mock data if nothing is stored
+    // Always start with mock data for a clean slate
+    setStoredNeeds(mockNeeds);
+    return mockNeeds;
 };
 
 // Helper to save the state to localStorage
