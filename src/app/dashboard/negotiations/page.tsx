@@ -32,9 +32,12 @@ export default function NegotiationsPage() {
   const [isLoading, setIsLoading] = useState(true);
   
   const fetchNegotiations = useCallback(() => {
-    let currentUserId = 'comp-1'; // Default for GENERATOR/BOTH
+    let currentUserId: string;
+    
     if (role === 'TRANSFORMER') {
         currentUserId = 'comp-3';
+    } else { // GENERATOR or BOTH
+        currentUserId = 'comp-1';
     }
     
     setIsLoading(true);
@@ -63,12 +66,16 @@ export default function NegotiationsPage() {
            return (
                 <div className="text-center py-16 text-muted-foreground">
                     {type === 'sent' ? (
-                        <>
-                            <p>Aún no has enviado ninguna solicitud.</p>
-                            <Button variant="link" asChild>
+                        <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed rounded-lg">
+                             <Handshake className="h-16 w-16 text-muted-foreground" />
+                             <h3 className="mt-4 text-xl font-semibold">Aún no has enviado ofertas</h3>
+                             <p className="mt-2 text-sm text-muted-foreground">
+                                Cuando envíes una oferta por un residuo que necesites, aparecerá aquí.
+                             </p>
+                             <Button variant="link" asChild className="mt-2">
                                 <Link href="/dashboard/marketplace">Explora el marketplace para empezar.</Link>
                             </Button>
-                        </>
+                        </div>
                     ) : (
                          <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed rounded-lg">
                             <Handshake className="h-16 w-16 text-muted-foreground" />
@@ -95,10 +102,10 @@ export default function NegotiationsPage() {
                     </Avatar>
                     <div className="flex-grow">
                         <p className="font-semibold text-lg">{neg.residue.type}</p>
-                        <p className="text-sm text-muted-foreground">
+                         <p className="text-sm text-muted-foreground">
                             {type === 'sent' 
-                                ? <>Solicitud a <span className="text-primary font-medium">{otherParty.name}</span></>
-                                : <>Solicitud de <span className="text-primary font-medium">{otherParty.name}</span></>
+                                ? <>Oferta para <span className="text-primary font-medium">{otherParty?.name}</span></>
+                                : <>Solicitud de <span className="text-primary font-medium">{otherParty?.name}</span></>
                             }
                         </p>
                     </div>
@@ -142,7 +149,7 @@ export default function NegotiationsPage() {
       <Tabs defaultValue="received" className="w-full">
         <TabsList className="grid w-full grid-cols-2 max-w-lg mx-auto">
           <TabsTrigger value="received">Solicitudes Recibidas</TabsTrigger>
-          <TabsTrigger value="sent">Mis Solicitudes</TabsTrigger>
+          <TabsTrigger value="sent">Mis Ofertas Enviadas</TabsTrigger>
         </TabsList>
         <TabsContent value="received">
              <Card>
