@@ -29,16 +29,17 @@ export default function NegotiationsPage() {
   const [receivedNegotiations, setReceivedNegotiations] = useState<Negotiation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
-  // Mock current user - this would come from an auth context
-  // comp-1 is Generator, comp-3 is Transformer
-  const currentUserId = role === 'GENERATOR' ? 'comp-1' : 'comp-3';
-
   useEffect(() => {
+    // In a real app, this would come from an auth context.
+    // comp-1 is Generator/Both, comp-3 is Transformer
+    const currentUserId = (role === 'TRANSFORMER') ? 'comp-3' : 'comp-1';
+    
+    setIsLoading(true);
     const { sent, received } = getAllNegotiationsForUser(currentUserId);
     setSentNegotiations(sent);
     setReceivedNegotiations(received);
     setIsLoading(false);
-  }, [currentUserId]);
+  }, [role]);
 
   const renderNegotiationList = (negotiations: Negotiation[], type: 'sent' | 'received') => {
       if (isLoading) return <p>Cargando negociaciones...</p>;
@@ -67,6 +68,8 @@ export default function NegotiationsPage() {
 
       return negotiations.map((neg) => {
             if (!neg.residue) return null; // Defensive check
+            const otherParty = type === 'sent' ? neg.requester : neg.supplier;
+
             return (
                 <div key={neg.id} className="flex flex-col md:flex-row items-center gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
                     <Avatar className="h-12 w-12 hidden md:flex">
@@ -77,8 +80,8 @@ export default function NegotiationsPage() {
                         <p className="font-semibold text-lg">{neg.residue.type}</p>
                         <p className="text-sm text-muted-foreground">
                             {type === 'sent' 
-                                ? <>Solicitud a <span className="text-primary font-medium">{neg.requester.name}</span></>
-                                : <>Solicitud de <span className="text-primary font-medium">{neg.supplier.name}</span></>
+                                ? <>Solicitud a <span className="text-primary font-medium">{otherParty.name}</span></>
+                                : <>Solicitud de <span className="text-primary font-medium">{otherParty.name}</span></>
                             }
                         </p>
                     </div>
