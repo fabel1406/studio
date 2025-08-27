@@ -32,12 +32,12 @@ export default function Home() {
             </div>
             <div className="relative h-64 sm:h-80 lg:h-full lg:min-h-[500px] rounded-2xl overflow-hidden shadow-2xl">
                 <Image
-                  src="https://picsum.photos/800/600"
-                  alt="Organic residues being processed"
+                  src="https://picsum.photos/seed/agro/800/600"
+                  alt="Agro-industrial residues"
                   fill
                   style={{objectFit: 'cover'}}
                   className="transform hover:scale-105 transition-transform duration-500"
-                  data-ai-hint="sustainability technology"
+                  data-ai-hint="agro-industrial waste"
                 />
                  <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
             </div>
