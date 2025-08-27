@@ -45,7 +45,7 @@ export default function AboutPage() {
                 {/* Our Story Section */}
                 <section className="py-20 sm:py-28">
                     <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="grid md:grid-cols-2 gap-12 items-center">
+                        <div className="grid md:grid-cols-1 gap-12 items-center">
                             <div className="order-2 md:order-1">
                                 <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">La Historia de EcoConnect</h2>
                                 <p className="mt-4 text-muted-foreground">
@@ -54,16 +54,6 @@ export default function AboutPage() {
                                 <p className="mt-4 text-muted-foreground">
                                     EcoConnect comenzó como un proyecto para optimizar la logística de residuos en la industria agroalimentaria. Rápidamente, nos dimos cuenta del potencial para crear un verdadero marketplace B2B, un ecosistema donde la economía circular no fuera solo un concepto, sino una realidad rentable y escalable. Hoy, nuestra plataforma impulsa la innovación y la sostenibilidad en múltiples sectores.
                                 </p>
-                            </div>
-                            <div className="order-1 md:order-2 rounded-lg overflow-hidden shadow-2xl">
-                                <Image
-                                    src="https://picsum.photos/800/600"
-                                    alt="Equipo de EcoConnect trabajando"
-                                    width={800}
-                                    height={600}
-                                    className="w-full h-full object-cover"
-                                    data-ai-hint="equipo colaborando"
-                                />
                             </div>
                         </div>
                     </div>
