@@ -24,8 +24,9 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { PlusCircle } from "lucide-react";
 import { useState, useEffect } from "react";
+import type { UserResidue } from "@/lib/types";
+import { ResidueList } from "@/components/residue-list";
 
 const profileSchema = z.object({
   companyName: z.string().min(1, "El nombre de la empresa es obligatorio."),
@@ -47,10 +48,10 @@ export default function SettingsPage() {
         },
     });
 
-    // We use a separate state to control UI visibility after form submission
     const [currentRole, setCurrentRole] = useState<ProfileFormValues['role']>(form.getValues("role"));
+    const [generatedResidues, setGeneratedResidues] = useState<UserResidue[]>([]);
+    const [transformedResidues, setTransformedResidues] = useState<UserResidue[]>([]);
 
-    // Watch for changes in the form field to update UI dynamically before submission
     const watchedRole = form.watch("role");
 
     useEffect(() => {
@@ -149,40 +150,36 @@ export default function SettingsPage() {
                 <div className="md:col-span-2 space-y-8">
                     {canGenerate && (
                         <Card>
-                            <CardHeader className="flex flex-row items-center justify-between">
-                                <div>
-                                    <CardTitle>Residuos que Genero</CardTitle>
-                                    <CardDescription>
-                                        Añade o edita los tipos de residuos que tu empresa produce.
-                                    </CardDescription>
-                                </div>
-                                <Button size="sm">
-                                    <PlusCircle className="mr-2 h-4 w-4" />
-                                    Añadir
-                                </Button>
+                            <CardHeader>
+                                <CardTitle>Residuos que Genero</CardTitle>
+                                <CardDescription>
+                                    Añade o edita los tipos de residuos que tu empresa produce.
+                                </CardDescription>
                             </CardHeader>
                             <CardContent>
-                                <p className="text-sm text-muted-foreground">Aún no has añadido ningún tipo de residuo.</p>
+                               <ResidueList
+                                    residues={generatedResidues}
+                                    setResidues={setGeneratedResidues}
+                                    residueType="generated"
+                               />
                             </CardContent>
                         </Card>
                     )}
 
                     {canTransform && (
                         <Card>
-                             <CardHeader className="flex flex-row items-center justify-between">
-                                <div>
-                                    <CardTitle>Residuos que Transformo</CardTitle>
-                                    <CardDescription>
-                                        Especifica los residuos que tu empresa puede procesar.
-                                    </CardDescription>
-                                </div>
-                                <Button size="sm">
-                                    <PlusCircle className="mr-2 h-4 w-4" />
-                                    Añadir
-                                </Button>
+                             <CardHeader>
+                                <CardTitle>Residuos que Transformo</CardTitle>
+                                <CardDescription>
+                                    Especifica los residuos que tu empresa puede procesar.
+                                </CardDescription>
                             </CardHeader>
                             <CardContent>
-                                <p className="text-sm text-muted-foreground">Aún no has añadido ninguna capacidad de transformación.</p>
+                                <ResidueList
+                                     residues={transformedResidues}
+                                     setResidues={setTransformedResidues}
+                                     residueType="transformed"
+                                />
                             </CardContent>
                         </Card>
                     )}

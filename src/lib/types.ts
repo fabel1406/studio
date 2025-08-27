@@ -1,3 +1,4 @@
+
 export type Company = {
   id: string;
   name: string;
@@ -44,3 +45,8 @@ export type ImpactMetric = {
   wasteDiverted: number;
   savings: number;
 };
+
+export type UserResidue = {
+    id: string;
+    name: string;
+}
