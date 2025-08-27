@@ -4,7 +4,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter, notFound } from "next/navigation";
-import { getNegotiationById, updateNegotiationStatus, addMessageToNegotiation } from "@/services/negotiation-service";
+import { getNegotiationById, updateNegotiationStatus, addMessageToNegotiation, updateNegotiationDetails } from "@/services/negotiation-service";
 import { useRole } from "../../layout";
 import type { Negotiation } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { NegotiationChat } from "@/components/negotiation-chat";
+import { OfferDialog } from "@/components/offer-dialog";
 
 
 const statusMap: {[key: string]: {text: string, variant: 'default' | 'secondary' | 'outline' | 'destructive'}} = {
@@ -30,6 +31,8 @@ export default function NegotiationDetailPage() {
     const { role } = useRole();
     const [negotiation, setNegotiation] = useState<Negotiation | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [isEditOfferOpen, setIsEditOfferOpen] = useState(false);
+
 
     const getCurrentUserId = () => {
         // This logic determines the user ID based on the role for mocking purposes.
@@ -37,13 +40,15 @@ export default function NegotiationDetailPage() {
         if (role === 'GENERATOR') return 'comp-1';
         if (role === 'TRANSFORMER') return 'comp-3';
         // When role is 'BOTH', we need to decide which identity to use.
-        // For simplicity, we'll assume 'BOTH' users act as generators by default
-        // unless they are the requester in a specific negotiation.
-        // This is a simplification; a real app might need a more complex role-switching mechanism.
-        if (negotiation && negotiation.requesterId === 'comp-1' && role === 'BOTH') {
-            return 'comp-3'; // Acting as transformer in this context
+        // The user is the supplier if their ID matches the supplierId in the negotiation.
+        if (negotiation && negotiation.supplierId === 'comp-1' && role === 'BOTH') {
+            return 'comp-1';
         }
-        return 'comp-1'; // Default to generator for 'BOTH'
+        // The user is the requester if their ID matches the requesterId in the negotiation.
+        if (negotiation && negotiation.requesterId === 'comp-1' && role === 'BOTH') {
+            return 'comp-3'; // Acting as a different company for transforming
+        }
+        return 'comp-1'; // Default to generator for 'BOTH' if context is unclear
     };
 
     const currentUserId = getCurrentUserId();
@@ -78,6 +83,10 @@ export default function NegotiationDetailPage() {
         });
         setNegotiation(updatedNegotiation);
     };
+    
+    const handleOfferUpdated = (updatedNegotiation: Negotiation) => {
+        setNegotiation(updatedNegotiation);
+    }
 
     if (isLoading) {
         return <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">Cargando...</div>;
@@ -92,101 +101,111 @@ export default function NegotiationDetailPage() {
     const isActionable = negotiation.status === 'SENT' || negotiation.status === 'REVIEWED';
 
     return (
-        <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-             <Button variant="ghost" onClick={() => router.back()} className="mb-4">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Volver a Negociaciones
-            </Button>
-            
-            <div className="grid gap-8 md:grid-cols-3">
-                <div className="md:col-span-2 space-y-6">
-                    <Card>
-                         <CardHeader>
-                            <CardTitle>Detalles de la Negociación</CardTitle>
-                            <div className="flex items-center gap-4 pt-2">
-                                <Badge variant={statusMap[negotiation.status].variant}>{statusMap[negotiation.status].text}</Badge>
-                                <span className="text-sm text-muted-foreground">
-                                    Iniciada el {format(new Date(negotiation.createdAt), "d 'de' MMMM, yyyy", { locale: es })}
-                                </span>
-                            </div>
-                        </CardHeader>
-                        <CardContent>
-                             <div className="grid grid-cols-2 gap-6 text-sm">
-                                <div>
-                                    <h3 className="font-semibold text-muted-foreground mb-2">Residuo</h3>
-                                    <p className="font-bold text-primary text-lg">{negotiation.residue.type}</p>
+        <>
+            <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+                <Button variant="ghost" onClick={() => router.back()} className="mb-4">
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Volver a Negociaciones
+                </Button>
+                
+                <div className="grid gap-8 md:grid-cols-3">
+                    <div className="md:col-span-2 space-y-6">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Detalles de la Negociación</CardTitle>
+                                <div className="flex items-center gap-4 pt-2">
+                                    <Badge variant={statusMap[negotiation.status].variant}>{statusMap[negotiation.status].text}</Badge>
+                                    <span className="text-sm text-muted-foreground">
+                                        Iniciada el {format(new Date(negotiation.createdAt), "d 'de' MMMM, yyyy", { locale: es })}
+                                    </span>
                                 </div>
-                                <div>
-                                    <h3 className="font-semibold text-muted-foreground mb-2">Cantidad Ofertada</h3>
-                                    <p className="font-bold text-lg">{negotiation.quantity} {negotiation.unit}</p>
-                                </div>
-                                {negotiation.offerPrice !== undefined && (
-                                     <div>
-                                        <h3 className="font-semibold text-muted-foreground mb-2">Precio de la Oferta</h3>
-                                        <p className="font-bold text-lg">${negotiation.offerPrice} / {negotiation.unit}</p>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="grid grid-cols-2 gap-6 text-sm">
+                                    <div>
+                                        <h3 className="font-semibold text-muted-foreground mb-2">Residuo</h3>
+                                        <p className="font-bold text-primary text-lg">{negotiation.residue.type}</p>
                                     </div>
+                                    <div>
+                                        <h3 className="font-semibold text-muted-foreground mb-2">Cantidad Ofertada</h3>
+                                        <p className="font-bold text-lg">{negotiation.quantity} {negotiation.unit}</p>
+                                    </div>
+                                    {negotiation.offerPrice !== undefined && (
+                                        <div>
+                                            <h3 className="font-semibold text-muted-foreground mb-2">Precio de la Oferta</h3>
+                                            <p className="font-bold text-lg">${negotiation.offerPrice} / {negotiation.unit}</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        <NegotiationChat
+                            messages={negotiation.messages}
+                            onSendMessage={handleSendMessage}
+                            currentUserId={currentUserId}
+                        />
+                    </div>
+
+                    <div className="space-y-6">
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>{isSupplier ? 'Solicitante' : 'Proveedor'}</CardTitle>
+                            </CardHeader>
+                            <CardContent className="flex items-center gap-4">
+                                <Avatar className="h-12 w-12">
+                                    <AvatarFallback>{isSupplier ? negotiation.requester.name.charAt(0) : negotiation.supplier.name.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                                <div>
+                                    <p className="font-semibold">{isSupplier ? negotiation.requester.name : negotiation.supplier.name}</p>
+                                    <p className="text-sm text-muted-foreground">{isSupplier ? negotiation.requester.city : negotiation.supplier.city}</p>
+                                </div>
+                            </CardContent>
+                        </Card>
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Acciones</CardTitle>
+                            </CardHeader>
+                            <CardContent className="space-y-2">
+                                {isActionable ? (
+                                    <>
+                                        {isRequester && ( // Actions for the Transformer
+                                            <>
+                                                <Button className="w-full" onClick={() => handleUpdateStatus('ACCEPTED')}>Aceptar Oferta</Button>
+                                                <Button className="w-full" variant="destructive" onClick={() => handleUpdateStatus('REJECTED')}>Rechazar Oferta</Button>
+                                            </>
+                                        )}
+                                        {isSupplier && ( // Actions for the Generator
+                                            <>
+                                                <Button className="w-full" variant="outline" onClick={() => setIsEditOfferOpen(true)}>
+                                                    <Pencil className="mr-2 h-4 w-4" /> Modificar Oferta
+                                                </Button>
+                                                <Button className="w-full" variant="destructive" onClick={() => handleUpdateStatus('REJECTED')}>
+                                                    <XCircle className="mr-2 h-4 w-4" /> Cancelar Oferta
+                                                </Button>
+                                            </>
+                                        )}
+                                    </>
+                                ) : (
+                                    <>
+                                        {negotiation.status === 'ACCEPTED' && <p className="text-center text-green-600 font-semibold">¡Negociación Aceptada!</p>}
+                                        {negotiation.status === 'REJECTED' && <p className="text-center text-red-600 font-semibold">Negociación Rechazada/Cancelada</p>}
+                                    </>
                                 )}
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <NegotiationChat
-                        messages={negotiation.messages}
-                        onSendMessage={handleSendMessage}
-                        currentUserId={currentUserId}
-                    />
+                            </CardContent>
+                        </Card>
+                    </div>
                 </div>
-
-                <div className="space-y-6">
-                     <Card>
-                        <CardHeader>
-                            <CardTitle>{isSupplier ? 'Solicitante' : 'Proveedor'}</CardTitle>
-                        </CardHeader>
-                        <CardContent className="flex items-center gap-4">
-                            <Avatar className="h-12 w-12">
-                                <AvatarFallback>{isSupplier ? negotiation.requester.name.charAt(0) : negotiation.supplier.name.charAt(0)}</AvatarFallback>
-                            </Avatar>
-                            <div>
-                                <p className="font-semibold">{isSupplier ? negotiation.requester.name : negotiation.supplier.name}</p>
-                                <p className="text-sm text-muted-foreground">{isSupplier ? negotiation.requester.city : negotiation.supplier.city}</p>
-                            </div>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Acciones</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-2">
-                            {isActionable ? (
-                                <>
-                                    {isRequester && ( // Actions for the Transformer
-                                        <>
-                                            <Button className="w-full" onClick={() => handleUpdateStatus('ACCEPTED')}>Aceptar Oferta</Button>
-                                            <Button className="w-full" variant="destructive" onClick={() => handleUpdateStatus('REJECTED')}>Rechazar Oferta</Button>
-                                        </>
-                                    )}
-                                    {isSupplier && ( // Actions for the Generator
-                                        <>
-                                            <Button className="w-full" variant="outline" disabled>
-                                                <Pencil className="mr-2 h-4 w-4" /> Modificar Oferta (Próximamente)
-                                            </Button>
-                                            <Button className="w-full" variant="destructive" onClick={() => handleUpdateStatus('REJECTED')}>
-                                                <XCircle className="mr-2 h-4 w-4" /> Cancelar Oferta
-                                            </Button>
-                                        </>
-                                    )}
-                                </>
-                            ) : (
-                                <>
-                                    {negotiation.status === 'ACCEPTED' && <p className="text-center text-green-600 font-semibold">¡Negociación Aceptada!</p>}
-                                    {negotiation.status === 'REJECTED' && <p className="text-center text-red-600 font-semibold">Negociación Rechazada/Cancelada</p>}
-                                </>
-                            )}
-                        </CardContent>
-                    </Card>
-                </div>
-
             </div>
-        </div>
+
+            {isSupplier && (
+                <OfferDialog
+                    isOpen={isEditOfferOpen}
+                    onOpenChange={setIsEditOfferOpen}
+                    negotiationToEdit={negotiation}
+                    onOfferUpdated={handleOfferUpdated}
+                />
+            )}
+        </>
     );
 }

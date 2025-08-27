@@ -1,3 +1,4 @@
+
 // src/components/offer-dialog.tsx
 "use client";
 
@@ -31,27 +32,43 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import type { Need, Residue } from "@/lib/types";
-import { addNegotiation } from "@/services/negotiation-service";
+import type { Need, Residue, Negotiation } from "@/lib/types";
+import { addNegotiation, updateNegotiationDetails } from "@/services/negotiation-service";
 import { useRouter } from "next/navigation";
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
+import { getAllResidues } from "@/services/residue-service";
 
 type OfferDialogProps = {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  need: Need;
-  userResidues: Residue[];
+  need?: Need; // For creating a new offer
+  negotiationToEdit?: Negotiation; // For editing an existing offer
+  onOfferUpdated?: (negotiation: Negotiation) => void;
 };
 
-export function OfferDialog({ isOpen, onOpenChange, need, userResidues }: OfferDialogProps) {
+export function OfferDialog({ 
+  isOpen, 
+  onOpenChange, 
+  need, 
+  userResidues, 
+  negotiationToEdit,
+  onOfferUpdated,
+}: OfferDialogProps & { userResidues?: Residue[] }) {
   const router = useRouter();
   const { toast } = useToast();
+  
+  const isEditMode = !!negotiationToEdit;
 
-  // Filter residues that are compatible with the need's type
-  const compatibleResidues = useMemo(
-      () => userResidues.filter(r => r.type.toLowerCase() === need.residueType.toLowerCase()),
-      [userResidues, need.residueType]
-  );
+  // In edit mode, the available residue is just the one in the negotiation
+  const compatibleResidues = useMemo(() => {
+    if (isEditMode) {
+      return negotiationToEdit.residue ? [negotiationToEdit.residue] : [];
+    }
+    if (need && userResidues) {
+      return userResidues.filter(r => r.type.toLowerCase() === need.residueType.toLowerCase());
+    }
+    return [];
+  }, [userResidues, need, negotiationToEdit, isEditMode]);
 
   const FormSchema = z.object({
     residueId: z.string({ required_error: "Debes seleccionar un residuo para ofertar." }),
@@ -59,6 +76,7 @@ export function OfferDialog({ isOpen, onOpenChange, need, userResidues }: OfferD
     price: z.coerce.number().optional(),
   }).refine(data => {
     const selectedResidue = compatibleResidues.find(r => r.id === data.residueId);
+    if (isEditMode) return true; // Don't check stock when editing, for simplicity. Could be enhanced later.
     return !selectedResidue || data.quantity <= selectedResidue.quantity;
   }, {
     message: "No puedes ofertar más cantidad de la que tienes disponible en el residuo seleccionado.",
@@ -70,43 +88,71 @@ export function OfferDialog({ isOpen, onOpenChange, need, userResidues }: OfferD
     resolver: zodResolver(FormSchema),
     defaultValues: {
       residueId: undefined,
-      price: undefined,
       quantity: undefined,
+      price: undefined,
     }
   });
+
+  useEffect(() => {
+    if (isEditMode && negotiationToEdit) {
+      form.reset({
+        residueId: negotiationToEdit.residueId,
+        quantity: negotiationToEdit.quantity,
+        price: negotiationToEdit.offerPrice,
+      });
+    } else {
+      form.reset({
+        residueId: undefined,
+        quantity: undefined,
+        price: undefined,
+      });
+    }
+  }, [isEditMode, negotiationToEdit, form]);
   
   const selectedResidueId = form.watch("residueId");
   const selectedResidue = compatibleResidues.find(r => r.id === selectedResidueId);
 
   const onSubmit = (data: z.infer<typeof FormSchema>) => {
-    if (!selectedResidue) return;
-
-    addNegotiation({
-      residueId: selectedResidue.id,
-      supplierId: selectedResidue.companyId, // Generator
-      requesterId: need.companyId, // Transformer
-      quantity: data.quantity,
-      unit: selectedResidue.unit,
-      offerPrice: data.price,
-    });
+    if (isEditMode && negotiationToEdit) {
+        const updatedNegotiation = updateNegotiationDetails(negotiationToEdit.id, data.quantity, data.price);
+        toast({
+            title: "¡Oferta Modificada!",
+            description: `Tu oferta ha sido actualizada a ${data.quantity} ${updatedNegotiation.unit}.`,
+        });
+        if (onOfferUpdated) {
+            onOfferUpdated(updatedNegotiation);
+        }
+    } else if (need && selectedResidue) {
+        addNegotiation({
+          residueId: selectedResidue.id,
+          supplierId: selectedResidue.companyId, // Generator
+          requesterId: need.companyId, // Transformer
+          quantity: data.quantity,
+          unit: selectedResidue.unit,
+          offerPrice: data.price,
+        });
+        toast({
+          title: "¡Oferta Enviada!",
+          description: `Tu oferta para ${need.residueType} ha sido enviada.`,
+        });
+        router.push('/dashboard/negotiations');
+    }
     
-    toast({
-      title: "¡Oferta Enviada!",
-      description: `Tu oferta para ${need.residueType} ha sido enviada.`,
-    });
     onOpenChange(false);
-    router.push('/dashboard/negotiations');
-    router.refresh();
   };
+
+  const title = isEditMode ? "Modificar Oferta" : "Hacer una Oferta";
+  const description = isEditMode
+    ? `Ajusta los detalles de tu oferta para ${negotiationToEdit.residue.type}.`
+    : `Oferta uno de tus residuos publicados para la necesidad de ${need?.residueType}.`;
+
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Hacer una Oferta</DialogTitle>
-          <DialogDescription>
-            Oferta uno de tus residuos publicados para la necesidad de <span className="font-bold text-primary">{need.residueType}</span>.
-          </DialogDescription>
+          <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         {compatibleResidues.length > 0 ? (
           <Form {...form}>
@@ -117,7 +163,7 @@ export function OfferDialog({ isOpen, onOpenChange, need, userResidues }: OfferD
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Residuo a Ofertar</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value} disabled={isEditMode}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Selecciona uno de tus residuos" />
@@ -145,7 +191,7 @@ export function OfferDialog({ isOpen, onOpenChange, need, userResidues }: OfferD
                       <FormItem>
                         <FormLabel>Cantidad a Ofertar ({selectedResidue.unit})</FormLabel>
                         <FormControl>
-                          <Input type="number" placeholder={`Máx: ${selectedResidue.quantity}`} {...field} value={field.value ?? ''} />
+                          <Input type="number" placeholder={isEditMode ? '' : `Máx: ${selectedResidue.quantity}`} {...field} value={field.value ?? ''} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -169,16 +215,20 @@ export function OfferDialog({ isOpen, onOpenChange, need, userResidues }: OfferD
 
               <DialogFooter>
                 <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>Cancelar</Button>
-                <Button type="submit" disabled={!selectedResidue || form.formState.isSubmitting}>Enviar Oferta</Button>
+                <Button type="submit" disabled={!selectedResidue || form.formState.isSubmitting}>
+                    {isEditMode ? "Guardar Cambios" : "Enviar Oferta"}
+                </Button>
               </DialogFooter>
             </form>
           </Form>
         ) : (
            <div className="py-8 text-center">
-                <p className="text-muted-foreground">No tienes residuos compatibles publicados.</p>
-                <Button variant="link" asChild className="mt-2">
-                    <Link href="/dashboard/residues/create">Publica un residuo primero</Link>
-                </Button>
+                <p className="text-muted-foreground">{isEditMode ? "No se pudo cargar el residuo para editar." : "No tienes residuos compatibles publicados."}</p>
+                {!isEditMode && (
+                    <Button variant="link" asChild className="mt-2">
+                        <Link href="/dashboard/residues/create">Publica un residuo primero</Link>
+                    </Button>
+                )}
             </div>
         )}
       </DialogContent>

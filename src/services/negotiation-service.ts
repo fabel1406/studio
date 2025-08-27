@@ -70,20 +70,14 @@ export const addNegotiation = (data: NewNegotiationData): Negotiation => {
         }],
     };
     
-    setStoredNegotiations([...currentNegotiations, {
-        ...newNegotiationData,
-        residue: getAllResidues().find(r => r.id === data.residueId)!,
-        requester: mockCompanies.find(c => c.id === data.requesterId)!,
-        supplier: mockCompanies.find(c => c.id === data.supplierId)!,
-    }] as Negotiation[]);
-
-
     const newNegotiation = {
         ...newNegotiationData,
         residue: getAllResidues().find(r => r.id === data.residueId)!,
         requester: mockCompanies.find(c => c.id === data.requesterId)!,
         supplier: mockCompanies.find(c => c.id === data.supplierId)!,
     }
+    
+    setStoredNegotiations([...currentNegotiations, newNegotiation]);
 
     return newNegotiation;
 };
@@ -91,9 +85,7 @@ export const addNegotiation = (data: NewNegotiationData): Negotiation => {
 
 export const getAllNegotiationsForUser = (userId: string): { sent: Negotiation[], received: Negotiation[] } => {
     const allNegotiations = getStoredNegotiations();
-    // Sent: Offers made by the user (as a generator/supplier)
     const sent = allNegotiations.filter(n => n.supplierId === userId).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    // Received: Offers received by the user (as a transformer/requester)
     const received = allNegotiations.filter(n => n.requesterId === userId).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     return { sent, received };
 };
@@ -111,6 +103,39 @@ export const updateNegotiationStatus = (id: string, status: Negotiation['status'
     }
 
     currentNegotiations[index].status = status;
+    setStoredNegotiations(currentNegotiations);
+    return currentNegotiations[index];
+};
+
+export const updateNegotiationDetails = (id: string, quantity: number, price?: number): Negotiation => {
+    const currentNegotiations = getStoredNegotiations();
+    const index = currentNegotiations.findIndex(n => n.id === id);
+
+    if (index === -1) {
+        throw new Error("Negotiation not found");
+    }
+
+    const originalQuantity = currentNegotiations[index].quantity;
+    const originalPrice = currentNegotiations[index].offerPrice;
+
+    currentNegotiations[index].quantity = quantity;
+    currentNegotiations[index].offerPrice = price;
+
+    let messageContent = "He modificado la oferta.";
+    if (quantity !== originalQuantity) {
+        messageContent += ` Nueva cantidad: ${quantity} ${currentNegotiations[index].unit}.`
+    }
+     if (price !== originalPrice) {
+        messageContent += ` Nuevo precio: ${price !== undefined ? `$${price}` : 'Negociable'}.`
+    }
+
+    currentNegotiations[index].messages.push({
+        senderId: currentNegotiations[index].supplierId,
+        content: messageContent,
+        timestamp: new Date().toISOString(),
+    });
+
+
     setStoredNegotiations(currentNegotiations);
     return currentNegotiations[index];
 };
