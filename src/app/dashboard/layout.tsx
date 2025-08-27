@@ -102,7 +102,7 @@ export default function DashboardLayout({
                 </div>
             </SidebarFooter>
         </Sidebar>
-        <main className="flex-1 md:ml-64">{children}</main>
+        <main className="flex-1 md:ml-[var(--sidebar-width-icon)] lg:ml-[var(--sidebar-width)] transition-[margin-left] duration-200">{children}</main>
       </div>
     </SidebarProvider>
   );
