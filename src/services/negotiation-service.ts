@@ -1,3 +1,4 @@
+
 // src/services/negotiation-service.ts
 import type { Negotiation, NegotiationMessage } from '@/lib/types';
 import { mockCompanies } from '@/lib/data';
@@ -6,10 +7,30 @@ import { getResidueById } from './residue-service';
 // Treat this as an in-memory database for negotiations
 let negotiationsDB: Negotiation[] = [];
 
+
 const rehydrateNegotiation = (negotiation: Negotiation): Negotiation => {
+    const residue = getResidueById(negotiation.residueId);
+    if (!residue) {
+        // Return a negotiation object with partial data to avoid crashes if residue is deleted
+        return {
+            ...negotiation,
+            residue: {
+                id: negotiation.residueId,
+                type: 'Residuo eliminado',
+                category: 'OTHERS',
+                quantity: 0,
+                unit: 'KG',
+                status: 'CLOSED',
+                companyId: negotiation.supplierId,
+                availabilityDate: new Date().toISOString(),
+            },
+            requester: mockCompanies.find(c => c.id === negotiation.requesterId),
+            supplier: mockCompanies.find(c => c.id === negotiation.supplierId),
+        }
+    }
     return {
         ...negotiation,
-        residue: getResidueById(negotiation.residueId)!,
+        residue,
         requester: mockCompanies.find(c => c.id === negotiation.requesterId),
         supplier: mockCompanies.find(c => c.id === negotiation.supplierId),
     };
@@ -40,8 +61,8 @@ export const addNegotiation = (data: NewNegotiationData): Negotiation => {
         status: 'SENT',
         createdAt: new Date().toISOString(),
         messages: [{
-            senderId: data.supplierId,
-            content: `He enviado una oferta de ${data.quantity} ${data.unit}${data.offerPrice ? ` a $${data.offerPrice}/${data.unit}` : ''}.`,
+            senderId: data.requesterId, // The requester initiates the conversation
+            content: `He enviado una solicitud de ${data.quantity} ${data.unit}${data.offerPrice ? ` a $${data.offerPrice}/${data.unit}` : ''}.`,
             timestamp: new Date().toISOString()
         }],
     };
@@ -53,14 +74,14 @@ export const addNegotiation = (data: NewNegotiationData): Negotiation => {
 export const getAllNegotiationsForUser = (userId: string): { sentOffers: Negotiation[], receivedOffers: Negotiation[] } => {
     const allNegotiations = negotiationsDB.map(rehydrateNegotiation);
     
-    // As a GENERATOR (or BOTH), you send offers.
+    // "Sent" are negotiations you initiated (you are the requester)
     const sentOffers = allNegotiations
-      .filter(n => n.supplierId === userId)
+      .filter(n => n.requesterId === userId)
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       
-    // As a TRANSFORMER (or BOTH), you receive offers.
+    // "Received" are negotiations where someone requested something from you (you are the supplier)
     const receivedOffers = allNegotiations
-      .filter(n => n.requesterId === userId)
+      .filter(n => n.supplierId === userId)
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       
     return { sentOffers, receivedOffers };
@@ -117,5 +138,8 @@ export const addMessageToNegotiation = (id: string, message: NegotiationMessage)
 }
 
 export const deleteNegotiation = (id: string): void => {
-    negotiationsDB = negotiationsDB.filter(n => n.id !== id);
+    const index = negotiationsDB.findIndex(n => n.id === id);
+    if (index > -1) {
+        negotiationsDB.splice(index, 1);
+    }
 };
