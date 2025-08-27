@@ -1,3 +1,4 @@
+
 // src/app/dashboard/residues/create/page.tsx
 "use client"
 
@@ -30,10 +31,12 @@ import { useToast } from "@/hooks/use-toast"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import type { Residue } from "@/lib/types"
 import { getResidueById, addResidue, updateResidue } from "@/services/residue-service"
+import { mockResidues } from "@/lib/data"
 
 
 const residueFormSchema = z.object({
-  type: z.string().min(2, { message: "El tipo debe tener al menos 2 caracteres." }),
+  type: z.string().min(1, { message: "Debes seleccionar o especificar un tipo." }),
+  customType: z.string().optional(),
   category: z.enum(['BIOMASS', 'FOOD', 'AGRO', 'OTHERS'], { required_error: "Debes seleccionar una categoría." }),
   quantity: z.coerce.number().min(0, { message: "La cantidad no puede ser negativa." }),
   unit: z.enum(['KG', 'TON'], { required_error: "Debes seleccionar una unidad." }),
@@ -43,9 +46,19 @@ const residueFormSchema = z.object({
   ),
   status: z.enum(['ACTIVE', 'RESERVED', 'CLOSED'], { required_error: "Debes seleccionar un estado." }),
   description: z.string().max(300, { message: "La descripción no puede exceder los 300 caracteres." }).optional(),
-})
+}).refine(data => {
+    if (data.type === 'Otro' && (!data.customType || data.customType.length < 2)) {
+        return false;
+    }
+    return true;
+}, {
+    message: "Por favor, especifica un tipo con al menos 2 caracteres.",
+    path: ["customType"],
+});
 
 type ResidueFormValues = z.infer<typeof residueFormSchema>
+
+const uniqueResidueTypes = [...new Set(mockResidues.map(r => r.type))];
 
 export default function ResidueFormPage() {
   const router = useRouter();
@@ -58,6 +71,7 @@ export default function ResidueFormPage() {
     resolver: zodResolver(residueFormSchema),
     defaultValues: {
         type: "",
+        customType: "",
         quantity: 0,
         pricePerUnit: undefined,
         description: "",
@@ -67,6 +81,8 @@ export default function ResidueFormPage() {
     },
     mode: "onChange",
   })
+
+  const selectedResidueType = form.watch("type");
   
   useEffect(() => {
     const id = searchParams.get('id');
@@ -75,8 +91,11 @@ export default function ResidueFormPage() {
       const residue = getResidueById(id);
       if (residue) {
         setExistingResidue(residue);
+        
+        const isStandardType = uniqueResidueTypes.includes(residue.type);
         form.reset({
-          type: residue.type,
+          type: isStandardType ? residue.type : 'Otro',
+          customType: isStandardType ? '' : residue.type,
           category: residue.category,
           quantity: residue.quantity,
           unit: residue.unit,
@@ -91,29 +110,33 @@ export default function ResidueFormPage() {
 
   function onSubmit(data: ResidueFormValues) {
     try {
+        const finalData = {
+          ...data,
+          type: data.type === 'Otro' ? data.customType! : data.type,
+        }
+
         if (residueId && existingResidue) {
-            // Merge existing data with form data to not lose fields like photos, location etc.
             const updatedData: Residue = {
                 ...existingResidue,
-                ...data,
+                ...finalData,
                 pricePerUnit: data.pricePerUnit,
                 description: data.description || '',
             };
             updateResidue(updatedData);
             toast({
                 title: "¡Residuo Actualizado!",
-                description: `El residuo "${data.type}" ha sido actualizado con éxito.`,
+                description: `El residuo "${finalData.type}" ha sido actualizado con éxito.`,
             })
         } else {
             const newResidue: Omit<Residue, 'id' | 'companyId' | 'availabilityDate'> = {
-                ...data,
+                ...finalData,
                 pricePerUnit: data.pricePerUnit,
                 description: data.description || '',
             };
             addResidue(newResidue);
             toast({
                 title: "¡Residuo Guardado!",
-                description: `El residuo "${data.type}" ha sido guardado con éxito.`,
+                description: `El residuo "${finalData.type}" ha sido guardado con éxito.`,
             })
         }
         router.push('/dashboard/residues');
@@ -144,22 +167,51 @@ export default function ResidueFormPage() {
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    
                     <FormField
-                    control={form.control}
-                    name="type"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Tipo de Residuo</FormLabel>
-                        <FormControl>
-                            <Input placeholder="Ej: Alperujo" {...field} />
-                        </FormControl>
-                        <FormDescription>
-                            El nombre específico del residuo que estás publicando.
-                        </FormDescription>
-                        <FormMessage />
-                        </FormItem>
-                    )}
+                      control={form.control}
+                      name="type"
+                      render={({ field }) => (
+                          <FormItem>
+                          <FormLabel>Tipo de Residuo</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
+                              <FormControl>
+                              <SelectTrigger>
+                                  <SelectValue placeholder="Selecciona un tipo de residuo" />
+                              </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                  {uniqueResidueTypes.map(type => (
+                                      <SelectItem key={type} value={type}>{type}</SelectItem>
+                                  ))}
+                                  <SelectItem value="Otro">Otro (especificar)</SelectItem>
+                              </SelectContent>
+                          </Select>
+                          <FormDescription>
+                              El nombre específico del residuo que estás publicando.
+                          </FormDescription>
+                          <FormMessage />
+                          </FormItem>
+                      )}
                     />
+
+                    {selectedResidueType === 'Otro' && (
+                        <FormField
+                        control={form.control}
+                        name="customType"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Especificar tipo de residuo</FormLabel>
+                            <FormControl>
+                                <Input placeholder="Ej: Poda de cítricos" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                        />
+                    )}
+
+
                     <FormField
                     control={form.control}
                     name="category"
@@ -293,3 +345,5 @@ export default function ResidueFormPage() {
     </div>
   )
 }
+
+    

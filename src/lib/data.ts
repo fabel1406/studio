@@ -56,6 +56,17 @@ export const mockCompanies: Company[] = [
     lat: 43.0120,
     lng: -7.5560,
   },
+    {
+    id: 'comp-6',
+    name: 'Café del Mundo',
+    type: 'GENERATOR',
+    description: 'Tostador y distribuidor de café a gran escala.',
+    city: 'Barcelona',
+    country: 'España',
+    verificationStatus: 'VERIFIED',
+    lat: 41.3851,
+    lng: 2.1734,
+  },
 ];
 
 export let mockResidues: Residue[] = [
@@ -239,6 +250,42 @@ export let mockResidues: Residue[] = [
     moisturePct: 95.0,
     contaminants: 'Ninguno',
   },
+   {
+    id: 'res-11',
+    companyId: 'comp-6',
+    company: mockCompanies[5],
+    type: 'Posos de café',
+    category: 'FOOD',
+    quantity: 5,
+    unit: 'TON',
+    availabilityDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
+    pricePerUnit: 2.0,
+    locationLat: 41.3851,
+    locationLng: 2.1734,
+    status: 'ACTIVE',
+    photos: ['https://picsum.photos/seed/cafe/600/400'],
+    description: 'Posos de café usados, provenientes de nuestro proceso de tostado y empaquetado. Ideal para compostaje, cultivo de hongos o como exfoliante natural.',
+    moisturePct: 50.0,
+    contaminants: 'Filtros de papel biodegradables',
+  },
+  {
+    id: 'res-12',
+    companyId: 'comp-4',
+    company: mockCompanies[3],
+    type: 'Sarmientos de vid',
+    category: 'BIOMASS',
+    quantity: 22,
+    unit: 'TON',
+    availabilityDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+    pricePerUnit: 14.0,
+    locationLat: 42.4653,
+    locationLng: -2.4485,
+    status: 'ACTIVE',
+    photos: ['https://picsum.photos/seed/sarmientos/600/400'],
+    description: 'Restos de la poda de invierno de nuestros viñedos. Biomasa de excelente calidad para energía o barbacoas.',
+    moisturePct: 25.0,
+    contaminants: 'Ninguno',
+  }
 ];
 
 const MESES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
@@ -251,3 +298,5 @@ export const mockImpactMetrics: ImpactMetric[] = [
   { label: MESES[4], co2Avoided: 550, wasteDiverted: 1100, savings: 1650 },
   { label: MESES[5], co2Avoided: 600, wasteDiverted: 1200, savings: 1800 },
 ];
+
+    
