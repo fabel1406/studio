@@ -102,7 +102,7 @@ export default function DashboardLayout({
                 </div>
             </SidebarFooter>
         </Sidebar>
-        <main className="flex-1 md:ml-[16rem]">{children}</main>
+        <main className="flex-1 md:ml-64">{children}</main>
       </div>
     </SidebarProvider>
   );
