@@ -16,19 +16,16 @@ import { getAllResidues } from "@/services/residue-service";
 export function NeedCard({ need }: { need: Need }) {
   const company = mockCompanies.find(c => c.id === need.companyId);
   const freqMap: {[key: string]: string} = { 'ONCE': 'una vez', 'WEEKLY': 'semanal', 'MONTHLY': 'mensual' };
-  const { role } = useRole();
+  const { role, currentUserId } = useRole();
   const [isMounted, setIsMounted] = useState(false);
   const [userResidues, setUserResidues] = useState<Residue[]>([]);
   const [isOfferDialogOpen, setIsOfferDialogOpen] = useState(false);
   
   const canOffer = role === 'GENERATOR' || role === 'BOTH';
-  
-  // Mock current user ID based on role. In a real app, this would come from auth.
-  const currentUserId = role === 'GENERATOR' ? 'comp-1' : role === 'BOTH' ? 'comp-1' : 'comp-3';
 
   useEffect(() => {
     setIsMounted(true);
-    if (canOffer) {
+    if (canOffer && currentUserId) {
         // In a real app, this would be the logged-in user's ID
         setUserResidues(getAllResidues().filter(r => r.companyId === currentUserId && r.status === 'ACTIVE'));
     }

@@ -26,6 +26,7 @@ type UserRole = "GENERATOR" | "TRANSFORMER" | "BOTH";
 type RoleContextType = {
   role: UserRole;
   setRole: (role: UserRole) => void;
+  currentUserId: string | null;
 };
 
 const RoleContext = createContext<RoleContextType | null>(null);
@@ -40,8 +41,23 @@ export const useRole = () => {
 
 const RoleProvider = ({ children }: { children: React.ReactNode }) => {
   const [role, setRole] = useState<UserRole>("GENERATOR"); // Default role
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
-  const value = useMemo(() => ({ role, setRole }), [role]);
+  useEffect(() => {
+    // In a real app, this would be derived from an auth session.
+    // We mock it based on the selected role for demonstration.
+    if (role === 'GENERATOR') {
+        setCurrentUserId('comp-1');
+    } else if (role === 'TRANSFORMER') {
+        setCurrentUserId('comp-3');
+    } else if (role === 'BOTH') {
+        // For 'BOTH', let's assume the primary identity is the generator one,
+        // but the app logic will handle actions for both roles.
+        setCurrentUserId('comp-1');
+    }
+  }, [role]);
+
+  const value = useMemo(() => ({ role, setRole, currentUserId }), [role, currentUserId]);
 
   return <RoleContext.Provider value={value}>{children}</RoleContext.Provider>;
 };

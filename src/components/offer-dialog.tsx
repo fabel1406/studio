@@ -56,7 +56,7 @@ export function OfferDialog({
 }: OfferDialogProps) {
   const router = useRouter();
   const { toast } = useToast();
-  const { role } = useRole();
+  const { currentUserId } = useRole();
   
   const isEditMode = !!negotiationToEdit;
 
@@ -70,17 +70,6 @@ export function OfferDialog({
     }
     return [];
   }, [userResidues, need, negotiationToEdit, isEditMode]);
-  
-  const getSupplierId = () => {
-    // This logic determines the user ID based on the role for mocking purposes.
-    // In a real app, this would come from an authentication context.
-    if (isEditMode) return negotiationToEdit!.supplierId;
-
-    if (role === 'GENERATOR' || role === 'BOTH') {
-        return 'comp-1'; // User is acting as the generator/supplier
-    }
-    return ''; // Should not happen if dialog is opened correctly
-  };
 
 
   const FormSchema = z.object({
@@ -126,6 +115,11 @@ export function OfferDialog({
   const selectedResidue = compatibleResidues.find(r => r.id === selectedResidueId);
 
   const onSubmit = (data: z.infer<typeof FormSchema>) => {
+    if (!currentUserId) {
+        toast({ title: "Error", description: "No se pudo identificar al usuario.", variant: "destructive" });
+        return;
+    }
+      
     if (isEditMode && negotiationToEdit) {
         const updatedNegotiation = updateNegotiationDetails(negotiationToEdit.id, data.quantity, data.price);
         toast({
@@ -138,8 +132,8 @@ export function OfferDialog({
     } else if (need && selectedResidue) {
         addNegotiation({
           residueId: selectedResidue.id,
-          supplierId: getSupplierId(), // Generator
-          requesterId: need.companyId, // Transformer
+          supplierId: currentUserId, // The user making the offer is the supplier.
+          requesterId: need.companyId, // The user who created the need is the requester.
           quantity: data.quantity,
           unit: selectedResidue.unit,
           offerPrice: data.price,
@@ -149,6 +143,7 @@ export function OfferDialog({
           description: `Tu oferta para ${need.residueType} ha sido enviada.`,
         });
         router.push('/dashboard/negotiations');
+        router.refresh();
     }
     
     onOpenChange(false);

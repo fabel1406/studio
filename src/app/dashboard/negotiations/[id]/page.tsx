@@ -2,13 +2,13 @@
 // src/app/dashboard/negotiations/[id]/page.tsx
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter, notFound } from "next/navigation";
-import { getNegotiationById, updateNegotiationStatus, addMessageToNegotiation, updateNegotiationDetails } from "@/services/negotiation-service";
+import { getNegotiationById, updateNegotiationStatus, addMessageToNegotiation } from "@/services/negotiation-service";
 import { useRole } from "../../layout";
 import type { Negotiation } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Send, Pencil, XCircle } from "lucide-react";
+import { ArrowLeft, Send, Pencil, XCircle, CheckCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -27,33 +27,10 @@ const statusMap: {[key: string]: {text: string, variant: 'default' | 'secondary'
 export default function NegotiationDetailPage() {
     const { id } = useParams<{ id: string }>();
     const router = useRouter();
-    const { role } = useRole();
+    const { role, currentUserId } = useRole();
     const [negotiation, setNegotiation] = useState<Negotiation | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isEditOfferOpen, setIsEditOfferOpen] = useState(false);
-
-
-    const getCurrentUserId = () => {
-        // This logic determines the user ID based on the role for mocking purposes.
-        // In a real app, this would come from an authentication context.
-        if (role === 'GENERATOR') return 'comp-1';
-        if (role === 'TRANSFORMER') return 'comp-3';
-        if (role === 'BOTH') {
-            // When role is 'BOTH', we need to decide which identity to use.
-            // The user is the supplier if their ID matches the supplierId in the negotiation.
-            if (negotiation && negotiation.supplierId === 'comp-1') {
-                return 'comp-1';
-            }
-            // The user is the requester if their ID matches the requesterId in the negotiation.
-            if (negotiation && negotiation.requesterId === 'comp-1') {
-                return 'comp-3'; // Acting as a different company for transforming
-            }
-        }
-        return 'comp-1'; // Default to generator for 'BOTH' if context is unclear
-    };
-
-    const currentUserId = getCurrentUserId();
-
 
     useEffect(() => {
         if (id) {
@@ -70,7 +47,7 @@ export default function NegotiationDetailPage() {
     };
 
     const handleSendMessage = (content: string) => {
-        if (!negotiation) return;
+        if (!negotiation || !currentUserId) return;
         const updatedNegotiation = addMessageToNegotiation(negotiation.id, {
             senderId: currentUserId,
             content,
@@ -83,7 +60,7 @@ export default function NegotiationDetailPage() {
         setNegotiation(updatedNegotiation);
     }
 
-    if (isLoading) {
+    if (isLoading || !currentUserId) {
         return <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">Cargando...</div>;
     }
 
@@ -91,9 +68,16 @@ export default function NegotiationDetailPage() {
         return notFound();
     }
     
+    // The user is the supplier if their ID matches the supplierId in the negotiation.
     const isSupplier = negotiation.supplierId === currentUserId;
+    // The user is the one who initiated the negotiation if their ID matches the requesterId.
     const isRequester = negotiation.requesterId === currentUserId;
+
+    // The negotiation is actionable if it's in 'SENT' state.
     const isActionable = negotiation.status === 'SENT';
+
+    // The user who can accept/reject is the one who DID NOT initiate the negotiation (the recipient).
+    const canAcceptOrReject = !isRequester;
 
     return (
         <>
@@ -145,15 +129,15 @@ export default function NegotiationDetailPage() {
                     <div className="space-y-6">
                         <Card>
                             <CardHeader>
-                                <CardTitle>{isSupplier ? 'Solicitante' : 'Proveedor'}</CardTitle>
+                                <CardTitle>{isRequester ? 'Proveedor' : 'Solicitante'}</CardTitle>
                             </CardHeader>
                             <CardContent className="flex items-center gap-4">
                                 <Avatar className="h-12 w-12">
-                                    <AvatarFallback>{isSupplier ? negotiation.requester.name.charAt(0) : negotiation.supplier.name.charAt(0)}</AvatarFallback>
+                                    <AvatarFallback>{isRequester ? negotiation.supplier.name.charAt(0) : negotiation.requester.name.charAt(0)}</AvatarFallback>
                                 </Avatar>
                                 <div>
-                                    <p className="font-semibold">{isSupplier ? negotiation.requester.name : negotiation.supplier.name}</p>
-                                    <p className="text-sm text-muted-foreground">{isSupplier ? negotiation.requester.city : negotiation.supplier.city}</p>
+                                    <p className="font-semibold">{isRequester ? negotiation.supplier.name : negotiation.requester.name}</p>
+                                    <p className="text-sm text-muted-foreground">{isRequester ? negotiation.supplier.city : negotiation.requester.city}</p>
                                 </div>
                             </CardContent>
                         </Card>
@@ -164,19 +148,23 @@ export default function NegotiationDetailPage() {
                             <CardContent className="space-y-2">
                                 {isActionable ? (
                                     <>
-                                        {isRequester && ( // Actions for the Transformer
+                                        {canAcceptOrReject && (
                                             <>
-                                                <Button className="w-full" onClick={() => handleUpdateStatus('ACCEPTED')}>Aceptar Oferta</Button>
-                                                <Button className="w-full" variant="destructive" onClick={() => handleUpdateStatus('REJECTED')}>Rechazar Oferta</Button>
-                                            </>
-                                        )}
-                                        {isSupplier && ( // Actions for the Generator
-                                            <>
-                                                <Button className="w-full" variant="outline" onClick={() => setIsEditOfferOpen(true)}>
-                                                    <Pencil className="mr-2 h-4 w-4" /> Modificar Oferta
+                                                <Button className="w-full" onClick={() => handleUpdateStatus('ACCEPTED')}>
+                                                    <CheckCircle className="mr-2 h-4 w-4" /> Aceptar Oferta
                                                 </Button>
                                                 <Button className="w-full" variant="destructive" onClick={() => handleUpdateStatus('REJECTED')}>
-                                                    <XCircle className="mr-2 h-4 w-4" /> Cancelar Oferta
+                                                    <XCircle className="mr-2 h-4 w-4" /> Rechazar Oferta
+                                                </Button>
+                                            </>
+                                        )}
+                                        {isRequester && ( 
+                                            <>
+                                                <Button className="w-full" variant="outline" onClick={() => setIsEditOfferOpen(true)}>
+                                                    <Pencil className="mr-2 h-4 w-4" /> Modificar Solicitud
+                                                </Button>
+                                                <Button className="w-full" variant="destructive" onClick={() => handleUpdateStatus('REJECTED')}>
+                                                    <XCircle className="mr-2 h-4 w-4" /> Cancelar Solicitud
                                                 </Button>
                                             </>
                                         )}
@@ -193,7 +181,7 @@ export default function NegotiationDetailPage() {
                 </div>
             </div>
 
-            {isSupplier && (
+            {isRequester && (
                 <OfferDialog
                     isOpen={isEditOfferOpen}
                     onOpenChange={setIsEditOfferOpen}

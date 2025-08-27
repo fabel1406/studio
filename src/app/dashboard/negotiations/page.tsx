@@ -11,7 +11,7 @@ import Link from "next/link";
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useEffect, useState, useCallback } from "react";
-import { getAllNegotiationsForUser, deleteNegotiation } from "@/services/negotiation-service";
+import { getAllNegotiationsForUser, deleteNegotiation as hideNegotiationFromUI } from "@/services/negotiation-service";
 import type { Negotiation } from "@/lib/types";
 import { useRole } from "../layout";
 import { useToast } from "@/hooks/use-toast";
@@ -30,42 +30,33 @@ export default function NegotiationsPage() {
   const [receivedNegotiations, setReceivedNegotiations] = useState<Negotiation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
-  const fetchNegotiations = useCallback(() => {
-    let currentUserId: string;
-    
-    // Determine user ID based on role for mock purposes
-    if (role === 'TRANSFORMER') {
-        currentUserId = 'comp-3';
-    } else { // GENERATOR or BOTH
-        currentUserId = 'comp-1';
-    }
-    
-    setIsLoading(true);
-    const { sentOffers, receivedOffers } = getAllNegotiationsForUser(currentUserId);
+  // This logic determines the user ID based on the role for mocking purposes.
+  // In a real app, this would come from an authentication context.
+  const getCurrentUserId = useCallback(() => {
+    if (role === 'TRANSFORMER') return 'comp-3';
+    // GENERATOR or BOTH default to comp-1 for this mock.
+    // A real app would have a single user ID from auth.
+    return 'comp-1';
+  }, [role]);
 
-    if (role === 'TRANSFORMER') {
-      // For a Transformer:
-      // Sent offers are requests they initiated.
-      // Received offers are offers from generators.
-      setSentNegotiations(receivedOffers); // They are the requester, so they receive offers
-      setReceivedNegotiations(sentOffers);  // They are the supplier of the need, so they send requests
-    } else {
-       // For a Generator:
-       // Sent offers are offers they made.
-       // Received offers are requests from transformers.
-       setSentNegotiations(sentOffers);
-       setReceivedNegotiations(receivedOffers);
-    }
+  
+  const fetchNegotiations = useCallback(() => {
+    const currentUserId = getCurrentUserId();
+    setIsLoading(true);
+    const { sent, received } = getAllNegotiationsForUser(currentUserId);
+    
+    setSentNegotiations(sent);
+    setReceivedNegotiations(received);
     
     setIsLoading(false);
-  }, [role]);
+  }, [getCurrentUserId]);
 
   useEffect(() => {
     fetchNegotiations();
   }, [fetchNegotiations]);
 
   const handleHideNegotiation = (id: string) => {
-    deleteNegotiation(id);
+    hideNegotiationFromUI(id);
     fetchNegotiations(); // Re-fetch to update the list
     toast({
         title: "Negociación Ocultada",
@@ -74,6 +65,8 @@ export default function NegotiationsPage() {
   }
 
   const renderNegotiationList = (negotiations: Negotiation[], listType: 'sent' | 'received') => {
+      const currentUserId = getCurrentUserId();
+
       if (isLoading) return <p>Cargando negociaciones...</p>;
       
       const isEmpty = negotiations.length === 0;
@@ -84,10 +77,8 @@ export default function NegotiationsPage() {
                     <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed rounded-lg">
                          <Handshake className="h-16 w-16 text-muted-foreground" />
                          <h3 className="mt-4 text-xl font-semibold">No hay negociaciones aquí</h3>
-                          {listType === 'sent' && role !== 'TRANSFORMER' && <p className="mt-2 text-sm text-muted-foreground">Cuando envíes una oferta, aparecerá aquí.</p>}
-                          {listType === 'sent' && role === 'TRANSFORMER' && <p className="mt-2 text-sm text-muted-foreground">Cuando solicites un residuo, tu solicitud aparecerá aquí.</p>}
-                          {listType === 'received' && role !== 'TRANSFORMER' && <p className="mt-2 text-sm text-muted-foreground">Cuando un transformador solicite uno de tus residuos, aparecerá aquí.</p>}
-                          {listType === 'received' && role === 'TRANSFORMER' && <p className="mt-2 text-sm text-muted-foreground">Cuando un generador te envíe una oferta, aparecerá aquí.</p>}
+                          {listType === 'sent' && <p className="mt-2 text-sm text-muted-foreground">Cuando envíes una oferta o solicitud, aparecerá aquí.</p>}
+                          {listType === 'received' && <p className="mt-2 text-sm text-muted-foreground">Cuando recibas una oferta o solicitud, aparecerá aquí.</p>}
                          <Button variant="link" asChild className="mt-2">
                             <Link href="/dashboard/marketplace">Explora el marketplace para empezar.</Link>
                         </Button>
@@ -97,9 +88,9 @@ export default function NegotiationsPage() {
       }
 
       return negotiations.map((neg) => {
-            // Determine who the other party is based on the current user's role
-            const currentUserId = role === 'TRANSFORMER' ? 'comp-3' : 'comp-1';
-            const otherParty = neg.supplierId === currentUserId ? neg.requester : neg.supplier;
+            const isInitiator = neg.requesterId === currentUserId;
+            const otherParty = isInitiator ? neg.supplier : neg.requester;
+            
             const isFinalStatus = neg.status === 'ACCEPTED' || neg.status === 'REJECTED';
             const statusInfo = statusMap[neg.status];
 
@@ -174,24 +165,24 @@ export default function NegotiationsPage() {
         description: "Aquí están las solicitudes que has iniciado para adquirir residuos.",
       },
     },
-    BOTH: { // Same as GENERATOR for simplicity, can be customized
+    BOTH: {
       received: {
         value: "received",
-        label: "Solicitudes Recibidas",
-        title: "Solicitudes de Transformadores",
-        description: "Empresas interesadas en tus residuos. ¡Respóndeles!",
+        label: "Negociaciones Recibidas",
+        title: "Solicitudes y Ofertas Recibidas",
+        description: "Aquí están todas las negociaciones iniciadas por otros usuarios hacia ti.",
       },
       sent: {
         value: "sent",
-        label: "Mis Ofertas Enviadas",
-        title: "Ofertas Enviadas a Transformadores",
-        description: "Estas son las ofertas que has enviado para cubrir las necesidades de los transformadores.",
+        label: "Negociaciones Enviadas",
+        title: "Mis Ofertas y Solicitudes Enviadas",
+        description: "Aquí están todas las negociaciones que has iniciado.",
       },
     }
   };
   
   const currentTabs = TABS_CONFIG[role];
-  const defaultTab = role === 'TRANSFORMER' ? currentTabs.sent.value : currentTabs.received.value;
+  const defaultTab = currentTabs.received.value;
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">

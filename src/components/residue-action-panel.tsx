@@ -28,9 +28,8 @@ type ResidueActionPanelProps = {
 }
 
 export function ResidueActionPanel({ residue }: ResidueActionPanelProps) {
-  const { role } = useRole();
-  const currentUserCompanyId = 'comp-3' // Mocking transformer company
-
+  const { role, currentUserId } = useRole();
+  
   const { toast } = useToast()
   const router = useRouter();
 
@@ -48,10 +47,15 @@ export function ResidueActionPanel({ residue }: ResidueActionPanelProps) {
   })
 
   const onSubmit = (values: z.infer<typeof actionSchema>) => {
+    if (!currentUserId) {
+      toast({ title: "Error", description: "Usuario no identificado.", variant: "destructive" });
+      return;
+    }
+    // When a user requests a residue, they are the requester, and the residue owner is the supplier.
     addNegotiation({
       residueId: residue.id,
       supplierId: residue.companyId,
-      requesterId: currentUserCompanyId,
+      requesterId: currentUserId,
       quantity: values.quantity,
       unit: residue.unit
     })
@@ -60,10 +64,12 @@ export function ResidueActionPanel({ residue }: ResidueActionPanelProps) {
       description: `Has solicitado ${values.quantity} ${residue.unit} de ${residue.type}. El generador ha sido notificado.`,
     })
     router.push('/dashboard/negotiations');
+    router.refresh();
   }
 
-  // A Transformer viewing a Generator's listing
-  if (role === "TRANSFORMER" || role === "BOTH") {
+  // A Transformer or a user with BOTH roles can request a residue from another company.
+  // They cannot request their own residue.
+  if ((role === "TRANSFORMER" || role === "BOTH") && residue.companyId !== currentUserId) {
     return (
       <Card>
         <CardHeader>
@@ -96,8 +102,5 @@ export function ResidueActionPanel({ residue }: ResidueActionPanelProps) {
     )
   }
 
-  // Future cases:
-  // - A Generator viewing their own listing
-
-  return null // Return null if user is only a Generator or no action is applicable
+  return null
 }
