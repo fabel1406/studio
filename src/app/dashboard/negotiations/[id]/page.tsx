@@ -20,7 +20,6 @@ import { OfferDialog } from "@/components/offer-dialog";
 
 const statusMap: {[key: string]: {text: string, variant: 'default' | 'secondary' | 'outline' | 'destructive'}} = {
     SENT: { text: 'Enviado', variant: 'outline' },
-    REVIEWED: { text: 'En revisión', variant: 'secondary' },
     ACCEPTED: { text: 'Aceptado', variant: 'default' },
     REJECTED: { text: 'Rechazado', variant: 'destructive' },
 };
@@ -39,14 +38,16 @@ export default function NegotiationDetailPage() {
         // In a real app, this would come from an authentication context.
         if (role === 'GENERATOR') return 'comp-1';
         if (role === 'TRANSFORMER') return 'comp-3';
-        // When role is 'BOTH', we need to decide which identity to use.
-        // The user is the supplier if their ID matches the supplierId in the negotiation.
-        if (negotiation && negotiation.supplierId === 'comp-1' && role === 'BOTH') {
-            return 'comp-1';
-        }
-        // The user is the requester if their ID matches the requesterId in the negotiation.
-        if (negotiation && negotiation.requesterId === 'comp-1' && role === 'BOTH') {
-            return 'comp-3'; // Acting as a different company for transforming
+        if (role === 'BOTH') {
+            // When role is 'BOTH', we need to decide which identity to use.
+            // The user is the supplier if their ID matches the supplierId in the negotiation.
+            if (negotiation && negotiation.supplierId === 'comp-1') {
+                return 'comp-1';
+            }
+            // The user is the requester if their ID matches the requesterId in the negotiation.
+            if (negotiation && negotiation.requesterId === 'comp-1') {
+                return 'comp-3'; // Acting as a different company for transforming
+            }
         }
         return 'comp-1'; // Default to generator for 'BOTH' if context is unclear
     };
@@ -55,18 +56,12 @@ export default function NegotiationDetailPage() {
 
 
     useEffect(() => {
-        if (id && role) {
+        if (id) {
             const fetchedNegotiation = getNegotiationById(id);
-            // Simulate marking as reviewed if the requester views it
-            if (fetchedNegotiation && fetchedNegotiation.status === 'SENT' && fetchedNegotiation.requesterId === currentUserId) {
-                const updated = updateNegotiationStatus(fetchedNegotiation.id, 'REVIEWED');
-                setNegotiation(updated);
-            } else {
-                setNegotiation(fetchedNegotiation || null);
-            }
+            setNegotiation(fetchedNegotiation || null);
             setIsLoading(false);
         }
-    }, [id, role, currentUserId]);
+    }, [id]);
 
     const handleUpdateStatus = (status: Negotiation['status']) => {
         if (!negotiation) return;
@@ -98,7 +93,7 @@ export default function NegotiationDetailPage() {
     
     const isSupplier = negotiation.supplierId === currentUserId;
     const isRequester = negotiation.requesterId === currentUserId;
-    const isActionable = negotiation.status === 'SENT' || negotiation.status === 'REVIEWED';
+    const isActionable = negotiation.status === 'SENT';
 
     return (
         <>

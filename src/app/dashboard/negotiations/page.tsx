@@ -1,3 +1,4 @@
+
 // src/app/dashboard/negotiations/page.tsx
 "use client";
 
@@ -19,7 +20,6 @@ import { useToast } from "@/hooks/use-toast";
 
 const statusMap: {[key: string]: {text: string, variant: 'default' | 'secondary' | 'outline' | 'destructive'}} = {
     SENT: { text: 'Enviado', variant: 'outline' },
-    REVIEWED: { text: 'En revisión', variant: 'secondary' },
     ACCEPTED: { text: 'Aceptado', variant: 'default' },
     REJECTED: { text: 'Rechazado', variant: 'destructive' },
 }
@@ -32,7 +32,11 @@ export default function NegotiationsPage() {
   const [isLoading, setIsLoading] = useState(true);
   
   const fetchNegotiations = useCallback(() => {
-    const currentUserId = (role === 'TRANSFORMER') ? 'comp-3' : 'comp-1';
+    let currentUserId = 'comp-1'; // Default for GENERATOR/BOTH
+    if (role === 'TRANSFORMER') {
+        currentUserId = 'comp-3';
+    }
+    
     setIsLoading(true);
     const { sent, received } = getAllNegotiationsForUser(currentUserId);
     setSentNegotiations(sent);
