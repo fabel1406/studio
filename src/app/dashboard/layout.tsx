@@ -17,7 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Logo } from "@/components/logo";
-import { BarChart2, Leaf, Recycle, Settings, LogOut, LayoutDashboard, Search } from "lucide-react";
+import { BarChart2, Leaf, Recycle, Settings, LogOut, LayoutDashboard, Search, List } from "lucide-react";
 import type { LucideIcon } from 'lucide-react';
 import { Footer } from "@/components/footer";
 
@@ -30,8 +30,8 @@ type NavItem = {
 const navItems: NavItem[] = [
   { href: "/dashboard", label: "Resumen", icon: LayoutDashboard },
   { href: "/dashboard/marketplace", label: "Marketplace", icon: Search },
+  { href: "/dashboard/residues", label: "Mis Residuos", icon: List },
   { href: "/dashboard/impact", label: "Impacto", icon: BarChart2 },
-  { href: "/dashboard/settings", label: "Mis Residuos", icon: Leaf },
   { href: "/dashboard/matches", label: "Coincidencias", icon: Recycle },
 ];
 
