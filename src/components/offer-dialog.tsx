@@ -68,6 +68,9 @@ export function OfferDialog({ isOpen, onOpenChange, need, userResidues }: OfferD
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
+    defaultValues: {
+      price: undefined,
+    }
   });
   
   const selectedResidueId = form.watch("residueId");
@@ -78,7 +81,7 @@ export function OfferDialog({ isOpen, onOpenChange, need, userResidues }: OfferD
 
     addNegotiation({
       needId: need.id,
-      residue: selectedResidue,
+      residueId: selectedResidue.id,
       supplierId: selectedResidue.companyId, // Generator
       requesterId: need.companyId, // Transformer
       quantity: data.quantity,
@@ -88,7 +91,7 @@ export function OfferDialog({ isOpen, onOpenChange, need, userResidues }: OfferD
     
     toast({
       title: "¡Oferta Enviada!",
-      description: `Tu oferta para ${need.residueType} ha sido enviada a ${need.companyId}.`,
+      description: `Tu oferta para ${need.residueType} ha sido enviada.`,
     });
     onOpenChange(false);
     router.push('/dashboard/negotiations');
@@ -153,7 +156,7 @@ export function OfferDialog({ isOpen, onOpenChange, need, userResidues }: OfferD
                       <FormItem>
                         <FormLabel>Precio por {selectedResidue.unit} (Opcional)</FormLabel>
                         <FormControl>
-                          <Input type="number" step="0.01" placeholder="Ej: 15.00" {...field} />
+                          <Input type="number" step="0.01" placeholder="Ej: 15.00" {...field} value={field.value ?? ''} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
