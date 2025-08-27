@@ -1,3 +1,4 @@
+// src/ai/flows/match-suggestions.ts
 'use server';
 
 /**
@@ -92,65 +93,71 @@ export async function getMatchSuggestions(input: MatchSuggestionsInput): Promise
   return { suggestions: hydratedSuggestions };
 }
 
-const findTransformersPrompt = `
-  You are an expert AI matchmaking agent for a B2B marketplace for organic waste.
-  Your goal is to help a RESIDUE GENERATOR find the best TRANSFORMER companies who need their residue.
-
-  You will be given a "Source Residue" and a list of "Available Needs" from transformer companies.
-
-  Analyze the list of needs and compare them against the source residue.
-  - Find up to 3 best matches.
-  - For each match, provide a score from 0.0 (worst) to 1.0 (best).
-  - The score should be based on:
-    1. Residue Type/Category: Must be a very close or exact match. This is the most important factor.
-    2. Location: Closer proximity (based on city/country, or lat/lng if available) results in a higher score.
-    3. Quantity: A closer match between residue quantity and need quantity is better.
-
-  Your response must include the ID of the source residue, the ID of the matched need, the score, and a brief, compelling reason for the match.
-  Highlight the key factors that make it a good match in the reason.
-
-  Source Residue:
-  {{{json sourceResidue}}}
-
-  Available Needs from Transformers:
-  {{{json availableNeeds}}}
-`;
-
-const findGeneratorsPrompt = `
-  You are an expert AI matchmaking agent for a B2B marketplace for organic waste.
-  Your goal is to help a TRANSFORMER company find the best RESIDUE GENERATORS for their needs.
-
-  You will be given a "Source Need" and a list of "Available Residues" from generator companies.
-
-  Analyze the list of residues and compare them against the source need.
-  - Find up to 3 best matches.
-  - For each match, provide a score from 0.0 (worst) to 1.0 (best).
-  - The score should be based on:
-    1. Residue Type/Category: Must be a very close or exact match. This is the most important factor.
-    2. Location: Closer proximity (based on city/country, or lat/lng if available) results in a higher score.
-    3. Quantity: The residue's available quantity should be sufficient to meet the need.
-
-  Your response must include the ID of the source need, the ID of the matched residue, the score, and a brief, compelling reason for the match.
-  Highlight the key factors that make it a good match in the reason.
-
-  Source Need:
-  {{{json sourceNeed}}}
-
-  Available Residues from Generators:
-  {{{json availableResidues}}}
-`;
-
-
-const prompt = ai.definePrompt({
-  name: 'matchSuggestionsPrompt',
-  input: {schema: MatchSuggestionsInputSchema},
-  output: {schema: MatchSuggestionsOutputSchema},
+const findTransformersPrompt = ai.definePrompt({
+  name: 'findTransformersPrompt',
+  input: {
+    schema: z.object({
+      sourceResidue: ResidueSchema,
+      availableNeeds: z.array(NeedSchema),
+    }),
+  },
+  output: { schema: MatchSuggestionsOutputSchema },
   prompt: `
-    {{#if (eq matchType "findTransformers")}}
-        ${findTransformersPrompt}
-    {{else}}
-        ${findGeneratorsPrompt}
-    {{/if}}
+    You are an expert AI matchmaking agent for a B2B marketplace for organic waste.
+    Your goal is to help a RESIDUE GENERATOR find the best TRANSFORMER companies who need their residue.
+
+    You will be given a "Source Residue" and a list of "Available Needs" from transformer companies.
+
+    Analyze the list of needs and compare them against the source residue.
+    - Find up to 3 best matches.
+    - For each match, provide a score from 0.0 (worst) to 1.0 (best).
+    - The score should be based on:
+      1. Residue Type/Category: Must be a very close or exact match. This is the most important factor.
+      2. Location: Closer proximity (based on city/country, or lat/lng if available) results in a higher score.
+      3. Quantity: A closer match between residue quantity and need quantity is better.
+
+    Your response must include the ID of the source residue, the ID of the matched need, the score, and a brief, compelling reason for the match.
+    Highlight the key factors that make it a good match in the reason.
+
+    Source Residue:
+    {{{json sourceResidue}}}
+
+    Available Needs from Transformers:
+    {{{json availableNeeds}}}
+  `,
+});
+
+const findGeneratorsPrompt = ai.definePrompt({
+  name: 'findGeneratorsPrompt',
+  input: {
+    schema: z.object({
+      sourceNeed: NeedSchema,
+      availableResidues: z.array(ResidueSchema),
+    }),
+  },
+  output: { schema: MatchSuggestionsOutputSchema },
+  prompt: `
+    You are an expert AI matchmaking agent for a B2B marketplace for organic waste.
+    Your goal is to help a TRANSFORMER company find the best RESIDUE GENERATORS for their needs.
+
+    You will be given a "Source Need" and a list of "Available Residues" from generator companies.
+
+    Analyze the list of residues and compare them against the source need.
+    - Find up to 3 best matches.
+    - For each match, provide a score from 0.0 (worst) to 1.0 (best).
+    - The score should be based on:
+      1. Residue Type/Category: Must be a very close or exact match. This is the most important factor.
+      2. Location: Closer proximity (based on city/country, or lat/lng if available) results in a higher score.
+      3. Quantity: The residue's available quantity should be sufficient to meet the need.
+
+    Your response must include the ID of the source need, the ID of the matched residue, the score, and a brief, compelling reason for the match.
+    Highlight the key factors that make it a good match in the reason.
+
+    Source Need:
+    {{{json sourceNeed}}}
+
+    Available Residues from Generators:
+    {{{json availableResidues}}}
   `,
 });
 
@@ -160,8 +167,19 @@ const matchSuggestionsFlow = ai.defineFlow(
     inputSchema: MatchSuggestionsInputSchema,
     outputSchema: MatchSuggestionsOutputSchema,
   },
-  async input => {
-    const {output} = await prompt(input);
-    return output!;
+  async (input) => {
+    if (input.matchType === 'findTransformers') {
+      const { output } = await findTransformersPrompt({
+        sourceResidue: input.sourceResidue,
+        availableNeeds: input.availableNeeds,
+      });
+      return output!;
+    } else {
+      const { output } = await findGeneratorsPrompt({
+        sourceNeed: input.sourceNeed,
+        availableResidues: input.availableResidues,
+      });
+      return output!;
+    }
   }
 );
