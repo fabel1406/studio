@@ -15,7 +15,8 @@ export default function RegisterPage() {
       <Card className="w-full max-w-md shadow-2xl">
         <CardHeader className="text-center">
           <Link href="/" className="flex items-center justify-center gap-2 mb-4">
-            <Logo className="h-8 w-auto text-primary" />
+            <Logo className="h-10 w-auto" />
+             <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">EcoConnect</span>
           </Link>
           <CardTitle className="text-2xl">Create an Account</CardTitle>
           <CardDescription>

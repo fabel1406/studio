@@ -46,8 +46,8 @@ export function Header() {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           <Link href="/" className="flex items-center gap-2">
-            <Logo className="h-8 w-auto text-primary" />
-            <span className="text-xl font-bold text-foreground hidden sm:inline">EcoConnect</span>
+            <Logo className="h-10 w-auto" />
+            <span className="text-xl font-bold text-foreground hidden sm:inline bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">EcoConnect</span>
           </Link>
 
           <nav className="hidden lg:flex items-center gap-6">
@@ -85,8 +85,8 @@ export function Header() {
                   <div className="flex flex-col h-full">
                     <div className="flex items-center justify-between border-b pb-4">
                       <Link href="/" className="flex items-center gap-2">
-                        <Logo className="h-8 w-auto text-primary" />
-                        <span className="text-xl font-bold text-foreground">EcoConnect</span>
+                        <Logo className="h-10 w-auto" />
+                        <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">EcoConnect</span>
                       </Link>
                     </div>
                     <nav className="flex flex-col gap-6 mt-8">

@@ -10,8 +10,8 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="md:col-span-1">
             <Link href="/" className="flex items-center gap-2 mb-4">
-              <Logo className="h-8 w-auto text-primary" />
-              <span className="text-xl font-bold text-foreground">EcoConnect</span>
+              <Logo className="h-10 w-auto" />
+              <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">EcoConnect</span>
             </Link>
             <p className="text-muted-foreground text-sm">
               Transforming residues into resources for a sustainable future.

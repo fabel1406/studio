@@ -52,8 +52,8 @@ export default function DashboardLayout({
         <Sidebar>
             <SidebarHeader>
                  <div className="flex items-center gap-2">
-                    <Logo className="size-7 text-primary" />
-                    <span className="text-lg font-semibold group-data-[collapsible=icon]:hidden">
+                    <Logo className="h-10 w-auto" />
+                    <span className="text-lg font-semibold group-data-[collapsible=icon]:hidden bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">
                         EcoConnect
                     </span>
                 </div>
