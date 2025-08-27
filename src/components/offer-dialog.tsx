@@ -70,6 +70,7 @@ export function OfferDialog({ isOpen, onOpenChange, need, userResidues }: OfferD
     resolver: zodResolver(FormSchema),
     defaultValues: {
       price: undefined,
+      quantity: undefined,
     }
   });
   
@@ -80,7 +81,6 @@ export function OfferDialog({ isOpen, onOpenChange, need, userResidues }: OfferD
     if (!selectedResidue) return;
 
     addNegotiation({
-      needId: need.id,
       residueId: selectedResidue.id,
       supplierId: selectedResidue.companyId, // Generator
       requesterId: need.companyId, // Transformer
@@ -143,7 +143,7 @@ export function OfferDialog({ isOpen, onOpenChange, need, userResidues }: OfferD
                       <FormItem>
                         <FormLabel>Cantidad a Ofertar ({selectedResidue.unit})</FormLabel>
                         <FormControl>
-                          <Input type="number" placeholder={`Máx: ${selectedResidue.quantity}`} {...field} />
+                          <Input type="number" placeholder={`Máx: ${selectedResidue.quantity}`} {...field} value={field.value ?? ''} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

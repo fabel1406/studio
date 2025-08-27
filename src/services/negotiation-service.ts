@@ -9,7 +9,7 @@ const getStoredNegotiations = (): Negotiation[] => {
     }
     const storedData = localStorage.getItem('negotiations');
     if (storedData) {
-        const negotiations: Negotiation[] = JSON.parse(storedData);
+        const negotiations: Omit<Negotiation, 'residue' | 'requester' | 'supplier'>[] = JSON.parse(storedData);
         // Re-hydrate the objects with full details from mock data
         const allResidues = getAllResidues();
         return negotiations.map(neg => {
@@ -41,7 +41,6 @@ if (typeof window !== 'undefined' && !localStorage.getItem('negotiations')) {
 // --- Service Functions ---
 
 type NewNegotiationData = {
-    needId: string;
     residueId: string; // The actual residue being offered by the generator
     supplierId: string; // The generator's company ID
     requesterId: string; // The transformer's company ID (who created the need)
@@ -52,18 +51,8 @@ type NewNegotiationData = {
 
 export const addNegotiation = (data: NewNegotiationData): Negotiation => {
     const currentNegotiations = getStoredNegotiations();
-
-    const need = mockNeeds.find(n => n.id === data.needId);
-    const supplier = mockCompanies.find(c => c.id === data.supplierId);
-    const requester = mockCompanies.find(c => c.id === data.requesterId);
-    const residue = getAllResidues().find(r => r.id === data.residueId);
-
-
-    if (!need || !supplier || !requester || !residue) {
-        throw new Error("Invalid data provided for negotiation.");
-    }
     
-    const newNegotiation: Negotiation = {
+    const newNegotiationData: Omit<Negotiation, 'residue' | 'requester' | 'supplier'> = {
         id: `neg-${Date.now()}`,
         residueId: data.residueId,
         supplierId: data.supplierId,
@@ -71,16 +60,22 @@ export const addNegotiation = (data: NewNegotiationData): Negotiation => {
         quantity: data.quantity,
         unit: data.unit,
         offerPrice: data.offerPrice,
-        residue: residue, // The specific residue being offered
-        supplier: supplier,
-        requester: requester,
         status: 'SENT',
         createdAt: new Date().toISOString(),
         messages: [],
     };
     
-    const updatedNegotiations = [...currentNegotiations, newNegotiation];
-    setStoredNegotiations(updatedNegotiations);
+    const allNegotiations = [...currentNegotiations, newNegotiationData].map(({ residue, requester, supplier, ...rest }) => rest);
+
+    localStorage.setItem('negotiations', JSON.stringify(allNegotiations));
+
+    const newNegotiation = {
+        ...newNegotiationData,
+        residue: getAllResidues().find(r => r.id === data.residueId)!,
+        requester: mockCompanies.find(c => c.id === data.requesterId)!,
+        supplier: mockCompanies.find(c => c.id === data.supplierId)!,
+    }
+
     return newNegotiation;
 };
 
