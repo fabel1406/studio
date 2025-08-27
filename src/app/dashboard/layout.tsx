@@ -1,5 +1,4 @@
-
-
+// src/app/dashboard/layout.tsx
 "use client";
 
 import Link from "next/link";
@@ -20,33 +19,60 @@ import { Logo } from "@/components/logo";
 import { BarChart2, Leaf, Recycle, Settings, LogOut, LayoutDashboard, Search, List, PackagePlus } from "lucide-react";
 import type { LucideIcon } from 'lucide-react';
 import { Footer } from "@/components/footer";
+import React, { createContext, useContext, useState, useMemo } from 'react';
+
+type UserRole = "GENERATOR" | "TRANSFORMER" | "BOTH";
+
+type RoleContextType = {
+  role: UserRole;
+  setRole: (role: UserRole) => void;
+};
+
+const RoleContext = createContext<RoleContextType | null>(null);
+
+export const useRole = () => {
+  const context = useContext(RoleContext);
+  if (!context) {
+    throw new Error("useRole must be used within a RoleProvider");
+  }
+  return context;
+};
+
+const RoleProvider = ({ children }: { children: React.ReactNode }) => {
+  const [role, setRole] = useState<UserRole>("GENERATOR"); // Default role
+
+  const value = useMemo(() => ({ role, setRole }), [role]);
+
+  return <RoleContext.Provider value={value}>{children}</RoleContext.Provider>;
+};
+
 
 type NavItem = {
   href: string;
   label: string;
   icon: LucideIcon;
+  roles: UserRole[];
 };
 
 const navItems: NavItem[] = [
-  { href: "/dashboard", label: "Resumen", icon: LayoutDashboard },
-  { href: "/dashboard/marketplace", label: "Marketplace", icon: Search },
-  { href: "/dashboard/residues", label: "Mis Residuos", icon: List },
-  { href: "/dashboard/needs", label: "Mis Necesidades", icon: PackagePlus },
-  { href: "/dashboard/impact", label: "Impacto", icon: BarChart2 },
-  { href: "/dashboard/matches", label: "Coincidencias", icon: Recycle },
+  { href: "/dashboard", label: "Resumen", icon: LayoutDashboard, roles: ["GENERATOR", "TRANSFORMER", "BOTH"] },
+  { href: "/dashboard/marketplace", label: "Marketplace", icon: Search, roles: ["GENERATOR", "TRANSFORMER", "BOTH"] },
+  { href: "/dashboard/residues", label: "Mis Residuos", icon: List, roles: ["GENERATOR", "BOTH"] },
+  { href: "/dashboard/needs", label: "Mis Necesidades", icon: PackagePlus, roles: ["TRANSFORMER", "BOTH"] },
+  { href: "/dashboard/impact", label: "Impacto", icon: BarChart2, roles: ["GENERATOR", "TRANSFORMER", "BOTH"] },
+  { href: "/dashboard/matches", label: "Coincidencias", icon: Recycle, roles: ["GENERATOR", "TRANSFORMER", "BOTH"] },
 ];
 
 const settingsNav: NavItem[] = [
-    { href: "/dashboard/settings", label: "Ajustes", icon: Settings },
-    { href: "/logout", label: "Cerrar Sesión", icon: LogOut },
+    { href: "/dashboard/settings", label: "Ajustes", icon: Settings, roles: ["GENERATOR", "TRANSFORMER", "BOTH"] },
+    { href: "/logout", label: "Cerrar Sesión", icon: LogOut, roles: ["GENERATOR", "TRANSFORMER", "BOTH"] },
 ]
 
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+function DashboardContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const { role } = useRole();
+
+  const filteredNavItems = navItems.filter(item => item.roles.includes(role));
 
   return (
     <SidebarProvider>
@@ -63,7 +89,7 @@ export default function DashboardLayout({
               </SidebarHeader>
               <SidebarContent>
                   <SidebarMenu>
-                      {navItems.map((item) => (
+                      {filteredNavItems.map((item) => (
                           <SidebarMenuItem key={item.href}>
                               <Link href={item.href}>
                                   <SidebarMenuButton 
@@ -114,4 +140,16 @@ export default function DashboardLayout({
       </div>
     </SidebarProvider>
   );
+}
+
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <RoleProvider>
+      <DashboardContent>{children}</DashboardContent>
+    </RoleProvider>
+  )
 }

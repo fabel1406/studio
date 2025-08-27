@@ -1,7 +1,7 @@
-
+// src/app/dashboard/settings/page.tsx
 "use client"
 
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
@@ -23,7 +23,8 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { useState } from "react";
+import { useEffect } from "react";
+import { useRole } from "../layout";
 
 const profileSchema = z.object({
   companyName: z.string().min(1, "El nombre de la empresa es obligatorio."),
@@ -32,24 +33,31 @@ const profileSchema = z.object({
 });
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
+type UserRole = "GENERATOR" | "TRANSFORMER" | "BOTH";
+
 
 export default function SettingsPage() {
     const { toast } = useToast();
+    const { role, setRole } = useRole();
     
     const form = useForm<ProfileFormValues>({
         resolver: zodResolver(profileSchema),
         defaultValues: {
             companyName: "Usuario Admin",
             email: "admin@ecoconnect.com",
-            role: "GENERATOR",
+            role: role,
         },
     });
 
+    useEffect(() => {
+        form.reset({ role });
+    }, [role, form]);
+
     function onSubmit(values: ProfileFormValues) {
-        console.log(values);
+        setRole(values.role);
         toast({
             title: "Perfil Actualizado",
-            description: "Tu información ha sido guardada con éxito.",
+            description: "Tu rol ha sido cambiado a: " + values.role,
         });
     }
 
@@ -103,7 +111,7 @@ export default function SettingsPage() {
                                 render={({ field }) => (
                                     <FormItem>
                                     <FormLabel>Rol Principal</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                    <Select onValueChange={field.onChange} value={field.value}>
                                         <FormControl>
                                             <SelectTrigger>
                                                 <SelectValue placeholder="Selecciona tu rol" />
