@@ -1,17 +1,17 @@
-
 // src/services/negotiation-service.ts
 import type { Negotiation, NegotiationMessage } from '@/lib/types';
-import { mockCompanies } from '@/lib/data';
-import { getResidueById } from './residue-service';
+import { mockCompanies, mockResidues, mockNeeds } from '@/lib/data';
+import { getResidueById, addResidue, updateResidue, deleteResidue } from './residue-service';
+import { getAllNeeds } from './need-service';
 
-// Treat this as an in-memory database for negotiations
+// Treat mock data as an in-memory database
+// This will reset on server restarts in development, which is good for testing.
 let negotiationsDB: Negotiation[] = [];
 
 
 const rehydrateNegotiation = (negotiation: Negotiation): Negotiation => {
     const residue = getResidueById(negotiation.residueId);
     if (!residue) {
-        // Return a negotiation object with partial data to avoid crashes if residue is deleted
         return {
             ...negotiation,
             residue: {
@@ -61,8 +61,8 @@ export const addNegotiation = (data: NewNegotiationData): Negotiation => {
         status: 'SENT',
         createdAt: new Date().toISOString(),
         messages: [{
-            senderId: data.requesterId, // The requester initiates the conversation
-            content: `He enviado una solicitud de ${data.quantity} ${data.unit}${data.offerPrice ? ` a $${data.offerPrice}/${data.unit}` : ''}.`,
+            senderId: data.requesterId, 
+            content: `He iniciado una negociación por ${data.quantity} ${data.unit} de ${residue.type}.`,
             timestamp: new Date().toISOString()
         }],
     };
@@ -74,14 +74,14 @@ export const addNegotiation = (data: NewNegotiationData): Negotiation => {
 export const getAllNegotiationsForUser = (userId: string): { sentOffers: Negotiation[], receivedOffers: Negotiation[] } => {
     const allNegotiations = negotiationsDB.map(rehydrateNegotiation);
     
-    // "Sent" are negotiations you initiated (you are the requester)
+    // "Sent" are negotiations where you are the supplier (Generator offering residue)
     const sentOffers = allNegotiations
-      .filter(n => n.requesterId === userId)
+      .filter(n => n.supplierId === userId)
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       
-    // "Received" are negotiations where someone requested something from you (you are the supplier)
+    // "Received" are negotiations where you are the requester (Transformer receiving an offer)
     const receivedOffers = allNegotiations
-      .filter(n => n.supplierId === userId)
+      .filter(n => n.requesterId === userId)
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       
     return { sentOffers, receivedOffers };

@@ -42,8 +42,21 @@ export default function NegotiationsPage() {
     
     setIsLoading(true);
     const { sentOffers, receivedOffers } = getAllNegotiationsForUser(currentUserId);
-    setSentNegotiations(sentOffers);
-    setReceivedNegotiations(receivedOffers);
+
+    if (role === 'TRANSFORMER') {
+      // For a Transformer:
+      // Sent offers are requests they initiated.
+      // Received offers are offers from generators.
+      setSentNegotiations(receivedOffers); // They are the requester, so they receive offers
+      setReceivedNegotiations(sentOffers);  // They are the supplier of the need, so they send requests
+    } else {
+       // For a Generator:
+       // Sent offers are offers they made.
+       // Received offers are requests from transformers.
+       setSentNegotiations(sentOffers);
+       setReceivedNegotiations(receivedOffers);
+    }
+    
     setIsLoading(false);
   }, [role]);
 
@@ -84,11 +97,13 @@ export default function NegotiationsPage() {
       }
 
       return negotiations.map((neg) => {
-            const otherParty = listType === 'sent' ? neg.requester : neg.supplier;
+            // Determine who the other party is based on the current user's role
+            const currentUserId = role === 'TRANSFORMER' ? 'comp-3' : 'comp-1';
+            const otherParty = neg.supplierId === currentUserId ? neg.requester : neg.supplier;
             const isFinalStatus = neg.status === 'ACCEPTED' || neg.status === 'REJECTED';
             const statusInfo = statusMap[neg.status];
 
-            if (!neg.residue || !otherParty || !statusInfo) return null; // Defensive check for bad data
+            if (!neg.residue || !otherParty || !statusInfo) return null;
 
             return (
                 <div key={neg.id} className="flex flex-col md:flex-row items-center gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors">
@@ -100,8 +115,8 @@ export default function NegotiationsPage() {
                         <p className="font-semibold text-lg">{neg.residue.type}</p>
                          <p className="text-sm text-muted-foreground">
                             {listType === 'sent' 
-                                ? <>Oferta para <span className="text-primary font-medium">{otherParty.name}</span></>
-                                : <>Oferta de <span className="text-primary font-medium">{otherParty.name}</span></>
+                                ? <>Para <span className="text-primary font-medium">{otherParty.name}</span></>
+                                : <>De <span className="text-primary font-medium">{otherParty.name}</span></>
                             }
                         </p>
                     </div>
@@ -176,6 +191,7 @@ export default function NegotiationsPage() {
   };
   
   const currentTabs = TABS_CONFIG[role];
+  const defaultTab = role === 'TRANSFORMER' ? currentTabs.sent.value : currentTabs.received.value;
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -188,7 +204,7 @@ export default function NegotiationsPage() {
         </div>
       </div>
       
-      <Tabs defaultValue="received" className="w-full">
+      <Tabs defaultValue={defaultTab} className="w-full">
         <TabsList className="grid w-full grid-cols-2 max-w-lg mx-auto">
           <TabsTrigger value={currentTabs.received.value}>{currentTabs.received.label}</TabsTrigger>
           <TabsTrigger value={currentTabs.sent.value}>{currentTabs.sent.label}</TabsTrigger>
