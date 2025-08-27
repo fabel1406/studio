@@ -103,26 +103,27 @@ const findTransformersPrompt = ai.definePrompt({
   },
   output: { schema: MatchSuggestionsOutputSchema },
   prompt: `
-    You are an expert AI matchmaking agent for a B2B marketplace for organic waste.
-    Your goal is to help a RESIDUE GENERATOR find the best TRANSFORMER companies who need their residue.
+    Eres un agente de matchmaking experto para un marketplace B2B de residuos orgánicos.
+    Tu objetivo es ayudar a un GENERADOR DE RESIDUOS a encontrar las mejores empresas TRANSFORMADORAS que necesiten su residuo.
+    Tu respuesta SIEMPRE debe ser en español.
 
-    You will be given a "Source Residue" and a list of "Available Needs" from transformer companies.
+    Se te proporcionará un "Residuo de Origen" y una lista de "Necesidades Disponibles" de empresas transformadoras.
 
-    Analyze the list of needs and compare them against the source residue.
-    - Find up to 3 best matches.
-    - For each match, provide a score from 0.0 (worst) to 1.0 (best).
-    - The score should be based on:
-      1. Residue Type/Category: Must be a very close or exact match. This is the most important factor.
-      2. Location: Closer proximity (based on city/country, or lat/lng if available) results in a higher score.
-      3. Quantity: A closer match between residue quantity and need quantity is better.
+    Analiza la lista de necesidades y compáralas con el residuo de origen.
+    - Encuentra hasta 3 de las mejores coincidencias.
+    - Para cada coincidencia, proporciona una puntuación de 0.0 (peor) a 1.0 (mejor).
+    - La puntuación debe basarse en:
+      1. Tipo/Categoría de Residuo: Debe ser una coincidencia muy cercana o exacta. Este es el factor más importante.
+      2. Ubicación: Una mayor proximidad (basada en ciudad/país, o lat/lng si están disponibles) resulta en una puntuación más alta.
+      3. Cantidad: Una coincidencia cercana entre la cantidad del residuo y la cantidad de la necesidad es mejor.
 
-    Your response must include the ID of the source residue, the ID of the matched need, the score, and a brief, compelling reason for the match.
-    Highlight the key factors that make it a good match in the reason.
+    Tu respuesta debe incluir el ID del residuo de origen, el ID de la necesidad coincidente, la puntuación y una razón breve y convincente para la coincidencia.
+    Destaca en la razón los factores clave que la convierten en una buena coincidencia.
 
-    Source Residue:
+    Residuo de Origen:
     {{{json sourceResidue}}}
 
-    Available Needs from Transformers:
+    Necesidades Disponibles de Transformadores:
     {{{json availableNeeds}}}
   `,
 });
@@ -137,26 +138,27 @@ const findGeneratorsPrompt = ai.definePrompt({
   },
   output: { schema: MatchSuggestionsOutputSchema },
   prompt: `
-    You are an expert AI matchmaking agent for a B2B marketplace for organic waste.
-    Your goal is to help a TRANSFORMER company find the best RESIDUE GENERATORS for their needs.
+    Eres un agente de matchmaking experto para un marketplace B2B de residuos orgánicos.
+    Tu objetivo es ayudar a una empresa TRANSFORMADORA a encontrar los mejores GENERADORES DE RESIDUOS para sus necesidades.
+    Tu respuesta SIEMPRE debe ser en español.
 
-    You will be given a "Source Need" and a list of "Available Residues" from generator companies.
+    Se te proporcionará una "Necesidad de Origen" y una lista de "Residuos Disponibles" de empresas generadoras.
 
-    Analyze the list of residues and compare them against the source need.
-    - Find up to 3 best matches.
-    - For each match, provide a score from 0.0 (worst) to 1.0 (best).
-    - The score should be based on:
-      1. Residue Type/Category: Must be a very close or exact match. This is the most important factor.
-      2. Location: Closer proximity (based on city/country, or lat/lng if available) results in a higher score.
-      3. Quantity: The residue's available quantity should be sufficient to meet the need.
+    Analiza la lista de residuos y compáralos con la necesidad de origen.
+    - Encuentra hasta 3 de las mejores coincidencias.
+    - Para cada coincidencia, proporciona una puntuación de 0.0 (peor) a 1.0 (mejor).
+    - La puntuación debe basarse en:
+      1. Tipo/Categoría de Residuo: Debe ser una coincidencia muy cercana o exacta. Este es el factor más importante.
+      2. Ubicación: Una mayor proximidad (basada en ciudad/país, o lat/lng si están disponibles) resulta en una puntuación más alta.
+      3. Cantidad: La cantidad disponible del residuo debe ser suficiente para satisfacer la necesidad.
 
-    Your response must include the ID of the source need, the ID of the matched residue, the score, and a brief, compelling reason for the match.
-    Highlight the key factors that make it a good match in the reason.
+    Tu respuesta debe incluir el ID de la necesidad de origen, el ID del residuo coincidente, la puntuación y una razón breve y convincente para la coincidencia.
+    Destaca en la razón los factores clave que la convierten en una buena coincidencia.
 
-    Source Need:
+    Necesidad de Origen:
     {{{json sourceNeed}}}
 
-    Available Residues from Generators:
+    Residuos Disponibles de Generadores:
     {{{json availableResidues}}}
   `,
 });
