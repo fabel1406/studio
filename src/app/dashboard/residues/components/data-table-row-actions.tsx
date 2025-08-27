@@ -24,26 +24,22 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { residueSchema } from "../data/schema"
-import { useToast } from "@/hooks/use-toast";
+import type { Residue } from "@/lib/types";
 
 
-interface DataTableRowActionsProps<TData> {
-  row: Row<TData>
+interface DataTableRowActionsProps<TData extends Residue> {
+  row: Row<TData>,
+  deleteResidue: (id: string, type: string) => void;
 }
 
-
-export function DataTableRowActions<TData>({
+export function DataTableRowActions<TData extends Residue>({
   row,
+  deleteResidue,
 }: DataTableRowActionsProps<TData>) {
-  const { toast } = useToast();
-   const residue = residueSchema.parse(row.original)
+   const residue = row.original;
 
    const handleDelete = () => {
-    toast({
-      title: "Residuo Eliminado",
-      description: `El residuo "${residue.type}" ha sido eliminado con éxito.`,
-    });
+    deleteResidue(residue.id, residue.type);
    }
 
   return (

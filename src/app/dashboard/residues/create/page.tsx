@@ -4,7 +4,8 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { useEffect, useState } from "react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -27,6 +28,7 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { addResidue, getResidueById, updateResidue } from "@/services/residue-service"
 
 
 const residueFormSchema = z.object({
@@ -42,7 +44,9 @@ type ResidueFormValues = z.infer<typeof residueFormSchema>
 
 export default function ResidueFormPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast()
+  const [residueId, setResidueId] = useState<string | null>(null);
 
   const form = useForm<ResidueFormValues>({
     resolver: zodResolver(residueFormSchema),
@@ -54,13 +58,51 @@ export default function ResidueFormPage() {
     },
     mode: "onChange",
   })
+  
+  useEffect(() => {
+    const id = searchParams.get('id');
+    if (id) {
+      setResidueId(id);
+      const existingResidue = getResidueById(id);
+      if (existingResidue) {
+        form.reset({
+          type: existingResidue.type,
+          category: existingResidue.category,
+          quantity: existingResidue.quantity,
+          unit: existingResidue.unit,
+          // pricePerUnit is optional, so handle its potential absence
+          pricePerUnit: existingResidue.pricePerUnit || undefined,
+          // description is optional, so handle its potential absence
+          description: existingResidue.description || undefined,
+        });
+      }
+    }
+  }, [searchParams, form]);
+
 
   function onSubmit(data: ResidueFormValues) {
-    toast({
-      title: "¡Residuo Guardado!",
-      description: `El residuo "${data.type}" ha sido guardado con éxito.`,
-    })
-    // In a real app, you would redirect to the residues list
+    const residueData = {
+        ...data,
+        id: residueId || crypto.randomUUID(),
+        companyId: 'comp-1', // Mock companyId
+        availabilityDate: new Date().toISOString(),
+        status: 'ACTIVE' as const,
+    }
+
+    if (residueId) {
+        updateResidue(residueData);
+        toast({
+            title: "¡Residuo Actualizado!",
+            description: `El residuo "${data.type}" ha sido actualizado con éxito.`,
+        })
+    } else {
+        addResidue(residueData);
+        toast({
+            title: "¡Residuo Guardado!",
+            description: `El residuo "${data.type}" ha sido guardado con éxito.`,
+        })
+    }
+
     router.push('/dashboard/residues');
   }
 
@@ -68,9 +110,12 @@ export default function ResidueFormPage() {
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
        <Card>
         <CardHeader>
-          <CardTitle>Publicar Nuevo Residuo</CardTitle>
+          <CardTitle>{residueId ? "Editar Residuo" : "Publicar Nuevo Residuo"}</CardTitle>
           <CardDescription>
-            Completa los detalles a continuación para añadir un nuevo residuo a tu inventario.
+            {residueId
+              ? "Actualiza los detalles de tu residuo."
+              : "Completa los detalles a continuación para añadir un nuevo residuo a tu inventario."
+            }
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -99,7 +144,7 @@ export default function ResidueFormPage() {
                     render={({ field }) => (
                         <FormItem>
                         <FormLabel>Categoría</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
                             <FormControl>
                             <SelectTrigger>
                                 <SelectValue placeholder="Selecciona una categoría" />
@@ -133,7 +178,7 @@ export default function ResidueFormPage() {
                                     control={form.control}
                                     name="unit"
                                     render={({ field: unitField }) => (
-                                        <Select onValueChange={unitField.onChange} defaultValue={unitField.value}>
+                                        <Select onValueChange={unitField.onChange} value={unitField.value} defaultValue={unitField.value}>
                                             <FormControl>
                                                 <SelectTrigger className="w-[100px]">
                                                     <SelectValue placeholder="Unidad" />
@@ -158,7 +203,7 @@ export default function ResidueFormPage() {
                         <FormItem>
                         <FormLabel>Precio por Unidad (Opcional)</FormLabel>
                         <FormControl>
-                            <Input type="number" placeholder="15.00" {...field} />
+                            <Input type="number" placeholder="15.00" {...field} value={field.value ?? ''} />
                         </FormControl>
                         <FormDescription>
                             Establece un precio por KG o TON. Déjalo en 0 si es negociable.
@@ -179,6 +224,7 @@ export default function ResidueFormPage() {
                                 placeholder="Añade detalles adicionales sobre el residuo, como su composición, humedad, posibles contaminantes, etc."
                                 className="resize-none"
                                 {...field}
+                                value={field.value ?? ''}
                                 />
                             </FormControl>
                             <FormMessage />
@@ -191,7 +237,7 @@ export default function ResidueFormPage() {
                     <Button type="button" variant="outline" onClick={() => router.back()}>
                         Cancelar
                     </Button>
-                    <Button type="submit">Guardar Residuo</Button>
+                    <Button type="submit">{residueId ? "Guardar Cambios" : "Guardar Residuo"}</Button>
                 </div>
                 </form>
             </Form>
