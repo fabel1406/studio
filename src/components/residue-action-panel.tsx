@@ -19,6 +19,8 @@ import {
 } from "@/components/ui/form"
 import { useToast } from "@/hooks/use-toast"
 import { Send } from "lucide-react"
+import { addNegotiation } from "@/services/negotiation-service"
+import { useRouter } from "next/navigation"
 
 type UserRole = "GENERATOR" | "TRANSFORMER" | "BOTH"
 
@@ -29,8 +31,10 @@ type ResidueActionPanelProps = {
 export function ResidueActionPanel({ residue }: ResidueActionPanelProps) {
   // In a real app, this would come from the user's session or context
   const currentUserRole: UserRole = "TRANSFORMER"
+  const currentUserCompanyId = 'comp-3' // Mocking transformer company
 
   const { toast } = useToast()
+  const router = useRouter();
 
   const actionSchema = z.object({
     quantity: z.coerce.number()
@@ -46,12 +50,18 @@ export function ResidueActionPanel({ residue }: ResidueActionPanelProps) {
   })
 
   const onSubmit = (values: z.infer<typeof actionSchema>) => {
-    console.log("Solicitud:", values)
+    addNegotiation({
+      residueId: residue.id,
+      supplierId: residue.companyId,
+      requesterId: currentUserCompanyId,
+      quantity: values.quantity,
+      unit: residue.unit
+    })
     toast({
       title: "Solicitud Enviada",
       description: `Has solicitado ${values.quantity} ${residue.unit} de ${residue.type}. El generador ha sido notificado.`,
     })
-    form.reset()
+    router.push('/dashboard/negotiations');
   }
 
   // A Transformer is viewing a Generator's listing

@@ -69,9 +69,9 @@ export type Negotiation = {
     id: string;
     residueId: string;
     residue: Residue;
-    requesterId: string;
+    requesterId: string; // The one asking (transformer)
     requester: Company;
-    supplierId: string;
+    supplierId: string; // The one providing (generator)
     supplier: Company;
     quantity: number;
     unit: 'KG' | 'TON';
