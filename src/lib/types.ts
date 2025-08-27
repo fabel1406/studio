@@ -73,7 +73,7 @@ export type NegotiationMessage = {
 
 export type Negotiation = {
     id: string;
-    residueId: string;
+    residueId: string; // The specific residue being offered
     residue: Residue;
     requesterId: string; // The one asking (transformer)
     requester: Company;
@@ -81,6 +81,7 @@ export type Negotiation = {
     supplier: Company;
     quantity: number;
     unit: 'KG' | 'TON';
+    offerPrice?: number;
     status: 'SENT' | 'REVIEWED' | 'ACCEPTED' | 'REJECTED';
     createdAt: string;
     messages: NegotiationMessage[];
