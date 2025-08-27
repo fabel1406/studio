@@ -59,7 +59,9 @@ export default function ResiduesPage() {
       </div>
       
       {residues.length > 0 ? (
-        <DataTable data={residues} columns={dynamicColumns} />
+        <div className="w-full overflow-x-auto">
+          <DataTable data={residues} columns={dynamicColumns} />
+        </div>
       ) : (
          <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed shadow-sm h-96">
           <div className="flex flex-col items-center gap-2 text-center">

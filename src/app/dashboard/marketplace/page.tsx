@@ -114,7 +114,7 @@ export default function MarketplacePage() {
       </div>
 
       <Tabs defaultValue="residues" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 max-w-lg mx-auto">
+        <TabsList className="grid w-full grid-cols-1 sm:grid-cols-2 max-w-lg mx-auto">
           <TabsTrigger value="residues">Residuos Disponibles ({filteredResidues.length})</TabsTrigger>
           <TabsTrigger value="needs">Necesidades del Mercado ({filteredNeeds.length})</TabsTrigger>
         </TabsList>
