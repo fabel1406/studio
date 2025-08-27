@@ -11,17 +11,17 @@ export default function Home() {
         <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-secondary/10 dark:from-primary/10 dark:via-background dark:to-secondary/20"></div>
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative">
           <div className="grid lg:grid-cols-1 gap-12 items-center">
-            <div className="text-center lg:text-left">
+            <div className="text-center">
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground">
                 Convierte tus Residuos
                 <span className="block bg-clip-text text-transparent bg-gradient-to-r from-primary via-green-500 to-secondary">
                   en Recursos
                 </span>
               </h1>
-              <p className="mt-4 sm:mt-6 text-lg sm:text-xl text-muted-foreground max-w-xl mx-auto lg:mx-0">
+              <p className="mt-4 sm:mt-6 text-lg sm:text-xl text-muted-foreground max-w-xl mx-auto">
                 EcoConnect es el marketplace B2B donde los residuos orgánicos encuentran su valor. Conectamos generadores con transformadores para crear una economía circular y sostenible.
               </p>
-              <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+              <div className="mt-8 sm:mt-10 flex flex-col sm:flex-row gap-4 justify-center">
                 <Button asChild size="lg" className="text-lg py-7 px-8">
                   <Link href="/register">Comenzar</Link>
                 </Button>
