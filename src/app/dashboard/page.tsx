@@ -3,18 +3,19 @@ import { Button } from "@/components/ui/button";
 import { ArrowUpRight, BarChart2, Leaf, Recycle } from "lucide-react";
 import Link from "next/link";
 import ImpactCharts from "@/components/impact-charts";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const stats = [
-    { title: "Active Listings", value: "12", icon: Leaf, change: "+2 this week" },
-    { title: "Potential Matches", value: "45", icon: Recycle, change: "+5 this week" },
-    { title: "CO₂ Avoided (kg)", value: "1,250", icon: BarChart2, change: "+150 this month" },
+    { title: "Listados Activos", value: "12", icon: Leaf, change: "+2 esta semana" },
+    { title: "Coincidencias Potenciales", value: "45", icon: Recycle, change: "+5 esta semana" },
+    { title: "CO₂ Evitado (kg)", value: "1,250", icon: BarChart2, change: "+150 este mes" },
 ]
 
 export default function DashboardOverviewPage() {
     return (
         <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
             <div className="flex items-center justify-between space-y-2">
-                <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+                <h2 className="text-3xl font-bold tracking-tight">Panel de control</h2>
             </div>
             
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -39,7 +40,7 @@ export default function DashboardOverviewPage() {
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
                 <Card className="col-span-4">
                     <CardHeader>
-                        <CardTitle>Impact Overview</CardTitle>
+                        <CardTitle>Resumen de Impacto</CardTitle>
                     </CardHeader>
                     <CardContent className="pl-2">
                         <ImpactCharts />
@@ -47,7 +48,7 @@ export default function DashboardOverviewPage() {
                 </Card>
                 <Card className="col-span-4 lg:col-span-3">
                     <CardHeader>
-                        <CardTitle>Recent Matches</CardTitle>
+                        <CardTitle>Coincidencias Recientes</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-4">
@@ -60,16 +61,16 @@ export default function DashboardOverviewPage() {
                                     <div className="ml-4 space-y-1">
                                         <p className="text-sm font-medium leading-none">BioGas Energía</p>
                                         <p className="text-sm text-muted-foreground">
-                                            Match for 'Alperujo'
+                                            Coincidencia para 'Alperujo'
                                         </p>
                                     </div>
-                                    <div className="ml-auto font-medium">85% score</div>
+                                    <div className="ml-auto font-medium">85% puntuación</div>
                                 </div>
                             ))}
                         </div>
                         <Button asChild className="mt-4 w-full">
                             <Link href="/dashboard/matches">
-                                View All Matches <ArrowUpRight className="ml-2 h-4 w-4" />
+                                Ver todas las coincidencias <ArrowUpRight className="ml-2 h-4 w-4" />
                             </Link>
                         </Button>
                     </CardContent>

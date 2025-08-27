@@ -14,39 +14,39 @@ export function Footer() {
               <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">EcoConnect</span>
             </Link>
             <p className="text-muted-foreground text-sm">
-              Transforming residues into resources for a sustainable future.
+              Transformando residuos en recursos para un futuro sostenible.
             </p>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-3 md:col-span-3 gap-8">
             <div>
-              <h3 className="text-sm font-semibold text-foreground tracking-wider uppercase">Solutions</h3>
+              <h3 className="text-sm font-semibold text-foreground tracking-wider uppercase">Soluciones</h3>
               <ul className="mt-4 space-y-4">
                 <li><Link href="/dashboard/marketplace" className="text-sm text-muted-foreground hover:text-primary">Marketplace</Link></li>
-                <li><Link href="/dashboard/impact" className="text-sm text-muted-foreground hover:text-primary">Impact Tracking</Link></li>
-                <li><Link href="#" className="text-sm text-muted-foreground hover:text-primary">For Generators</Link></li>
-                <li><Link href="#" className="text-sm text-muted-foreground hover:text-primary">For Transformers</Link></li>
+                <li><Link href="/dashboard/impact" className="text-sm text-muted-foreground hover:text-primary">Seguimiento de Impacto</Link></li>
+                <li><Link href="#" className="text-sm text-muted-foreground hover:text-primary">Para Generadores</Link></li>
+                <li><Link href="#" className="text-sm text-muted-foreground hover:text-primary">Para Transformadores</Link></li>
               </ul>
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-foreground tracking-wider uppercase">Company</h3>
+              <h3 className="text-sm font-semibold text-foreground tracking-wider uppercase">Compañía</h3>
               <ul className="mt-4 space-y-4">
-                <li><Link href="#" className="text-sm text-muted-foreground hover:text-primary">About</Link></li>
-                <li><Link href="#" className="text-sm text-muted-foreground hover:text-primary">Careers</Link></li>
-                <li><Link href="#" className="text-sm text-muted-foreground hover:text-primary">Press</Link></li>
+                <li><Link href="#" className="text-sm text-muted-foreground hover:text-primary">Sobre Nosotros</Link></li>
+                <li><Link href="#" className="text-sm text-muted-foreground hover:text-primary">Empleo</Link></li>
+                <li><Link href="#" className="text-sm text-muted-foreground hover:text-primary">Prensa</Link></li>
               </ul>
             </div>
             <div>
               <h3 className="text-sm font-semibold text-foreground tracking-wider uppercase">Legal</h3>
               <ul className="mt-4 space-y-4">
-                <li><Link href="#" className="text-sm text-muted-foreground hover:text-primary">Privacy Policy</Link></li>
-                <li><Link href="#" className="text-sm text-muted-foreground hover:text-primary">Terms of Service</Link></li>
+                <li><Link href="#" className="text-sm text-muted-foreground hover:text-primary">Política de Privacidad</Link></li>
+                <li><Link href="#" className="text-sm text-muted-foreground hover:text-primary">Términos de Servicio</Link></li>
               </ul>
             </div>
           </div>
         </div>
         <div className="mt-8 border-t pt-8 flex flex-col md:flex-row items-center justify-between">
           <p className="text-sm text-muted-foreground md:order-1">
-            &copy; {new Date().getFullYear()} EcoConnect. All rights reserved.
+            &copy; {new Date().getFullYear()} EcoConnect. Todos los derechos reservados.
           </p>
           <div className="flex space-x-6 mt-4 md:mt-0 md:order-2">
             <Button variant="ghost" size="icon" asChild>

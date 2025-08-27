@@ -33,7 +33,7 @@ export function ResidueDetails({ residue }: { residue: Residue }) {
             console.error(error);
             toast({
                 title: "Error",
-                description: "Failed to generate enhanced description.",
+                description: "No se pudo generar la descripción mejorada.",
                 variant: "destructive",
             });
         } finally {
@@ -63,7 +63,7 @@ export function ResidueDetails({ residue }: { residue: Residue }) {
             console.error(error);
             toast({
                 title: "Error",
-                description: "Failed to find matches.",
+                description: "No se pudieron encontrar coincidencias.",
                 variant: "destructive",
             });
         } finally {
@@ -74,7 +74,7 @@ export function ResidueDetails({ residue }: { residue: Residue }) {
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Analysis & Opportunities</CardTitle>
+                <CardTitle>Análisis y Oportunidades</CardTitle>
             </CardHeader>
             <CardContent>
                 <Accordion type="single" collapsible className="w-full">
@@ -82,7 +82,7 @@ export function ResidueDetails({ residue }: { residue: Residue }) {
                         <AccordionTrigger className="text-lg">
                             <div className="flex items-center gap-2">
                                 <Sparkles className="h-5 w-5 text-primary" />
-                                <span>AI Enhanced Description</span>
+                                <span>Descripción Mejorada con IA</span>
                             </div>
                         </AccordionTrigger>
                         <AccordionContent className="pt-2">
@@ -97,7 +97,7 @@ export function ResidueDetails({ residue }: { residue: Residue }) {
                                 <p className="text-foreground whitespace-pre-wrap">{enhancedDescription}</p>
                             ) : (
                                 <Button onClick={handleGenerateDescription}>
-                                    <Sparkles className="mr-2 h-4 w-4" /> Generate Analysis
+                                    <Sparkles className="mr-2 h-4 w-4" /> Generar Análisis
                                 </Button>
                             )}
                         </AccordionContent>
@@ -106,7 +106,7 @@ export function ResidueDetails({ residue }: { residue: Residue }) {
                          <AccordionTrigger className="text-lg">
                              <div className="flex items-center gap-2">
                                 <Recycle className="h-5 w-5 text-primary" />
-                                <span>Potential Matches</span>
+                                <span>Coincidencias Potenciales</span>
                              </div>
                         </AccordionTrigger>
                         <AccordionContent className="pt-2">
@@ -127,17 +127,17 @@ export function ResidueDetails({ residue }: { residue: Residue }) {
                                     {matches.map((match, index) => (
                                         <div key={index} className="p-4 border rounded-lg bg-background/50">
                                             <div className="flex justify-between items-start">
-                                                <h4 className="font-semibold">Transformer Company #{index + 1}</h4>
-                                                <Badge>Score: {(match.score * 100).toFixed(0)}%</Badge>
+                                                <h4 className="font-semibold">Empresa Transformadora #{index + 1}</h4>
+                                                <Badge>Puntuación: {(match.score * 100).toFixed(0)}%</Badge>
                                             </div>
                                             <p className="text-sm text-muted-foreground mt-2">{match.reason}</p>
-                                             <Button size="sm" className="mt-4">Contact Transformer</Button>
+                                             <Button size="sm" className="mt-4">Contactar Transformador</Button>
                                         </div>
                                     ))}
                                 </div>
                             ) : (
                                 <Button onClick={handleFindMatches}>
-                                     <Recycle className="mr-2 h-4 w-4" /> Find Matches
+                                     <Recycle className="mr-2 h-4 w-4" /> Encontrar Coincidencias
                                 </Button>
                             )}
                         </AccordionContent>

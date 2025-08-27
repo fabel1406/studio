@@ -9,8 +9,8 @@ import { useState, useEffect } from "react";
 
 const navLinks = [
   { href: "/dashboard/marketplace", label: "Marketplace" },
-  { href: "/dashboard/impact", label: "Impact" },
-  { href: "/about", label: "About Us" },
+  { href: "/dashboard/impact", label: "Impacto" },
+  { href: "/about", label: "Sobre Nosotros" },
 ];
 
 export function Header() {
@@ -68,10 +68,10 @@ export function Header() {
             </Button>
             <div className="hidden lg:flex items-center gap-2">
               <Button asChild variant="ghost">
-                <Link href="/login">Log In</Link>
+                <Link href="/login">Iniciar Sesión</Link>
               </Button>
               <Button asChild>
-                <Link href="/register">Sign Up</Link>
+                <Link href="/register">Registrarse</Link>
               </Button>
             </div>
             <div className="lg:hidden">
@@ -102,10 +102,10 @@ export function Header() {
                     </nav>
                     <div className="mt-auto border-t pt-6 flex flex-col gap-4">
                       <Button asChild variant="outline">
-                        <Link href="/login">Log In</Link>
+                        <Link href="/login">Iniciar Sesión</Link>
                       </Button>
                       <Button asChild>
-                        <Link href="/register">Sign Up</Link>
+                        <Link href="/register">Registrarse</Link>
                       </Button>
                     </div>
                   </div>

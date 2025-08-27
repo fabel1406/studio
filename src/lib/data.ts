@@ -7,7 +7,7 @@ export const mockCompanies: Company[] = [
     type: 'GENERATOR',
     description: 'Productora de aceite de oliva con residuos de alperujo',
     city: 'Jaén',
-    country: 'Spain',
+    country: 'España',
     verificationStatus: 'VERIFIED',
     lat: 37.7796,
     lng: -3.7859,
@@ -18,7 +18,7 @@ export const mockCompanies: Company[] = [
     type: 'GENERATOR',
     description: 'Procesadora de alimentos frescos',
     city: 'Murcia',
-    country: 'Spain',
+    country: 'España',
     verificationStatus: 'PENDING',
     lat: 37.9922,
     lng: -1.1307,
@@ -29,7 +29,7 @@ export const mockCompanies: Company[] = [
     type: 'TRANSFORMER',
     description: 'Producción de biogás a partir de residuos orgánicos',
     city: 'Valencia',
-    country: 'Spain',
+    country: 'España',
     verificationStatus: 'VERIFIED',
     lat: 39.4699,
     lng: -0.3763,
@@ -111,11 +111,13 @@ export const mockResidues: Residue[] = [
   },
 ];
 
+const MESES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
 export const mockImpactMetrics: ImpactMetric[] = [
-  { label: 'Jan', co2Avoided: 250, wasteDiverted: 500, savings: 750 },
-  { label: 'Feb', co2Avoided: 320, wasteDiverted: 640, savings: 960 },
-  { label: 'Mar', co2Avoided: 450, wasteDiverted: 900, savings: 1350 },
-  { label: 'Apr', co2Avoided: 400, wasteDiverted: 800, savings: 1200 },
-  { label: 'May', co2Avoided: 550, wasteDiverted: 1100, savings: 1650 },
-  { label: 'Jun', co2Avoided: 600, wasteDiverted: 1200, savings: 1800 },
+  { label: MESES[0], co2Avoided: 250, wasteDiverted: 500, savings: 750 },
+  { label: MESES[1], co2Avoided: 320, wasteDiverted: 640, savings: 960 },
+  { label: MESES[2], co2Avoided: 450, wasteDiverted: 900, savings: 1350 },
+  { label: MESES[3], co2Avoided: 400, wasteDiverted: 800, savings: 1200 },
+  { label: MESES[4], co2Avoided: 550, wasteDiverted: 1100, savings: 1650 },
+  { label: MESES[5], co2Avoided: 600, wasteDiverted: 1200, savings: 1800 },
 ];

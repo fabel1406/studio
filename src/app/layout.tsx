@@ -5,8 +5,8 @@ import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
 
 export const metadata: Metadata = {
-  title: 'EcoConnect - Transforming Residues into Resources',
-  description: 'A B2B marketplace connecting organic waste generators with transformers who can valorize them.',
+  title: 'EcoConnect - Transformando Residuos en Recursos',
+  description: 'Un marketplace B2B que conecta generadores de residuos orgánicos con transformadores que pueden valorizarlos.',
 };
 
 export default function RootLayout({
@@ -15,7 +15,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="es" className="dark">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

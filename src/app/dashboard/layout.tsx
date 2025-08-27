@@ -27,16 +27,16 @@ type NavItem = {
 };
 
 const navItems: NavItem[] = [
-  { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
+  { href: "/dashboard", label: "Resumen", icon: LayoutDashboard },
   { href: "/dashboard/marketplace", label: "Marketplace", icon: Search },
-  { href: "/dashboard/impact", label: "Impact", icon: BarChart2 },
-  { href: "/dashboard/residues", label: "My Residues", icon: Leaf },
-  { href: "/dashboard/matches", label: "Matches", icon: Recycle },
+  { href: "/dashboard/impact", label: "Impacto", icon: BarChart2 },
+  { href: "/dashboard/residues", label: "Mis Residuos", icon: Leaf },
+  { href: "/dashboard/matches", label: "Coincidencias", icon: Recycle },
 ];
 
 const settingsNav: NavItem[] = [
-    { href: "/dashboard/settings", label: "Settings", icon: Settings },
-    { href: "/logout", label: "Logout", icon: LogOut },
+    { href: "/dashboard/settings", label: "Ajustes", icon: Settings },
+    { href: "/logout", label: "Cerrar Sesión", icon: LogOut },
 ]
 
 export default function DashboardLayout({
@@ -97,7 +97,7 @@ export default function DashboardLayout({
                         <AvatarFallback>CN</AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col group-data-[collapsible=icon]:hidden">
-                        <span className="text-sm font-medium text-foreground">Admin User</span>
+                        <span className="text-sm font-medium text-foreground">Usuario Admin</span>
                         <span className="text-xs text-muted-foreground">admin@ecoconnect.com</span>
                     </div>
                 </div>

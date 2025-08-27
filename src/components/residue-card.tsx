@@ -6,6 +6,7 @@ import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { MapPin, Calendar, ArrowRight } from "lucide-react";
 import { formatDistanceToNow } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 
 export function ResidueCard({ residue }: { residue: Residue }) {
@@ -18,7 +19,7 @@ export function ResidueCard({ residue }: { residue: Residue }) {
             alt={residue.type}
             fill
             style={{objectFit: 'cover'}}
-            data-ai-hint="organic waste"
+            data-ai-hint="residuo organico"
           />
            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
            <div className="absolute bottom-4 left-4">
@@ -43,7 +44,7 @@ export function ResidueCard({ residue }: { residue: Residue }) {
             </div>
             <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-primary" />
-                <span>Available {formatDistanceToNow(new Date(residue.availabilityDate), { addSuffix: true })}</span>
+                <span>Disponible {formatDistanceToNow(new Date(residue.availabilityDate), { addSuffix: true, locale: es })}</span>
             </div>
             <div className="flex items-center justify-between pt-2">
                 <span className="font-bold text-lg text-foreground">{residue.quantity} {residue.unit}</span>
@@ -56,7 +57,7 @@ export function ResidueCard({ residue }: { residue: Residue }) {
       <CardFooter className="p-4 pt-0">
         <Button asChild className="w-full">
             <Link href={`/dashboard/residues/${residue.id}`}>
-                View Details <ArrowRight className="ml-2 h-4 w-4" />
+                Ver Detalles <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
         </Button>
       </CardFooter>

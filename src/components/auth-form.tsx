@@ -24,15 +24,15 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 
 const loginSchema = z.object({
-  email: z.string().email({ message: "Invalid email address." }),
-  password: z.string().min(1, { message: "Password is required." }),
+  email: z.string().email({ message: "Dirección de correo electrónico no válida." }),
+  password: z.string().min(1, { message: "La contraseña es obligatoria." }),
 });
 
 const registerSchema = z.object({
-  email: z.string().email({ message: "Invalid email address." }),
-  password: z.string().min(8, { message: "Password must be at least 8 characters." }),
+  email: z.string().email({ message: "Dirección de correo electrónico no válida." }),
+  password: z.string().min(8, { message: "La contraseña debe tener al menos 8 caracteres." }),
   role: z.enum(["GENERATOR", "TRANSFORMER"], {
-    required_error: "You need to select a role.",
+    required_error: "Debes seleccionar un rol.",
   }),
 });
 
@@ -58,8 +58,8 @@ export function AuthForm({ mode }: AuthFormProps) {
   function onSubmit(values: z.infer<typeof schema>) {
     console.log(values);
     toast({
-      title: mode === "login" ? "Login Successful" : "Registration Successful",
-      description: "Redirecting to dashboard...",
+      title: mode === "login" ? "Inicio de Sesión Exitoso" : "Registro Exitoso",
+      description: "Redirigiendo al panel de control...",
     });
     // Simulate API call and redirect
     setTimeout(() => {
@@ -75,9 +75,9 @@ export function AuthForm({ mode }: AuthFormProps) {
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Email</FormLabel>
+              <FormLabel>Correo Electrónico</FormLabel>
               <FormControl>
-                <Input placeholder="name@example.com" {...field} />
+                <Input placeholder="nombre@ejemplo.com" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -88,7 +88,7 @@ export function AuthForm({ mode }: AuthFormProps) {
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Password</FormLabel>
+              <FormLabel>Contraseña</FormLabel>
               <FormControl>
                 <Input type="password" placeholder="********" {...field} />
               </FormControl>
@@ -102,16 +102,16 @@ export function AuthForm({ mode }: AuthFormProps) {
             name="role"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>I am a...</FormLabel>
+                <FormLabel>Soy un...</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select your role" />
+                      <SelectValue placeholder="Selecciona tu rol" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="GENERATOR">Residue Generator</SelectItem>
-                    <SelectItem value="TRANSFORMER">Residue Transformer</SelectItem>
+                    <SelectItem value="GENERATOR">Generador de Residuos</SelectItem>
+                    <SelectItem value="TRANSFORMER">Transformador de Residuos</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -120,7 +120,7 @@ export function AuthForm({ mode }: AuthFormProps) {
           />
         )}
         <Button type="submit" className="w-full">
-          {mode === "login" ? "Log In" : "Create Account"}
+          {mode === "login" ? "Iniciar Sesión" : "Crear Cuenta"}
         </Button>
       </form>
     </Form>

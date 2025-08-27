@@ -18,17 +18,17 @@ export default function LoginPage() {
               <Logo className="h-10 w-auto" />
               <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">EcoConnect</span>
             </Link>
-          <CardTitle className="text-2xl">Welcome Back!</CardTitle>
+          <CardTitle className="text-2xl">¡Bienvenido de nuevo!</CardTitle>
           <CardDescription>
-            Enter your credentials to access your account.
+            Introduce tus credenciales para acceder a tu cuenta.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <AuthForm mode="login" />
           <div className="mt-4 text-center text-sm">
-            Don&apos;t have an account?{" "}
+            ¿No tienes una cuenta?{" "}
             <Link href="/register" className="underline text-primary">
-              Sign up
+              Regístrate
             </Link>
           </div>
         </CardContent>

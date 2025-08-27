@@ -16,12 +16,12 @@ export default function ResiduePage({ params }: { params: { id: string } }) {
   const company = mockCompanies.find((c) => c.id === residue.companyId);
 
   const details = [
-    { icon: Scale, label: "Quantity", value: `${residue.quantity} ${residue.unit}` },
-    { icon: Calendar, label: "Available From", value: new Date(residue.availabilityDate).toLocaleDateString() },
-    { icon: Droplets, label: "Moisture", value: residue.moisturePct ? `${residue.moisturePct}%` : "N/A" },
-    { icon: TestTube2, label: "Contaminants", value: residue.contaminants || "None" },
-    { icon: MapPin, label: "Location", value: `${company?.city}, ${company?.country}` },
-    { icon: DollarSign, label: "Price", value: residue.pricePerUnit ? `$${residue.pricePerUnit} / ${residue.unit}`: "Negotiable" },
+    { icon: Scale, label: "Cantidad", value: `${residue.quantity} ${residue.unit}` },
+    { icon: Calendar, label: "Disponible Desde", value: new Date(residue.availabilityDate).toLocaleDateString() },
+    { icon: Droplets, label: "Humedad", value: residue.moisturePct ? `${residue.moisturePct}%` : "N/A" },
+    { icon: TestTube2, label: "Contaminantes", value: residue.contaminants || "Ninguno" },
+    { icon: MapPin, label: "Ubicación", value: `${company?.city}, ${company?.country}` },
+    { icon: DollarSign, label: "Precio", value: residue.pricePerUnit ? `$${residue.pricePerUnit} / ${residue.unit}`: "Negociable" },
   ];
 
   return (
@@ -37,7 +37,7 @@ export default function ResiduePage({ params }: { params: { id: string } }) {
                         alt={residue.type}
                         fill
                         style={{objectFit: 'cover'}}
-                        data-ai-hint="organic material"
+                        data-ai-hint="materia organica"
                     />
                     </div>
                 </CardContent>
@@ -74,13 +74,13 @@ export default function ResiduePage({ params }: { params: { id: string } }) {
             {company && (
                  <Card>
                     <CardHeader>
-                        <CardTitle>Generator</CardTitle>
+                        <CardTitle>Generador</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <h3 className="font-semibold text-primary">{company.name}</h3>
                         <p className="text-sm text-muted-foreground">{company.description}</p>
                         <Badge variant={company.verificationStatus === 'VERIFIED' ? 'default' : 'destructive'} className="mt-2">
-                           {company.verificationStatus}
+                           {company.verificationStatus === 'VERIFIED' ? 'VERIFICADO' : 'PENDIENTE'}
                         </Badge>
                     </CardContent>
                 </Card>

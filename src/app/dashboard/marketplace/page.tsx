@@ -19,12 +19,12 @@ export default function MarketplacePage() {
        <div className="flex flex-col md:flex-row items-center justify-between space-y-2">
         <div>
             <h2 className="text-3xl font-bold tracking-tight">Marketplace</h2>
-            <p className="text-muted-foreground">Discover residues or find valuable resources.</p>
+            <p className="text-muted-foreground">Descubre residuos o encuentra recursos valiosos.</p>
         </div>
         <div className="flex items-center space-x-2">
             <Button asChild>
                 <Link href="/dashboard/residues/create">
-                    <PlusCircle className="mr-2 h-4 w-4" /> Add Residue
+                    <PlusCircle className="mr-2 h-4 w-4" /> Añadir Residuo
                 </Link>
             </Button>
         </div>
@@ -32,30 +32,30 @@ export default function MarketplacePage() {
       
       <div className="bg-card p-4 rounded-lg border shadow-sm">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Input placeholder="Search by type (e.g. Alperujo...)" />
+            <Input placeholder="Buscar por tipo (ej. Alperujo...)" />
             <Select>
                 <SelectTrigger>
-                    <SelectValue placeholder="Filter by category" />
+                    <SelectValue placeholder="Filtrar por categoría" />
                 </SelectTrigger>
                 <SelectContent>
-                    <SelectItem value="AGRO">Agro-industrial</SelectItem>
-                    <SelectItem value="FOOD">Food Waste</SelectItem>
-                    <SelectItem value="BIOMASS">Biomass</SelectItem>
-                    <SelectItem value="OTHERS">Others</SelectItem>
+                    <SelectItem value="AGRO">Agroindustrial</SelectItem>
+                    <SelectItem value="FOOD">Residuos alimentarios</SelectItem>
+                    <SelectItem value="BIOMASS">Biomasa</SelectItem>
+                    <SelectItem value="OTHERS">Otros</SelectItem>
                 </SelectContent>
             </Select>
             <Select>
                 <SelectTrigger>
-                    <SelectValue placeholder="Filter by country" />
+                    <SelectValue placeholder="Filtrar por país" />
                 </SelectTrigger>
                 <SelectContent>
-                    <SelectItem value="spain">Spain</SelectItem>
+                    <SelectItem value="spain">España</SelectItem>
                     <SelectItem value="portugal">Portugal</SelectItem>
-                    <SelectItem value="france">France</SelectItem>
+                    <SelectItem value="france">Francia</SelectItem>
                 </SelectContent>
             </Select>
              <Button variant="outline">
-                <ListFilter className="mr-2 h-4 w-4" /> Advanced Filters
+                <ListFilter className="mr-2 h-4 w-4" /> Filtros avanzados
             </Button>
         </div>
       </div>

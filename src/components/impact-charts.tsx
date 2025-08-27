@@ -5,11 +5,11 @@ import { mockImpactMetrics } from "@/lib/data";
 
 const chartConfig = {
   wasteDiverted: {
-    label: "Waste Diverted (kg)",
+    label: "Residuos Desviados (kg)",
     color: "hsl(var(--chart-1))",
   },
   co2Avoided: {
-    label: "CO₂ Avoided (kg)",
+    label: "CO₂ Evitado (kg)",
     color: "hsl(var(--chart-2))",
   },
 };
@@ -40,8 +40,8 @@ export default function ImpactCharts() {
             }}
         />
         <Legend />
-        <Bar dataKey="wasteDiverted" fill={chartConfig.wasteDiverted.color} name="Waste Diverted (kg)" radius={[4, 4, 0, 0]} />
-        <Bar dataKey="co2Avoided" fill={chartConfig.co2Avoided.color} name="CO₂ Avoided (kg)" radius={[4, 4, 0, 0]} />
+        <Bar dataKey="wasteDiverted" fill={chartConfig.wasteDiverted.color} name="Residuos Desviados (kg)" radius={[4, 4, 0, 0]} />
+        <Bar dataKey="co2Avoided" fill={chartConfig.co2Avoided.color} name="CO₂ Evitado (kg)" radius={[4, 4, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   );

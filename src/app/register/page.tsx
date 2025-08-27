@@ -18,17 +18,17 @@ export default function RegisterPage() {
             <Logo className="h-10 w-auto" />
              <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">EcoConnect</span>
           </Link>
-          <CardTitle className="text-2xl">Create an Account</CardTitle>
+          <CardTitle className="text-2xl">Crear una cuenta</CardTitle>
           <CardDescription>
-            Join EcoConnect and start turning waste into value.
+            Únete a EcoConnect y empieza a convertir residuos en valor.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <AuthForm mode="register" />
           <div className="mt-4 text-center text-sm">
-            Already have an account?{" "}
+            ¿Ya tienes una cuenta?{" "}
             <Link href="/login" className="underline text-primary">
-              Log in
+              Iniciar sesión
             </Link>
           </div>
         </CardContent>
