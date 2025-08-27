@@ -2,74 +2,45 @@
 import type { Need } from '@/lib/types';
 import { mockNeeds } from '@/lib/data';
 
-// Helper to get the current state from localStorage
-const getStoredNeeds = (): Need[] => {
-     if (typeof window === 'undefined') {
-        return mockNeeds;
-    }
-    try {
-        const storedData = localStorage.getItem('needs');
-        return storedData ? JSON.parse(storedData) as Need[] : mockNeeds;
-    } catch (e) {
-        console.error("Failed to parse needs from localStorage", e);
-        return mockNeeds;
-    }
-};
-
-// Helper to save the state to localStorage
-const setStoredNeeds = (needs: Need[]): void => {
-    if (typeof window !== 'undefined') {
-        localStorage.setItem('needs', JSON.stringify(needs));
-    }
-};
-
-// Initialize on first load if not present
-if (typeof window !== 'undefined' && !localStorage.getItem('needs')) {
-    setStoredNeeds(mockNeeds);
-}
-
+// Treat mockNeeds as an in-memory database
+let needsDB = [...mockNeeds];
 
 // --- Service Functions ---
 
 export const getAllNeeds = (): Need[] => {
-    return getStoredNeeds();
+    return needsDB;
 };
 
 export const getNeedById = (id: string): Need | undefined => {
-    return getStoredNeeds().find(n => n.id === id);
+    return needsDB.find(n => n.id === id);
 };
 
 export const addNeed = (needData: Omit<Need, 'id' | 'companyId'>): Need => {
-    const currentNeeds = getStoredNeeds();
     const newNeed: Need = {
         ...needData,
         id: `need-${Date.now()}`, // Simple unique ID
         companyId: 'comp-3', // Mock current user's company (a transformer)
     };
-    const updatedNeeds = [...currentNeeds, newNeed];
-    setStoredNeeds(updatedNeeds);
+    needsDB.push(newNeed);
     return newNeed;
 };
 
 export const updateNeed = (updatedNeed: Need): Need => {
-    const currentNeeds = getStoredNeeds();
-    const index = currentNeeds.findIndex(n => n.id === updatedNeed.id);
+    const index = needsDB.findIndex(n => n.id === updatedNeed.id);
 
     if (index === -1) {
         throw new Error("Need not found");
     }
 
-    currentNeeds[index] = {
-        ...currentNeeds[index], // Keep old data
-        ...updatedNeed, // Overwrite with new data
+    const newNeed = {
+        ...needsDB[index],
+        ...updatedNeed,
     };
+    needsDB[index] = newNeed;
     
-    setStoredNeeds(currentNeeds);
-    return currentNeeds[index];
+    return newNeed;
 };
 
 export const deleteNeed = (id: string): void => {
-    const currentNeeds = getStoredNeeds();
-    const updatedNeeds = currentNeeds.filter(n => n.id !== id);
-    setStoredNeeds(updatedNeeds);
+    needsDB = needsDB.filter(n => n.id !== id);
 };

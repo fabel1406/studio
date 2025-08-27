@@ -1,7 +1,7 @@
 // src/app/dashboard/residues/page.tsx
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { columns } from './components/columns';
 import { DataTable } from './components/data-table';
 import type { Residue } from '@/lib/types';
@@ -10,36 +10,23 @@ import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getAllResidues, deleteResidue as deleteResidueService } from '@/services/residue-service';
-import { useRouter } from 'next/navigation';
 
 export default function ResiduesPage() {
   const [residues, setResidues] = useState<Residue[]>([]);
-  const { toast } = useToast();
-  const router = useRouter();
 
-  const fetchResidues = useCallback(() => {
-    // In a real app, this would fetch data for the current user.
-    // The service simulates this for now.
+  useEffect(() => {
+    // Fetch initial data on component mount
     const userResidues = getAllResidues().filter(r => r.companyId === 'comp-1');
     setResidues(userResidues);
   }, []);
 
-  useEffect(() => {
-    fetchResidues();
-    
-    const handleStorageChange = () => {
-      fetchResidues();
-    };
-    window.addEventListener('storage', handleStorageChange);
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, [fetchResidues]);
-
+  const { toast } = useToast();
 
   const deleteResidue = (residueId: string, residueType: string) => {
     deleteResidueService(residueId);
-    setResidues(prevResidues => prevResidues.filter(r => r.id !== residueId));
+    // Refetch data to reflect the deletion
+    const userResidues = getAllResidues().filter(r => r.companyId === 'comp-1');
+    setResidues(userResidues);
     toast({
       title: "Residuo Eliminado",
       description: `La publicación para "${residueType}" ha sido eliminada.`,

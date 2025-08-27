@@ -10,19 +10,24 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import Link from 'next/link';
+import { useRole } from '../layout';
 
 export default function NeedsPage() {
   const [needs, setNeeds] = useState<Need[]>([]);
   const { toast } = useToast();
+  const { role } = useRole();
 
   useEffect(() => {
     // In a real app, this would fetch data for the current user.
-    setNeeds(getAllNeeds());
-  }, []);
+    // We filter by a mock company ID based on role.
+    const currentUserCompanyId = role === 'GENERATOR' ? 'comp-1' : 'comp-3';
+    setNeeds(getAllNeeds().filter(n => n.companyId === currentUserCompanyId));
+  }, [role]);
 
   const deleteNeed = (needId: string, residueType: string) => {
     deleteNeedService(needId);
-    setNeeds(prevNeeds => prevNeeds.filter(n => n.id !== needId));
+    const currentUserCompanyId = role === 'GENERATOR' ? 'comp-1' : 'comp-3';
+    setNeeds(getAllNeeds().filter(n => n.companyId === currentUserCompanyId));
     toast({
       title: "Necesidad Eliminada",
       description: `Tu solicitud para "${residueType}" ha sido eliminada.`,
