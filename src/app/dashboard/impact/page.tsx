@@ -1,12 +1,29 @@
+// src/app/dashboard/impact/page.tsx
+"use client";
+
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import ImpactCharts from "@/components/impact-charts";
 import { mockImpactMetrics } from "@/lib/data";
 import { BarChart, DollarSign, Globe, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
 
 export default function ImpactPage() {
-    const totalWasteDiverted = mockImpactMetrics.reduce((sum, item) => sum + item.wasteDiverted, 0);
-    const totalCo2Avoided = mockImpactMetrics.reduce((sum, item) => sum + item.co2Avoided, 0);
-    const totalSavings = mockImpactMetrics.reduce((sum, item) => sum + item.savings, 0);
+    const [totalWasteDiverted, setTotalWasteDiverted] = useState(0);
+    const [totalCo2Avoided, setTotalCo2Avoided] = useState(0);
+    const [totalSavings, setTotalSavings] = useState(0);
+
+    useEffect(() => {
+        // In a real app, this data would likely come from a dedicated service
+        // that aggregates historical data. For now, we sum the mock data.
+        const waste = mockImpactMetrics.reduce((sum, item) => sum + item.wasteDiverted, 0);
+        const co2 = mockImpactMetrics.reduce((sum, item) => sum + item.co2Avoided, 0);
+        const savings = mockImpactMetrics.reduce((sum, item) => sum + item.savings, 0);
+        
+        setTotalWasteDiverted(waste);
+        setTotalCo2Avoided(co2);
+        setTotalSavings(savings);
+    }, []);
+
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">

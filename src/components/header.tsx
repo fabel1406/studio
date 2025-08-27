@@ -6,35 +6,31 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu, Sun, Moon } from "lucide-react";
 import { Logo } from "./logo";
 import { useState, useEffect } from "react";
+import { useTheme } from "next-themes";
 
 const navLinks = [
   { href: "/dashboard/marketplace", label: "Marketplace" },
-  { href: "/dashboard/impact", label: "Impacto" },
+  { href: "/for-generators", label: "Para Generadores" },
+  { href: "/for-transformers", label: "Para Transformadores" },
   { href: "/about", label: "Sobre Nosotros" },
 ];
 
 export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(true);
+  const [mounted, setMounted] = useState(false);
+  const { theme, setTheme } = useTheme();
 
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
     };
     window.addEventListener("scroll", handleScroll);
+    setMounted(true);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
   
-  useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
-  }, [isDarkMode]);
-
   const toggleDarkMode = () => {
-    setIsDarkMode(!isDarkMode);
+    setTheme(theme === 'dark' ? 'light' : 'dark');
   };
 
   return (
@@ -63,9 +59,11 @@ export function Header() {
           </nav>
 
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" onClick={toggleDarkMode} aria-label="Toggle dark mode">
-              {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-            </Button>
+             {mounted && (
+                <Button variant="ghost" size="icon" onClick={toggleDarkMode} aria-label="Toggle theme">
+                  {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                </Button>
+            )}
             <div className="hidden lg:flex items-center gap-2">
               <Button asChild variant="ghost">
                 <Link href="/login">Iniciar Sesión</Link>
@@ -86,7 +84,7 @@ export function Header() {
                     <div className="flex items-center justify-between border-b pb-4">
                       <Link href="/" className="flex items-center gap-2">
                         <Logo className="h-10 w-auto" />
-                        <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">EcoConnect</span>
+                        <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">EcoConnect</span>
                       </Link>
                     </div>
                     <nav className="flex flex-col gap-6 mt-8">

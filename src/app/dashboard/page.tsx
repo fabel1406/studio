@@ -1,17 +1,48 @@
+// src/app/dashboard/page.tsx
+"use client";
+
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowUpRight, BarChart2, Leaf, Recycle } from "lucide-react";
+import { ArrowRight, BarChart2, Handshake, Leaf } from "lucide-react";
 import Link from "next/link";
 import ImpactCharts from "@/components/impact-charts";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
-const stats = [
-    { title: "Listados Activos", value: "12", icon: Leaf, change: "+2 esta semana" },
-    { title: "Coincidencias Potenciales", value: "45", icon: Recycle, change: "+5 esta semana" },
-    { title: "CO₂ Evitado (kg)", value: "1,250", icon: BarChart2, change: "+150 este mes" },
-]
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useRole } from "./layout";
+import { useEffect, useState } from "react";
+import { getAllResidues } from "@/services/residue-service";
+import { getAllNegotiationsForUser } from "@/services/negotiation-service";
+import { mockImpactMetrics } from "@/lib/data";
+import type { Negotiation } from "@/lib/types";
 
 export default function DashboardOverviewPage() {
+    const { currentUserId } = useRole();
+    const [activeListings, setActiveListings] = useState(0);
+    const [activeNegotiationsCount, setActiveNegotiationsCount] = useState(0);
+    const [totalCo2Avoided, setTotalCo2Avoided] = useState(0);
+    const [recentNegotiations, setRecentNegotiations] = useState<Negotiation[]>([]);
+
+    useEffect(() => {
+        if (currentUserId) {
+            // Fetch active listings
+            const userResidues = getAllResidues().filter(r => r.companyId === currentUserId && r.status === 'ACTIVE');
+            setActiveListings(userResidues.length);
+
+            // Fetch negotiations
+            const { sent, received } = getAllNegotiationsForUser(currentUserId);
+            const allNegotiations = [...sent, ...received];
+            const activeNegotiations = allNegotiations.filter(n => n.status === 'SENT');
+            setActiveNegotiationsCount(activeNegotiations.length);
+
+            // Set recent negotiations for display
+            const sortedNegotiations = allNegotiations.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+            setRecentNegotiations(sortedNegotiations.slice(0, 5));
+
+            // Calculate total CO2 avoided
+            const co2 = mockImpactMetrics.reduce((sum, item) => sum + item.co2Avoided, 0);
+            setTotalCo2Avoided(co2);
+        }
+    }, [currentUserId]);
+
     return (
         <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
             <div className="flex items-center justify-between space-y-2">
@@ -19,22 +50,48 @@ export default function DashboardOverviewPage() {
             </div>
             
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {stats.map((stat) => (
-                     <Card key={stat.title}>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">
-                                {stat.title}
-                            </CardTitle>
-                            <stat.icon className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{stat.value}</div>
-                            <p className="text-xs text-muted-foreground">
-                                {stat.change}
-                            </p>
-                        </CardContent>
-                    </Card>
-                ))}
+                 <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">
+                            Listados Activos
+                        </CardTitle>
+                        <Leaf className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{activeListings}</div>
+                        <p className="text-xs text-muted-foreground">
+                            Residuos actualmente en el marketplace.
+                        </p>
+                    </CardContent>
+                </Card>
+                 <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">
+                            Negociaciones Activas
+                        </CardTitle>
+                        <Handshake className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{activeNegotiationsCount}</div>
+                        <p className="text-xs text-muted-foreground">
+                           Solicitudes y ofertas pendientes.
+                        </p>
+                    </CardContent>
+                </Card>
+                 <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">
+                             CO₂ Evitado (kg)
+                        </CardTitle>
+                        <BarChart2 className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{totalCo2Avoided.toLocaleString()}</div>
+                        <p className="text-xs text-muted-foreground">
+                            Total de los últimos 6 meses.
+                        </p>
+                    </CardContent>
+                </Card>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
@@ -48,31 +105,41 @@ export default function DashboardOverviewPage() {
                 </Card>
                 <Card className="col-span-4 lg:col-span-3">
                     <CardHeader>
-                        <CardTitle>Coincidencias Recientes</CardTitle>
+                        <CardTitle>Negociaciones Recientes</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-4">
-                            {[...Array(5)].map((_, i) => (
-                                <div key={i} className="flex items-center">
-                                    <Avatar className="h-9 w-9">
-                                        <AvatarImage src={`https://picsum.photos/seed/avatar${i}/40`} alt="Avatar" />
-                                        <AvatarFallback>C{i+1}</AvatarFallback>
-                                    </Avatar>
-                                    <div className="ml-4 space-y-1">
-                                        <p className="text-sm font-medium leading-none">BioGas Energía</p>
-                                        <p className="text-sm text-muted-foreground">
-                                            Coincidencia para 'Alperujo'
-                                        </p>
-                                    </div>
-                                    <div className="ml-auto font-medium">85% puntuación</div>
-                                </div>
-                            ))}
+                            {recentNegotiations.length > 0 ? (
+                                recentNegotiations.map((neg) => {
+                                    const otherParty = neg.requesterId === currentUserId ? neg.supplier : neg.requester;
+                                    return (
+                                         <div key={neg.id} className="flex items-center">
+                                            <Avatar className="h-9 w-9">
+                                                <AvatarFallback>{otherParty?.name.charAt(0)}</AvatarFallback>
+                                            </Avatar>
+                                            <div className="ml-4 space-y-1">
+                                                <p className="text-sm font-medium leading-none">{otherParty?.name}</p>
+                                                <p className="text-sm text-muted-foreground">
+                                                    Negociación para '{neg.residue.type}'
+                                                </p>
+                                            </div>
+                                             <Link href={`/dashboard/negotiations/${neg.id}`} className="ml-auto">
+                                                <Button variant="ghost" size="sm">Ver</Button>
+                                             </Link>
+                                        </div>
+                                    )
+                                })
+                            ) : (
+                                <p className="text-sm text-muted-foreground text-center py-10">No hay negociaciones recientes.</p>
+                            )}
                         </div>
-                        <Button asChild className="mt-4 w-full">
-                            <Link href="/dashboard/matches">
-                                Ver todas las coincidencias <ArrowUpRight className="ml-2 h-4 w-4" />
-                            </Link>
-                        </Button>
+                         {recentNegotiations.length > 0 && (
+                            <Button asChild className="mt-4 w-full">
+                                <Link href="/dashboard/negotiations">
+                                    Ver todas las negociaciones <ArrowRight className="ml-2 h-4 w-4" />
+                                </Link>
+                            </Button>
+                         )}
                     </CardContent>
                 </Card>
             </div>
