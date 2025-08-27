@@ -10,7 +10,7 @@ export default function Home() {
       <section className="relative pt-16 pb-24 sm:pt-24 sm:pb-32 lg:pt-32 lg:pb-40 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-secondary/10 dark:from-primary/10 dark:via-background dark:to-secondary/20"></div>
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+          <div className="grid lg:grid-cols-1 gap-12 items-center">
             <div className="text-center lg:text-left">
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground">
                 Convierte tus Residuos
@@ -29,17 +29,6 @@ export default function Home() {
                   <Link href="/dashboard/marketplace">Explorar Marketplace</Link>
                 </Button>
               </div>
-            </div>
-            <div className="relative h-64 sm:h-80 lg:h-full lg:min-h-[500px] rounded-2xl overflow-hidden shadow-2xl">
-                <Image
-                  src="https://picsum.photos/800/600"
-                  alt="Un par de manos humanas sosteniendo con delicadeza una pequeña planta en crecimiento, simbolizando crecimiento y cuidado ambiental."
-                  fill
-                  style={{objectFit: 'cover'}}
-                  className="transform hover:scale-105 transition-transform duration-500"
-                  data-ai-hint="planta manos"
-                />
-                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
             </div>
           </div>
         </div>
