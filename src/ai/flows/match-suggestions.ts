@@ -24,7 +24,7 @@ const MatchSuggestionsOutputSchema = z.object({
   suggestions: z.array(
     z.object({
       residueId: z.string().describe('The ID of the suggested residue.'),
-      score: z.number().describe('A score indicating the suitability of the match.'),
+      score: z.number().describe('A score between 0.0 and 1.0 indicating the suitability of the match.'),
       reason: z.string().describe('The reason for the suggestion.'),
     })
   ).describe('A list of suggested residue matches for the transformer.'),
@@ -41,7 +41,7 @@ const prompt = ai.definePrompt({
   output: {schema: MatchSuggestionsOutputSchema},
   prompt: `You are an AI assistant helping a transformer company find suitable residue matches.
 
-  Based on the following information about the transformer and the residue they need, suggest the best residue matches:
+  Based on the following information about the transformer and the residue they need, suggest the best residue matches.
 
   Transformer Company ID: {{{transformerCompanyId}}}
   Residue Type Needed: {{{residueType}}}
@@ -49,7 +49,7 @@ const prompt = ai.definePrompt({
   Location (Longitude): {{{locationLng}}}
   Quantity Needed: {{{quantityNeeded}}}
 
-  Provide a list of suggestions, each including the residue ID, a score indicating the suitability of the match, and a reason for the suggestion.
+  Provide a list of suggestions, each including the residue ID, a score indicating the suitability of the match (from 0.0 for a bad match to 1.0 for a perfect match), and a reason for the suggestion.
   `,
 });
 
@@ -60,8 +60,9 @@ const matchSuggestionsFlow = ai.defineFlow(
     outputSchema: MatchSuggestionsOutputSchema,
   },
   async input => {
+    // In a real app, you would fetch all available residues from a database here
+    // and pass them to the prompt to get more accurate suggestions.
     const {output} = await prompt(input);
     return output!;
   }
 );
-
