@@ -40,12 +40,11 @@ export const addResidue = (residue: Omit<Residue, 'company'>) => {
 };
 
 // Function to update an existing residue
-export const updateResidue = (updatedResidue: Omit<Residue, 'company'>) => {
+export const updateResidue = (updatedResidue: Residue) => {
   let residues = getAllResidues();
   residues = residues.map(r => {
     if (r.id === updatedResidue.id) {
-      // Merge the existing residue with the updated fields
-      return { ...r, ...updatedResidue };
+      return updatedResidue; // Replace the entire residue object
     }
     return r;
   });
@@ -58,3 +57,5 @@ export const deleteResidue = (id: string) => {
   residues = residues.filter(r => r.id !== id);
   localStorage.setItem(RESIDUE_STORAGE_KEY, JSON.stringify(residues));
 };
+
+    

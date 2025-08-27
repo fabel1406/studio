@@ -30,6 +30,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { addResidue, getResidueById, updateResidue } from "@/services/residue-service"
+import type { Residue } from "@/lib/types"
 
 
 const residueFormSchema = z.object({
@@ -49,6 +50,7 @@ export default function ResidueFormPage() {
   const searchParams = useSearchParams();
   const { toast } = useToast()
   const [residueId, setResidueId] = useState<string | null>(null);
+  const [existingResidue, setExistingResidue] = useState<Residue | null>(null);
 
   const form = useForm<ResidueFormValues>({
     resolver: zodResolver(residueFormSchema),
@@ -66,16 +68,17 @@ export default function ResidueFormPage() {
     const id = searchParams.get('id');
     if (id) {
       setResidueId(id);
-      const existingResidue = getResidueById(id);
-      if (existingResidue) {
+      const residue = getResidueById(id);
+      if (residue) {
+        setExistingResidue(residue);
         form.reset({
-          type: existingResidue.type,
-          category: existingResidue.category,
-          quantity: existingResidue.quantity,
-          unit: existingResidue.unit,
-          status: existingResidue.status,
-          pricePerUnit: existingResidue.pricePerUnit || undefined,
-          description: existingResidue.description || undefined,
+          type: residue.type,
+          category: residue.category,
+          quantity: residue.quantity,
+          unit: residue.unit,
+          status: residue.status,
+          pricePerUnit: residue.pricePerUnit || undefined,
+          description: residue.description || undefined,
         });
       }
     }
@@ -83,21 +86,24 @@ export default function ResidueFormPage() {
 
 
   function onSubmit(data: ResidueFormValues) {
-    const residueData = {
-        ...data,
-        id: residueId || crypto.randomUUID(),
-        companyId: 'comp-1', // Mock companyId
-        availabilityDate: new Date().toISOString(),
-    }
-
-    if (residueId) {
-        updateResidue(residueData);
+    if (residueId && existingResidue) {
+        const updatedResidueData = {
+            ...existingResidue, // Start with all existing data
+            ...data, // Override with form data
+        };
+        updateResidue(updatedResidueData);
         toast({
             title: "¡Residuo Actualizado!",
             description: `El residuo "${data.type}" ha sido actualizado con éxito.`,
         })
     } else {
-        addResidue(residueData);
+        const newResidueData = {
+            ...data,
+            id: crypto.randomUUID(),
+            companyId: 'comp-1', // Mock companyId
+            availabilityDate: new Date().toISOString(),
+        }
+        addResidue(newResidueData);
         toast({
             title: "¡Residuo Guardado!",
             description: `El residuo "${data.type}" ha sido guardado con éxito.`,
@@ -273,3 +279,5 @@ export default function ResidueFormPage() {
     </div>
   )
 }
+
+    
