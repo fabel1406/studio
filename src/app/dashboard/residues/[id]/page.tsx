@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, Droplets, MapPin, Scale, TestTube2, DollarSign } from "lucide-react";
 import { ResidueDetails } from "@/components/residue-details";
+import { ResidueActionPanel } from "@/components/residue-action-panel";
 
 export default function ResiduePage({ params }: { params: { id: string } }) {
   const residue = mockResidues.find((r) => r.id === params.id);
@@ -85,6 +86,8 @@ export default function ResiduePage({ params }: { params: { id: string } }) {
                     </CardContent>
                 </Card>
             )}
+
+             <ResidueActionPanel residue={residue} />
         </div>
       </div>
     </div>
