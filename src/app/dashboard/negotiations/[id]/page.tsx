@@ -1,4 +1,3 @@
-
 // src/app/dashboard/negotiations/[id]/page.tsx
 "use client";
 
@@ -68,18 +67,21 @@ export default function NegotiationDetailPage() {
         return notFound();
     }
     
-    const isCurrentUserTheInitiator = negotiation.requesterId === currentUserId;
-    const isCurrentUserTheSupplier = negotiation.supplierId === currentUserId;
+    // The user who initiated the negotiation.
+    const isInitiator = negotiation.initiatedBy === currentUserId;
+    // The user who receives the initial request/offer.
+    const isRecipient = !isInitiator;
     
-    // The user who can accept/reject is the one who IS the supplier AND DID NOT initiate the negotiation.
-    const canAcceptOrReject = isCurrentUserTheSupplier && !isCurrentUserTheInitiator;
+    // The user who can accept/reject is the one who RECEIVED the negotiation.
+    const canAcceptOrReject = isRecipient;
 
     // The user who can modify or cancel is the one who INITIATED the negotiation.
-    const canModifyOrCancel = isCurrentUserTheInitiator;
+    const canModifyOrCancel = isInitiator;
 
     const isActionable = negotiation.status === 'SENT';
 
-    const otherParty = isCurrentUserTheInitiator ? negotiation.supplier : negotiation.requester;
+    const otherParty = currentUserId === negotiation.requesterId ? negotiation.supplier : negotiation.requester;
+    const otherPartyRole = currentUserId === negotiation.requesterId ? 'Proveedor' : 'Solicitante';
 
 
     return (
@@ -109,12 +111,12 @@ export default function NegotiationDetailPage() {
                                         <p className="font-bold text-primary text-lg">{negotiation.residue.type}</p>
                                     </div>
                                     <div>
-                                        <h3 className="font-semibold text-muted-foreground mb-2">Cantidad Ofertada</h3>
+                                        <h3 className="font-semibold text-muted-foreground mb-2">Cantidad</h3>
                                         <p className="font-bold text-lg">{negotiation.quantity} {negotiation.unit}</p>
                                     </div>
                                     {negotiation.offerPrice !== undefined && (
                                         <div>
-                                            <h3 className="font-semibold text-muted-foreground mb-2">Precio de la Oferta</h3>
+                                            <h3 className="font-semibold text-muted-foreground mb-2">Precio Ofertado</h3>
                                             <p className="font-bold text-lg">${negotiation.offerPrice} / {negotiation.unit}</p>
                                         </div>
                                     )}
@@ -132,7 +134,7 @@ export default function NegotiationDetailPage() {
                     <div className="space-y-6">
                         <Card>
                             <CardHeader>
-                                <CardTitle>{isCurrentUserTheInitiator ? 'Proveedor' : 'Solicitante'}</CardTitle>
+                                <CardTitle>{otherPartyRole}</CardTitle>
                             </CardHeader>
                              <CardContent className="flex items-center gap-4">
                                 {otherParty ? (
@@ -160,20 +162,20 @@ export default function NegotiationDetailPage() {
                                         {canAcceptOrReject && (
                                             <>
                                                 <Button className="w-full" onClick={() => handleUpdateStatus('ACCEPTED')}>
-                                                    <CheckCircle className="mr-2 h-4 w-4" /> Aceptar Oferta
+                                                    <CheckCircle className="mr-2 h-4 w-4" /> Aceptar
                                                 </Button>
                                                 <Button className="w-full" variant="destructive" onClick={() => handleUpdateStatus('REJECTED')}>
-                                                    <XCircle className="mr-2 h-4 w-4" /> Rechazar Oferta
+                                                    <XCircle className="mr-2 h-4 w-4" /> Rechazar
                                                 </Button>
                                             </>
                                         )}
                                         {canModifyOrCancel && ( 
                                             <>
                                                 <Button className="w-full" variant="outline" onClick={() => setIsEditOfferOpen(true)}>
-                                                    <Pencil className="mr-2 h-4 w-4" /> Modificar Solicitud
+                                                    <Pencil className="mr-2 h-4 w-4" /> Modificar
                                                 </Button>
                                                 <Button className="w-full" variant="destructive" onClick={() => handleUpdateStatus('REJECTED')}>
-                                                    <XCircle className="mr-2 h-4 w-4" /> Cancelar Solicitud
+                                                    <XCircle className="mr-2 h-4 w-4" /> Cancelar
                                                 </Button>
                                             </>
                                         )}
@@ -190,7 +192,7 @@ export default function NegotiationDetailPage() {
                 </div>
             </div>
 
-            {isCurrentUserTheInitiator && (
+            {isInitiator && (
                 <OfferDialog
                     isOpen={isEditOfferOpen}
                     onOpenChange={setIsEditOfferOpen}

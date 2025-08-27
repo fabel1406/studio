@@ -73,12 +73,16 @@ export type NegotiationMessage = {
 
 export type Negotiation = {
     id: string;
-    residueId: string; // The specific residue being offered from the generator
+    residueId: string; 
     residue: Residue;
-    requesterId: string; // The one asking (transformer, who created the need)
+    // The one who needs the residue
+    requesterId: string; 
     requester?: Company;
-    supplierId: string; // The one providing (generator, who made the offer)
+    // The one who has the residue
+    supplierId: string; 
     supplier?: Company;
+    // Who started this negotiation
+    initiatedBy: string;
     quantity: number;
     unit: 'KG' | 'TON';
     offerPrice?: number;

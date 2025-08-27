@@ -60,7 +60,6 @@ export function OfferDialog({
   
   const isEditMode = !!negotiationToEdit;
 
-  // In edit mode, the available residue is just the one in the negotiation
   const compatibleResidues = useMemo(() => {
     if (isEditMode && negotiationToEdit?.residue) {
       return [negotiationToEdit.residue];
@@ -130,13 +129,12 @@ export function OfferDialog({
             onOfferUpdated(updatedNegotiation);
         }
     } else if (need && selectedResidue) {
-        // When making an offer for a need, the current user is the supplier (Generator)
-        // and the need's company is the requester (Transformer)
         addNegotiation({
-          residueId: selectedResidue.id,
-          requesterId: currentUserId, // The generator is initiating contact, so they are the requester here.
+          type: 'offer',
+          residue: selectedResidue,
+          need: need,
+          initiatorId: currentUserId,
           quantity: data.quantity,
-          unit: selectedResidue.unit,
           offerPrice: data.price,
         });
         toast({

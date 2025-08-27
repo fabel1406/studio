@@ -1,21 +1,15 @@
 // src/services/negotiation-service.ts
-import type { Negotiation, NegotiationMessage } from '@/lib/types';
+import type { Negotiation, NegotiationMessage, Residue, Need } from '@/lib/types';
 import { mockCompanies } from '@/lib/data';
 import { getResidueById } from './residue-service';
 
 // In-memory array to act as a database
 let negotiationsDB: Negotiation[] = [];
 
-/**
- * Attaches full company and residue objects to a raw negotiation object.
- * This is crucial for displaying details in the UI.
- * @param negotiation The raw negotiation object.
- * @returns The rehydrated negotiation object with full details.
- */
+
 const rehydrateNegotiation = (negotiation: Negotiation): Negotiation => {
     const residue = getResidueById(negotiation.residueId);
     
-    // Create a placeholder for deleted residues to avoid crashes.
     const hydratedResidue = residue || {
         id: negotiation.residueId,
         type: 'Residuo eliminado',
@@ -35,37 +29,61 @@ const rehydrateNegotiation = (negotiation: Negotiation): Negotiation => {
     };
 };
 
-type NewNegotiationData = {
-    residueId: string;
-    requesterId: string; // The one initiating the contact
+type NewNegotiationFromResidue = {
+    type: 'request';
+    residue: Residue;
+    initiatorId: string; // Transformer's ID
     quantity: number;
-    unit: 'KG' | 'TON';
+}
+
+type NewNegotiationFromNeed = {
+    type: 'offer';
+    residue: Residue;
+    need: Need;
+    initiatorId: string; // Generator's ID
+    quantity: number;
     offerPrice?: number;
 }
 
-export const addNegotiation = (data: NewNegotiationData): Negotiation => {
-    const residue = getResidueById(data.residueId);
-    if (!residue || !residue.companyId) {
-        throw new Error("Residue or its company ID not found for negotiation");
-    }
+export const addNegotiation = (data: NewNegotiationFromResidue | NewNegotiationFromNeed): Negotiation => {
+    let newNegotiation: Negotiation;
 
-    const newNegotiation: Negotiation = {
-        id: `neg-${Date.now()}`,
-        residueId: data.residueId,
-        residue: residue, // Storing the full object at creation time
-        supplierId: residue.companyId, // The supplier is the owner of the residue
-        requesterId: data.requesterId,
-        quantity: data.quantity,
-        unit: data.unit,
-        offerPrice: data.offerPrice,
-        status: 'SENT',
-        createdAt: new Date().toISOString(),
-        messages: [{
-            senderId: data.requesterId, 
-            content: `He iniciado una negociación por ${data.quantity} ${data.unit} de ${residue.type}.`,
-            timestamp: new Date().toISOString()
-        }],
-    };
+    if (data.type === 'request') {
+        newNegotiation = {
+            id: `neg-${Date.now()}`,
+            residueId: data.residue.id,
+            requesterId: data.initiatorId, // The Transformer is the requester
+            supplierId: data.residue.companyId, // The Generator is the supplier
+            quantity: data.quantity,
+            unit: data.residue.unit,
+            initiatedBy: data.initiatorId,
+            status: 'SENT',
+            createdAt: new Date().toISOString(),
+            messages: [{
+                senderId: data.initiatorId,
+                content: `Ha solicitado ${data.quantity} ${data.residue.unit} de ${data.residue.type}.`,
+                timestamp: new Date().toISOString()
+            }],
+        };
+    } else { // type === 'offer'
+        newNegotiation = {
+            id: `neg-${Date.now()}`,
+            residueId: data.residue.id,
+            requesterId: data.need.companyId, // The Transformer who created the need is the requester
+            supplierId: data.initiatorId, // The Generator making the offer is the supplier
+            quantity: data.quantity,
+            unit: data.residue.unit,
+            offerPrice: data.offerPrice,
+            initiatedBy: data.initiatorId,
+            status: 'SENT',
+            createdAt: new Date().toISOString(),
+            messages: [{
+                senderId: data.initiatorId,
+                content: `Ha ofrecido ${data.quantity} ${data.residue.unit} de ${data.residue.type} para cubrir tu necesidad.`,
+                timestamp: new Date().toISOString()
+            }],
+        };
+    }
     
     negotiationsDB.push(newNegotiation);
     return rehydrateNegotiation(newNegotiation);
@@ -77,16 +95,17 @@ export const getAllNegotiationsForUser = (userId: string): { sent: Negotiation[]
     
     // "Sent" are negotiations the user initiated.
     const sent = allNegotiations
-      .filter(n => n.requesterId === userId)
+      .filter(n => n.initiatedBy === userId)
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       
-    // "Received" are negotiations where the user is the recipient of the request.
+    // "Received" are negotiations initiated by the other party.
     const received = allNegotiations
-      .filter(n => n.supplierId === userId)
+      .filter(n => n.initiatedBy !== userId && (n.requesterId === userId || n.supplierId === userId))
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       
     return { sent, received };
 };
+
 
 export const getNegotiationById = (id: string): Negotiation | undefined => {
     const negotiation = negotiationsDB.find(n => n.id === id);
@@ -120,7 +139,7 @@ export const updateNegotiationDetails = (id: string, quantity: number, price?: n
     }
 
     negotiationToUpdate.messages.push({
-        senderId: negotiationToUpdate.supplierId,
+        senderId: negotiationToUpdate.initiatedBy,
         content: messageContent,
         timestamp: new Date().toISOString(),
     });

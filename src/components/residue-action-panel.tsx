@@ -51,13 +51,14 @@ export function ResidueActionPanel({ residue }: ResidueActionPanelProps) {
       toast({ title: "Error", description: "Usuario no identificado.", variant: "destructive" });
       return;
     }
-    // When a user requests a residue, they are the requester.
+    
     addNegotiation({
-      residueId: residue.id,
-      requesterId: currentUserId,
+      type: 'request',
+      residue: residue,
+      initiatorId: currentUserId,
       quantity: values.quantity,
-      unit: residue.unit
     })
+
     toast({
       title: "Solicitud Enviada",
       description: `Has solicitado ${values.quantity} ${residue.unit} de ${residue.type}. El generador ha sido notificado.`,
