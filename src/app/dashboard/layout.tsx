@@ -82,8 +82,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen flex-col">
-        <div className="flex flex-1">
+      <div className="flex min-h-screen">
           <Sidebar>
               <SidebarHeader>
                    <div className="flex items-center gap-2 p-2">
@@ -138,12 +137,13 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                   </div>
               </SidebarFooter>
           </Sidebar>
-          <main className="flex-1 md:ml-[var(--sidebar-width-icon)] lg:ml-[var(--sidebar-width)] transition-[margin-left] duration-200">{children}</main>
-        </div>
-        <div className="md:ml-[var(--sidebar-width-icon)] lg:ml-[var(--sidebar-width)] transition-[margin-left] duration-200">
+          <main className="flex-1 flex flex-col md:ml-[var(--sidebar-width-icon)] lg:ml-[var(--sidebar-width)] transition-[margin-left] duration-200">
+            <div className="flex-grow">
+              {children}
+            </div>
             <Footer />
+          </main>
         </div>
-      </div>
     </SidebarProvider>
   );
 }
