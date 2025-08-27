@@ -24,6 +24,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import type { Residue } from "@/lib/types";
+import { useState } from "react";
 
 
 interface DataTableRowActionsProps<TData extends Residue> {
@@ -36,13 +37,15 @@ export function DataTableRowActions<TData extends Residue>({
   deleteResidue,
 }: DataTableRowActionsProps<TData>) {
    const residue = row.original;
+   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
    const handleDelete = () => {
     deleteResidue(residue.id, residue.type);
+    setIsDeleteDialogOpen(false);
    }
 
   return (
-    <AlertDialog>
+    <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
@@ -61,15 +64,13 @@ export function DataTableRowActions<TData extends Residue>({
             </Link>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-           <AlertDialogTrigger asChild>
-              <DropdownMenuItem
-                  onSelect={(e) => e.preventDefault()}
-                  className="text-destructive focus:bg-destructive/10 focus:text-destructive"
-                >
-                <Trash className="mr-2 h-4 w-4" />
-                Eliminar
-              </DropdownMenuItem>
-            </AlertDialogTrigger>
+           <DropdownMenuItem
+                onSelect={() => setIsDeleteDialogOpen(true)}
+                className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+              >
+              <Trash className="mr-2 h-4 w-4" />
+              Eliminar
+            </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
       <AlertDialogContent>
@@ -80,7 +81,7 @@ export function DataTableRowActions<TData extends Residue>({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => setIsDeleteDialogOpen(false)}>Cancelar</AlertDialogCancel>
             <AlertDialogAction
                onClick={handleDelete}
                className="bg-destructive hover:bg-destructive/90"
@@ -88,6 +89,7 @@ export function DataTableRowActions<TData extends Residue>({
               Eliminar
             </AlertDialogAction>
           </AlertDialogFooter>
+        </AlertDialogContent>
     </AlertDialog>
   )
 }
