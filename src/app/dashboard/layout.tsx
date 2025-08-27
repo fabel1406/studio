@@ -51,9 +51,10 @@ const RoleProvider = ({ children }: { children: React.ReactNode }) => {
     } else if (role === 'TRANSFORMER') {
         setCurrentUserId('comp-3');
     } else if (role === 'BOTH') {
-        // For 'BOTH', let's assume the primary identity is the generator one,
-        // but the app logic will handle actions for both roles.
-        setCurrentUserId('comp-1');
+        // For 'BOTH', the primary identity should be the transformer one to allow
+        // them to request residues from other generators in the marketplace.
+        // The app logic for posting residues/needs will still work based on the 'BOTH' role.
+        setCurrentUserId('comp-3');
     }
   }, [role]);
 

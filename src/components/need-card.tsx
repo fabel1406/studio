@@ -27,7 +27,9 @@ export function NeedCard({ need }: { need: Need }) {
     setIsMounted(true);
     if (canOffer && currentUserId) {
         // In a real app, this would be the logged-in user's ID
-        setUserResidues(getAllResidues().filter(r => r.companyId === currentUserId && r.status === 'ACTIVE'));
+        // For the 'BOTH' role, their ID might be a transformer ID, but we should find their generator company ID
+        const generatorCompanyId = 'comp-1'; // Hardcoded for mock purposes
+        setUserResidues(getAllResidues().filter(r => r.companyId === generatorCompanyId && r.status === 'ACTIVE'));
     }
   }, [canOffer, currentUserId]);
 
