@@ -125,9 +125,11 @@ export default function MatchesPage() {
                                 </div>
                                 <p className="text-sm text-muted-foreground mt-1 mb-3">{matchedCompany?.city}, {matchedCompany?.country}</p>
                                 <p className="text-sm text-muted-foreground mb-4">{match.reason}</p>
-                                <Button size="sm">
+                                <Button asChild size="sm">
+                                  <Link href={`/dashboard/residues/${match.matchedId}`}>
                                     <Send className="mr-2 h-4 w-4" />
                                     Contactar
+                                  </Link>
                                 </Button>
                             </div>
                         )})}

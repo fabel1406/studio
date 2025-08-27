@@ -131,9 +131,8 @@ export function OfferDialog({
     } else if (need && selectedResidue) {
         addNegotiation({
           type: 'offer',
-          residueId: selectedResidue.id,
+          residue: selectedResidue,
           need: need,
-          requesterId: need.companyId,
           initiatorId: currentUserId,
           quantity: data.quantity,
           offerPrice: data.price,
