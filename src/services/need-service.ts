@@ -1,6 +1,14 @@
 // src/services/need-service.ts
-import type { Need } from '@/lib/types';
-import { mockNeeds } from '@/lib/data';
+import type { Need, Company } from '@/lib/types';
+import { mockNeeds, mockCompanies } from '@/lib/data';
+
+// Helper to rehydrate need with full company object
+const rehydrateNeed = (need: Need): Need => {
+    return {
+        ...need,
+        company: mockCompanies.find(c => c.id === need.companyId)
+    };
+};
 
 // Treat mockNeeds as an in-memory database
 let needsDB = [...mockNeeds];
@@ -8,21 +16,22 @@ let needsDB = [...mockNeeds];
 // --- Service Functions ---
 
 export const getAllNeeds = (): Need[] => {
-    return needsDB;
+    return needsDB.map(rehydrateNeed);
 };
 
 export const getNeedById = (id: string): Need | undefined => {
-    return needsDB.find(n => n.id === id);
+    const need = needsDB.find(n => n.id === id);
+    return need ? rehydrateNeed(need) : undefined;
 };
 
-export const addNeed = (needData: Omit<Need, 'id' | 'companyId'>): Need => {
+export const addNeed = (needData: Omit<Need, 'id' | 'companyId' | 'company'>): Need => {
     const newNeed: Need = {
         ...needData,
         id: `need-${Date.now()}`, // Simple unique ID
         companyId: 'comp-3', // Mock current user's company (a transformer)
     };
     needsDB.push(newNeed);
-    return newNeed;
+    return rehydrateNeed(newNeed);
 };
 
 export const updateNeed = (updatedNeed: Need): Need => {
@@ -38,7 +47,7 @@ export const updateNeed = (updatedNeed: Need): Need => {
     };
     needsDB[index] = newNeed;
     
-    return newNeed;
+    return rehydrateNeed(newNeed);
 };
 
 export const deleteNeed = (id: string): void => {

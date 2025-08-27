@@ -1,5 +1,6 @@
 
 
+
 export type Company = {
   id: string;
   name: string;
@@ -38,6 +39,7 @@ export type Residue = {
 export type Need = {
     id: string;
     companyId: string;
+    company?: Company;
     residueType: string;
     category: 'BIOMASS' | 'FOOD' | 'AGRO' | 'OTHERS';
     quantity: number;
@@ -48,9 +50,11 @@ export type Need = {
 }
 
 export type Match = {
-  residueId: string;
+  sourceId: string;
+  matchedId: string;
   score: number;
   reason: string;
+  company?: Company;
 };
 
 export type ImpactMetric = {
