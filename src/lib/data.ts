@@ -36,7 +36,7 @@ export const mockCompanies: Company[] = [
   },
 ];
 
-export const mockResidues: Residue[] = [
+export let mockResidues: Residue[] = [
   {
     id: 'res-1',
     companyId: 'comp-1',
@@ -109,6 +109,24 @@ export const mockResidues: Residue[] = [
     moisturePct: 85.0,
     contaminants: 'Tierra mínima',
   },
+  {
+    id: 'res-5',
+    companyId: 'comp-3',
+    company: mockCompanies[2],
+    type: 'Poda de cítricos',
+    category: 'BIOMASS',
+    quantity: 25,
+    unit: 'TON',
+    availabilityDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+    pricePerUnit: 12.0,
+    locationLat: 39.4699,
+    locationLng: -0.3763,
+    status: 'ACTIVE',
+    photos: ['https://picsum.photos/seed/res5/600/400'],
+    description: 'Ramas y hojas de naranjos y limoneros. Perfecta para trituración y uso como biomasa en calderas.',
+    moisturePct: 30.0,
+    contaminants: 'Ninguno',
+  },
 ];
 
 const MESES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
@@ -121,3 +139,5 @@ export const mockImpactMetrics: ImpactMetric[] = [
   { label: MESES[4], co2Avoided: 550, wasteDiverted: 1100, savings: 1650 },
   { label: MESES[5], co2Avoided: 600, wasteDiverted: 1200, savings: 1800 },
 ];
+
+    

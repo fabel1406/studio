@@ -1,3 +1,4 @@
+
 // src/app/dashboard/needs/create/page.tsx
 "use client"
 
@@ -27,17 +28,30 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { mockResidues } from "@/lib/data"
 
 const needFormSchema = z.object({
-  residueType: z.string().min(2, { message: "El tipo debe tener al menos 2 caracteres." }),
+  residueType: z.string({ required_error: "Debes seleccionar un tipo de residuo." }),
+  customResidueType: z.string().optional(),
   category: z.enum(['BIOMASS', 'FOOD', 'AGRO', 'OTHERS'], { required_error: "Debes seleccionar una categoría." }),
   quantity: z.coerce.number().min(1, { message: "La cantidad debe ser mayor que 0." }),
   unit: z.enum(['KG', 'TON'], { required_error: "Debes seleccionar una unidad." }),
   frequency: z.enum(['ONCE', 'WEEKLY', 'MONTHLY'], { required_error: "Debes seleccionar una frecuencia." }),
   specifications: z.string().max(500, { message: "La descripción no puede exceder los 500 caracteres." }).optional(),
-})
+}).refine(data => {
+    if (data.residueType === 'Otro' && !data.customResidueType) {
+        return false;
+    }
+    return true;
+}, {
+    message: "Por favor, especifica el tipo de residuo.",
+    path: ["customResidueType"],
+});
+
 
 type NeedFormValues = z.infer<typeof needFormSchema>
+
+const uniqueResidueTypes = [...new Set(mockResidues.map(r => r.type))];
 
 export default function NeedFormPage() {
   const router = useRouter();
@@ -47,6 +61,7 @@ export default function NeedFormPage() {
     resolver: zodResolver(needFormSchema),
     defaultValues: {
       residueType: "",
+      customResidueType: "",
       quantity: 1,
       unit: 'TON',
       category: 'AGRO',
@@ -56,12 +71,17 @@ export default function NeedFormPage() {
     mode: "onChange",
   })
 
+  const selectedResidueType = form.watch("residueType");
+
   function onSubmit(data: NeedFormValues) {
-    // Logic to add/update need will go here
-    console.log(data);
+    const finalData = {
+        ...data,
+        residueType: data.residueType === 'Otro' ? data.customResidueType : data.residueType,
+    };
+    console.log(finalData);
     toast({
         title: "¡Necesidad Publicada!",
-        description: `Tu solicitud de "${data.residueType}" ha sido publicada con éxito.`,
+        description: `Tu solicitud de "${finalData.residueType}" ha sido publicada con éxito.`,
     })
     router.push('/dashboard/needs');
   }
@@ -79,22 +99,49 @@ export default function NeedFormPage() {
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <FormField
-                      control={form.control}
-                      name="residueType"
-                      render={({ field }) => (
-                          <FormItem>
-                          <FormLabel>Tipo de Residuo Buscado</FormLabel>
-                          <FormControl>
-                              <Input placeholder="Ej: Poda de cítricos" {...field} />
-                          </FormControl>
-                          <FormDescription>
-                              El nombre específico del residuo que necesitas.
-                          </FormDescription>
-                          <FormMessage />
-                          </FormItem>
-                      )}
-                    />
+                    <div className="space-y-4">
+                        <FormField
+                        control={form.control}
+                        name="residueType"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Tipo de Residuo Buscado</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
+                                <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Selecciona un tipo de residuo" />
+                                </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    {uniqueResidueTypes.map(type => (
+                                        <SelectItem key={type} value={type}>{type}</SelectItem>
+                                    ))}
+                                    <SelectItem value="Otro">Otro (especificar)</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <FormDescription>
+                                Selecciona un residuo o elige "Otro" para especificar.
+                            </FormDescription>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                        />
+                        {selectedResidueType === 'Otro' && (
+                            <FormField
+                            control={form.control}
+                            name="customResidueType"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Especificar otro tipo de residuo</FormLabel>
+                                <FormControl>
+                                    <Input placeholder="Ej: Poda de cítricos" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                            />
+                        )}
+                    </div>
                     <FormField
                       control={form.control}
                       name="category"
@@ -209,3 +256,5 @@ export default function NeedFormPage() {
     </div>
   )
 }
+
+    
