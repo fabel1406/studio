@@ -6,8 +6,8 @@ import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { DataTableColumnHeader } from "./data-table-column-header"
 import { DataTableRowActions } from "./data-table-row-actions"
-import { ResidueSchema } from "../data/schema"
 import { z } from "zod"
+import { residueSchema } from "../data/schema"
 
 const categories = [
     { value: "AGRO", label: "Agroindustrial" },
@@ -22,7 +22,7 @@ const statuses = [
     { value: "CLOSED", label: "Cerrado" },
 ]
 
-type Residue = z.infer<typeof ResidueSchema>
+type Residue = z.infer<typeof residueSchema>
 
 export const columns: ColumnDef<Residue>[] = [
   {
