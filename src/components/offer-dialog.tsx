@@ -69,6 +69,7 @@ export function OfferDialog({ isOpen, onOpenChange, need, userResidues }: OfferD
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
+      residueId: undefined,
       price: undefined,
       quantity: undefined,
     }
@@ -95,6 +96,7 @@ export function OfferDialog({ isOpen, onOpenChange, need, userResidues }: OfferD
     });
     onOpenChange(false);
     router.push('/dashboard/negotiations');
+    router.refresh();
   };
 
   return (

@@ -68,7 +68,7 @@ export function NeedCard({ need }: { need: Need }) {
         </CardContent>
         <CardFooter className="p-4 pt-0">
           {canOffer ? (
-              <Button className="w-full" onClick={() => setIsOfferDialogOpen(true)}>
+              <Button className="w-full" onClick={() => setIsOfferDialogOpen(true)} disabled={!isMounted}>
                   <PackageCheck className="mr-2 h-4 w-4" /> Hacer una Oferta
               </Button>
           ) : (
@@ -78,7 +78,7 @@ export function NeedCard({ need }: { need: Need }) {
           )}
         </CardFooter>
       </Card>
-      {canOffer && (
+      {isMounted && canOffer && (
         <OfferDialog
           isOpen={isOfferDialogOpen}
           onOpenChange={setIsOfferDialogOpen}

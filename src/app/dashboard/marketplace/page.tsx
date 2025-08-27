@@ -20,6 +20,8 @@ import Link from "next/link";
 import { useRole } from '../layout';
 
 const uniqueResidueTypes = [...new Set(mockResidues.map(r => r.type))];
+const uniqueNeedTypes = [...new Set(mockNeeds.map(r => r.residueType))];
+const allUniqueTypes = [...new Set([...uniqueResidueTypes, ...uniqueNeedTypes])];
 
 export default function MarketplacePage() {
   const { role } = useRole();
@@ -77,7 +79,7 @@ export default function MarketplacePage() {
                 </SelectTrigger>
                 <SelectContent>
                     <SelectItem value="ALL_TYPES">Todos los tipos</SelectItem>
-                    {uniqueResidueTypes.map(type => (
+                    {allUniqueTypes.map(type => (
                         <SelectItem key={type} value={type}>{type}</SelectItem>
                     ))}
                 </SelectContent>

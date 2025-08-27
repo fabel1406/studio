@@ -137,12 +137,12 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                   </div>
               </SidebarFooter>
           </Sidebar>
-          <main className="flex-1 flex flex-col md:ml-[var(--sidebar-width-icon)] lg:ml-[var(--sidebar-width)] transition-[margin-left] duration-200">
-            <div className="flex-grow">
+          <div className="flex-1 flex flex-col md:ml-[var(--sidebar-width-icon)] lg:ml-[var(--sidebar-width)] transition-[margin-left] duration-200">
+            <main className="flex-grow">
               {children}
-            </div>
+            </main>
             <Footer />
-          </main>
+          </div>
         </div>
     </SidebarProvider>
   );

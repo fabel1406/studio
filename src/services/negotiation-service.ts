@@ -62,7 +62,11 @@ export const addNegotiation = (data: NewNegotiationData): Negotiation => {
         offerPrice: data.offerPrice,
         status: 'SENT',
         createdAt: new Date().toISOString(),
-        messages: [],
+        messages: [{
+            senderId: data.supplierId,
+            content: `He enviado una oferta de ${data.quantity} ${data.unit} para tu necesidad.`,
+            timestamp: new Date().toISOString()
+        }],
     };
     
     const allNegotiations = [...currentNegotiations, newNegotiationData].map(({ residue, requester, supplier, ...rest }) => rest);
