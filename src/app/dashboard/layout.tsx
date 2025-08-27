@@ -1,0 +1,110 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+  SidebarProvider,
+  SidebarInset,
+  SidebarFooter,
+  SidebarTrigger
+} from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Logo } from "@/components/logo";
+import { BarChart2, Leaf, Recycle, Settings, LogOut, LayoutDashboard, Search } from "lucide-react";
+import type { LucideIcon } from 'lucide-react';
+
+type NavItem = {
+  href: string;
+  label: string;
+  icon: LucideIcon;
+};
+
+const navItems: NavItem[] = [
+  { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
+  { href: "/dashboard/marketplace", label: "Marketplace", icon: Search },
+  { href: "/dashboard/impact", label: "Impact", icon: BarChart2 },
+  { href: "/dashboard/residues", label: "My Residues", icon: Leaf },
+  { href: "/dashboard/matches", label: "Matches", icon: Recycle },
+];
+
+const settingsNav: NavItem[] = [
+    { href: "/dashboard/settings", label: "Settings", icon: Settings },
+    { href: "/logout", label: "Logout", icon: LogOut },
+]
+
+export default function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const pathname = usePathname();
+
+  return (
+    <SidebarProvider>
+      <div className="flex min-h-[calc(100vh-80px)]">
+        <Sidebar>
+            <SidebarHeader>
+                 <div className="flex items-center gap-2">
+                    <Logo className="size-7 text-primary" />
+                    <span className="text-lg font-semibold group-data-[collapsible=icon]:hidden">
+                        EcoConnect
+                    </span>
+                </div>
+            </SidebarHeader>
+            <SidebarContent>
+                <SidebarMenu>
+                    {navItems.map((item) => (
+                        <SidebarMenuItem key={item.href}>
+                            <Link href={item.href} legacyBehavior passHref>
+                                <SidebarMenuButton 
+                                    isActive={pathname === item.href}
+                                    tooltip={item.label}
+                                >
+                                    <item.icon />
+                                    <span>{item.label}</span>
+                                </SidebarMenuButton>
+                            </Link>
+                        </SidebarMenuItem>
+                    ))}
+                </SidebarMenu>
+            </SidebarContent>
+            <SidebarFooter>
+                <SidebarMenu>
+                    {settingsNav.map((item) => (
+                        <SidebarMenuItem key={item.href}>
+                           <Link href={item.href} legacyBehavior passHref>
+                                <SidebarMenuButton 
+                                    isActive={pathname === item.href}
+                                    tooltip={item.label}
+                                >
+                                    <item.icon />
+                                    <span>{item.label}</span>
+                                </SidebarMenuButton>
+                            </Link>
+                        </SidebarMenuItem>
+                    ))}
+                </SidebarMenu>
+                <div className="flex items-center gap-3 p-2 group-data-[collapsible=icon]:justify-center">
+                    <Avatar className="size-9">
+                        <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
+                        <AvatarFallback>CN</AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col group-data-[collapsible=icon]:hidden">
+                        <span className="text-sm font-medium text-foreground">Admin User</span>
+                        <span className="text-xs text-muted-foreground">admin@ecoconnect.com</span>
+                    </div>
+                </div>
+            </SidebarFooter>
+        </Sidebar>
+        <SidebarInset>{children}</SidebarInset>
+      </div>
+    </SidebarProvider>
+  );
+}
