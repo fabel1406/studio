@@ -26,12 +26,12 @@ export function NeedCard({ need }: { need: Need }) {
   useEffect(() => {
     setIsMounted(true);
     if (canOffer && currentUserId) {
-        // In a real app, this would be the logged-in user's ID
-        // For the 'BOTH' role, their ID might be a transformer ID, but we should find their generator company ID
-        const generatorCompanyId = 'comp-1'; // Hardcoded for mock purposes
+        // Mock logic: 'BOTH' user (comp-3) can offer residues from their generator counterpart (comp-1)
+        // In a real app, a user with BOTH roles might have multiple company profiles associated with them.
+        const generatorCompanyId = role === 'BOTH' ? 'comp-1' : currentUserId;
         setUserResidues(getAllResidues().filter(r => r.companyId === generatorCompanyId && r.status === 'ACTIVE'));
     }
-  }, [canOffer, currentUserId]);
+  }, [canOffer, currentUserId, role]);
 
   if (!isMounted) {
     return null; // or a skeleton loader

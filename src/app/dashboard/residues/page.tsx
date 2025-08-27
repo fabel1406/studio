@@ -10,23 +10,28 @@ import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getAllResidues, deleteResidue as deleteResidueService } from '@/services/residue-service';
+import { useRole } from '../layout';
 
 export default function ResiduesPage() {
   const [residues, setResidues] = useState<Residue[]>([]);
+  const { toast } = useToast();
+  const { role, currentUserId } = useRole();
 
   useEffect(() => {
     // Fetch initial data on component mount
-    const userResidues = getAllResidues().filter(r => r.companyId === 'comp-1');
-    setResidues(userResidues);
-  }, []);
-
-  const { toast } = useToast();
+    if (currentUserId) {
+        const userResidues = getAllResidues().filter(r => r.companyId === currentUserId);
+        setResidues(userResidues);
+    }
+  }, [currentUserId]);
 
   const deleteResidue = (residueId: string, residueType: string) => {
     deleteResidueService(residueId);
     // Refetch data to reflect the deletion
-    const userResidues = getAllResidues().filter(r => r.companyId === 'comp-1');
-    setResidues(userResidues);
+    if (currentUserId) {
+        const userResidues = getAllResidues().filter(r => r.companyId === currentUserId);
+        setResidues(userResidues);
+    }
     toast({
       title: "Residuo Eliminado",
       description: `La publicación para "${residueType}" ha sido eliminada.`,

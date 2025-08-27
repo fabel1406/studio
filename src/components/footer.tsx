@@ -22,7 +22,7 @@ export function Footer() {
               <h3 className="text-base font-semibold text-foreground tracking-wider uppercase">Soluciones</h3>
               <ul className="mt-4 space-y-4">
                 <li><Link href="/dashboard/marketplace" className="text-sm text-muted-foreground hover:text-primary">Marketplace</Link></li>
-                <li><Link href="/dashboard/impact" className="text-sm text-muted-foreground hover:text-primary">Seguimiento de Impacto</Link></li>
+                <li><Link href="/dashboard/impact" className="text-sm text-muted-foreground hover:text-primary">Impacto</Link></li>
                 <li><Link href="/for-generators" className="text-sm text-muted-foreground hover:text-primary">Para Generadores</Link></li>
                 <li><Link href="/for-transformers" className="text-sm text-muted-foreground hover:text-primary">Para Transformadores</Link></li>
               </ul>

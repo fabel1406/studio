@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import type { Residue, Match } from '@/lib/types';
+import type { Residue, Match, Need } from '@/lib/types';
 import { Button } from './ui/button';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from './ui/accordion';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
@@ -11,7 +11,7 @@ import { generateResidueDetails } from '@/ai/flows/residue-details';
 import { getMatchSuggestions } from '@/ai/flows/match-suggestions';
 import { Sparkles, Recycle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-
+import { getAllNeeds } from '@/services/need-service';
 
 export function ResidueDetails({ residue }: { residue: Residue }) {
     const { toast } = useToast();
@@ -44,21 +44,20 @@ export function ResidueDetails({ residue }: { residue: Residue }) {
     const handleFindMatches = async () => {
         setIsMatchesLoading(true);
         try {
+            // This component is for a single residue, so we are always looking for transformers (who have needs)
+            const allNeeds: Need[] = getAllNeeds();
             const result = await getMatchSuggestions({
-                transformerCompanyId: 'user-company-id', // This would be the current user's company ID
-                residueType: residue.type,
-                locationLat: residue.locationLat || 0,
-                locationLng: residue.locationLng || 0,
-                quantityNeeded: 10, // Mock quantity
+                matchType: 'findTransformers',
+                sourceResidue: residue,
+                availableNeeds: allNeeds,
             });
-            // In a real app, we would use the IDs to fetch company details.
-            // Here we'll just mock some data with the result.
-            const mockMatches = result.suggestions.map(s => ({
-                residueId: s.residueId,
-                score: s.score,
-                reason: s.reason,
-            }));
-            setMatches(mockMatches);
+            
+            if (result && result.suggestions) {
+                 setMatches(result.suggestions);
+            } else {
+                 setMatches([]);
+            }
+           
         } catch (error) {
             console.error(error);
             toast({
@@ -127,11 +126,12 @@ export function ResidueDetails({ residue }: { residue: Residue }) {
                                     {matches.map((match, index) => (
                                         <div key={index} className="p-4 border rounded-lg bg-background/50">
                                             <div className="flex justify-between items-start">
-                                                <h4 className="font-semibold">Empresa Transformadora #{index + 1}</h4>
+                                                <h4 className="font-semibold">{match.company?.name || `Empresa #${index + 1}`}</h4>
                                                 <Badge>Puntuación: {(match.score * 100).toFixed(0)}%</Badge>
                                             </div>
+                                             <p className="text-sm text-muted-foreground mt-1 mb-2">{match.company?.city}, {match.company?.country}</p>
                                             <p className="text-sm text-muted-foreground mt-2">{match.reason}</p>
-                                             <Button size="sm" className="mt-4">Contactar Transformador</Button>
+                                             <Button size="sm" className="mt-4">Iniciar Negociación</Button>
                                         </div>
                                     ))}
                                 </div>
