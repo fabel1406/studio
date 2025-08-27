@@ -19,7 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { z } from "zod"
-import { ResidueSchema } from "../data/schema"
+import { residueSchema } from "../data/schema"
 
 interface DataTableRowActionsProps<TData> {
   row: Row<TData>
@@ -36,7 +36,7 @@ export function DataTableRowActions<TData>({
   row,
 }: DataTableRowActionsProps<TData>) {
   // We can assume the row data matches the schema
-   const residue = ResidueSchema.parse(row.original)
+   const residue = residueSchema.parse(row.original)
 
   return (
     <DropdownMenu>
