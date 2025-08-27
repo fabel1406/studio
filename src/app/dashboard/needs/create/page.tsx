@@ -39,7 +39,7 @@ const needFormSchema = z.object({
   frequency: z.enum(['ONCE', 'WEEKLY', 'MONTHLY'], { required_error: "Debes seleccionar una frecuencia." }),
   specifications: z.string().max(500, { message: "La descripción no puede exceder los 500 caracteres." }).optional(),
 }).refine(data => {
-    if (data.residueType === 'Otro' && !data.customResidueType) {
+    if (data.residueType === 'Otro' && (!data.customResidueType || data.customResidueType.trim().length < 2)) {
         return false;
     }
     return true;
@@ -78,6 +78,8 @@ export default function NeedFormPage() {
         ...data,
         residueType: data.residueType === 'Otro' ? data.customResidueType : data.residueType,
     };
+    // In a real app, this would be sent to a service to be saved.
+    // For now, we'll just log it.
     console.log(finalData);
     toast({
         title: "¡Necesidad Publicada!",
@@ -99,7 +101,7 @@ export default function NeedFormPage() {
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div className="space-y-4">
+                    
                         <FormField
                         control={form.control}
                         name="residueType"
@@ -141,7 +143,7 @@ export default function NeedFormPage() {
                             )}
                             />
                         )}
-                    </div>
+                    
                     <FormField
                       control={form.control}
                       name="category"
@@ -256,5 +258,3 @@ export default function NeedFormPage() {
     </div>
   )
 }
-
-    
