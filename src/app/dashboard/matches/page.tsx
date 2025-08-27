@@ -12,17 +12,23 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useRole } from '../layout';
 import { getAllResidues, getResidueById } from '@/services/residue-service';
-import { getAllNeeds } from '@/services/need-service';
+import { getAllNeeds, getNeedById } from '@/services/need-service';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Link from 'next/link';
+import { OfferDialog } from '@/components/offer-dialog';
+import { ResidueActionPanel } from '@/components/residue-action-panel';
+import { addNegotiation } from '@/services/negotiation-service';
+import { useRouter } from 'next/navigation';
 
 type MatchResult = {
     sourceId: string; // Can be a residueId or a needId
+    sourceType: 'residue' | 'need';
     matches: Match[];
 }
 
 export default function MatchesPage() {
     const { toast } = useToast();
+    const router = useRouter();
     const { role, currentUserId } = useRole();
     const [loadingSourceId, setLoadingSourceId] = useState<string | null>(null);
     const [matchResults, setMatchResults] = useState<MatchResult[]>([]);
@@ -55,6 +61,7 @@ export default function MatchesPage() {
             
             const newMatchResult: MatchResult = {
                 sourceId: need.id,
+                sourceType: 'need',
                 matches: result.suggestions,
             };
 
@@ -86,6 +93,7 @@ export default function MatchesPage() {
             
             const newMatchResult: MatchResult = {
                 sourceId: residue.id,
+                sourceType: 'residue',
                 matches: result.suggestions,
             };
 
@@ -105,17 +113,52 @@ export default function MatchesPage() {
             setLoadingSourceId(null);
         }
     };
+
+    const handleContact = (sourceType: 'residue' | 'need', match: Match) => {
+        if (!currentUserId) return;
+
+        if (sourceType === 'residue') {
+            // A Generator is contacting a Transformer about a Need
+            const sourceResidue = userResidues.find(r => r.id === match.sourceId);
+            const matchedNeed = allNeeds.find(n => n.id === match.matchedId);
+            if (!sourceResidue || !matchedNeed) return;
+            
+            addNegotiation({
+                type: 'offer',
+                residue: sourceResidue,
+                need: matchedNeed,
+                initiatorId: currentUserId,
+                quantity: sourceResidue.quantity, // Defaults to full quantity for now
+            });
+            toast({ title: "Oferta Iniciada", description: `Se ha iniciado una negociación para "${sourceResidue.type}".` });
+
+        } else { // sourceType === 'need'
+            // A Transformer is contacting a Generator about a Residue
+            const matchedResidue = allResidues.find(r => r.id === match.matchedId);
+            if (!matchedResidue) return;
+
+            addNegotiation({
+                type: 'request',
+                residue: matchedResidue,
+                initiatorId: currentUserId,
+                quantity: matchedResidue.quantity, // Defaults to full quantity for now
+            });
+            toast({ title: "Solicitud Iniciada", description: `Se ha iniciado una negociación para "${matchedResidue.type}".` });
+        }
+        router.push('/dashboard/negotiations');
+    }
     
     const renderMatchList = (sourceId: string) => {
-        const foundMatches = matchResults.find(r => r.sourceId === sourceId)?.matches;
-        if (!foundMatches) return null;
+        const result = matchResults.find(r => r.sourceId === sourceId);
+        if (!result || !result.matches) return null;
+        const { matches, sourceType } = result;
 
         return (
              <CardContent>
                 <Separator className="my-4" />
-                {foundMatches.length > 0 ? (
+                {matches.length > 0 ? (
                     <div className="grid gap-6">
-                        {foundMatches.map((match, index) => {
+                        {matches.map((match, index) => {
                             const matchedCompany = match.company;
                             return (
                             <div key={index} className="p-4 border rounded-lg bg-background/50">
@@ -125,11 +168,9 @@ export default function MatchesPage() {
                                 </div>
                                 <p className="text-sm text-muted-foreground mt-1 mb-3">{matchedCompany?.city}, {matchedCompany?.country}</p>
                                 <p className="text-sm text-muted-foreground mb-4">{match.reason}</p>
-                                <Button asChild size="sm">
-                                  <Link href={`/dashboard/residues/${match.matchedId}`}>
+                                <Button size="sm" onClick={() => handleContact(sourceType, match)}>
                                     <Send className="mr-2 h-4 w-4" />
                                     Contactar
-                                  </Link>
                                 </Button>
                             </div>
                         )})}
@@ -254,3 +295,5 @@ export default function MatchesPage() {
         </div>
     );
 }
+
+    
