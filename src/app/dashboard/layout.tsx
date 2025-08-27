@@ -49,11 +49,11 @@ export default function DashboardLayout({
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-[calc(100vh-80px)]">
+      <div className="flex min-h-screen">
         <Sidebar>
             <SidebarHeader>
                  <div className="flex items-center gap-2">
-                    <Logo className="h-10 w-auto" />
+                    <Logo className="h-12 w-auto" />
                     <span className="text-lg font-semibold group-data-[collapsible=icon]:hidden bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">
                         EcoConnect
                     </span>
@@ -109,4 +109,3 @@ export default function DashboardLayout({
     </SidebarProvider>
   );
 }
-
