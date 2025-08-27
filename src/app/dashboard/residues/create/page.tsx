@@ -58,11 +58,7 @@ export default function ResidueFormPage() {
   function onSubmit(data: ResidueFormValues) {
     toast({
       title: "¡Residuo Guardado!",
-      description: (
-        <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-          <code className="text-white">{JSON.stringify(data, null, 2)}</code>
-        </pre>
-      ),
+      description: `El residuo "${data.type}" ha sido guardado con éxito.`,
     })
     // In a real app, you would redirect to the residues list
     router.push('/dashboard/residues');

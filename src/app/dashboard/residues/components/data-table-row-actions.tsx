@@ -60,7 +60,7 @@ export function DataTableRowActions<TData>({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-[160px]">
           <DropdownMenuItem asChild>
-             <Link href={`/dashboard/residues/create`}>
+             <Link href={`/dashboard/residues/create?id=${residue.id}`}>
               <Edit className="mr-2 h-4 w-4" />
               Editar
             </Link>
