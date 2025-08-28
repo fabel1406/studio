@@ -8,12 +8,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import PublicLayout from "../(public)/layout";
+import { Footer } from "@/components/footer";
+import { Header } from "@/components/header";
 
 export default function LoginPage() {
   return (
-    <PublicLayout>
-      <div className="min-h-[calc(100vh-80px)] flex items-center justify-center p-4 bg-gradient-to-br from-primary/10 via-background to-secondary/10">
+    <div className="flex flex-col min-h-screen">
+      <Header />
+      <main className="flex-grow flex items-center justify-center p-4 bg-gradient-to-br from-primary/10 via-background to-secondary/10">
         <Card className="w-full max-w-md shadow-2xl">
           <CardHeader className="text-center">
               <Link href="/" className="flex items-center justify-center gap-2 mb-4">
@@ -35,7 +37,9 @@ export default function LoginPage() {
             </div>
           </CardContent>
         </Card>
-      </div>
-    </PublicLayout>
+      </main>
+      <Footer />
+    </div>
   );
 }
+
