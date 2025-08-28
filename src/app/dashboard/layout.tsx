@@ -51,6 +51,7 @@ const RoleProvider = ({ children }: { children: React.ReactNode }) => {
   const [role, setRole] = useState<UserRole>("GENERATOR");
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -61,11 +62,12 @@ const RoleProvider = ({ children }: { children: React.ReactNode }) => {
         setRole(finalRole);
       } else {
         setUser(null);
+        router.push('/login');
       }
       setIsLoading(false);
     });
     return () => unsubscribe();
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     if (user) {
@@ -126,13 +128,10 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   const { role, user } = useRole();
   const { setOpenMobile } = useSidebar();
   const router = useRouter();
-
-  useEffect(() => {
-    if (!user) {
-        router.push('/login');
-    }
-  }, [user, router]);
-
+  
+  if (!user) {
+    return null; // The RoleProvider handles the redirect.
+  }
 
   const handleLinkClick = () => {
     setOpenMobile(false);
@@ -158,10 +157,6 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
         </div>
       </div>
   );
-
-  if (!user) {
-    return null; // The useEffect above will handle the redirect.
-  }
 
   return (
     <div className="flex min-h-screen">
