@@ -12,9 +12,17 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-const app: FirebaseApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const auth: Auth = getAuth(app);
+let app: FirebaseApp;
+let auth: Auth;
 
+if (typeof window !== 'undefined' && !getApps().length) {
+  app = initializeApp(firebaseConfig);
+  auth = getAuth(app);
+} else if (typeof window !== 'undefined' && getApps().length > 0) {
+  app = getApp();
+  auth = getAuth(app);
+}
 
+// @ts-ignore
 export { app, auth };
 
