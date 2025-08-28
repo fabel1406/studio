@@ -1,4 +1,3 @@
-
 // src/app/dashboard/residues/create/page.tsx
 "use client"
 
