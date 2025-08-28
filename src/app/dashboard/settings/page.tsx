@@ -44,32 +44,40 @@ type ProfileFormValues = z.infer<typeof profileSchema>;
 
 export default function SettingsPage() {
     const { toast } = useToast();
-    const { role, setRole } = useRole();
+    const { user, role, setRole } = useRole();
     
     // In a real app, you would fetch company data here.
     // For now, we use mock data.
     const form = useForm<ProfileFormValues>({
         resolver: zodResolver(profileSchema),
         defaultValues: {
-            companyName: "Usuario Admin",
-            email: "admin@ecoconnect.com",
-            description: "Productora de aceite de oliva con residuos de alperujo",
+            companyName: "Usuario EcoConnect",
+            email: "",
+            description: "Empresa de la plataforma EcoConnect.",
             country: "España",
-            city: "Jaén",
-            address: "Polígono Industrial Los Olivares, Calle B, Parcela 23",
-            contactEmail: "contacto@ecooliva.es",
-            phone: "+34 953 123 456",
-            website: "https://www.ecooliva.es",
+            city: "Madrid",
+            address: "Calle Ficticia 123",
+            contactEmail: "",
+            phone: "+34 123 456 789",
+            website: "https://www.ecoconnect.com",
             role: role,
         },
     });
 
     useEffect(() => {
-        form.reset({ ...form.getValues(), role });
-    }, [role, form]);
+        if (user) {
+            form.reset({
+                ...form.getValues(),
+                email: user.email || '',
+                companyName: user.displayName || 'Usuario EcoConnect',
+                role,
+            });
+        }
+    }, [role, user, form]);
 
     function onSubmit(values: ProfileFormValues) {
         setRole(values.role);
+        localStorage.setItem('userRole', values.role); // Persist role change for this demo
         console.log("Saving profile data:", values);
         toast({
             title: "Perfil Actualizado",

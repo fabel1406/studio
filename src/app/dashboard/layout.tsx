@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Sidebar,
   SidebarContent,
@@ -23,13 +23,18 @@ import { Footer } from "@/components/footer";
 import React, { createContext, useContext, useState, useMemo, useEffect } from 'react';
 import { DashboardHeader } from "@/components/dashboard-header";
 import { ScrollToTop } from "@/components/scroll-to-top";
+import { auth } from "@/lib/firebase";
+import { onAuthStateChanged, signOut, type User } from "firebase/auth";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type UserRole = "GENERATOR" | "TRANSFORMER" | "BOTH";
 
 type RoleContextType = {
+  user: User | null;
   role: UserRole;
   setRole: (role: UserRole) => void;
   currentUserId: string | null;
+  isLoading: boolean;
 };
 
 const RoleContext = createContext<RoleContextType | null>(null);
@@ -43,26 +48,48 @@ export const useRole = () => {
 };
 
 const RoleProvider = ({ children }: { children: React.ReactNode }) => {
-  const [role, setRole] = useState<UserRole>("GENERATOR"); // Default role
+  const [user, setUser] = useState<User | null>(null);
+  const [role, setRole] = useState<UserRole>("GENERATOR");
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
-    // In a real app, this would be derived from an auth session.
-    // We mock it based on the selected role for demonstration.
-    if (role === 'GENERATOR') {
-        setCurrentUserId('comp-1');
-    } else if (role === 'TRANSFORMER') {
-        setCurrentUserId('comp-3');
-    } else if (role === 'BOTH') {
-        // For 'BOTH', the primary identity is the transformer one to allow
-        // them to request residues from other generators in the marketplace.
-        // But they also have access to generator features. The app logic for
-        // posting residues/needs will still work based on the 'BOTH' role.
-        setCurrentUserId('comp-3');
-    }
-  }, [role]);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setUser(user);
+        // In a real app, role would be fetched from a database.
+        // We use localStorage as a mock for this demo.
+        const storedRole = localStorage.getItem('userRole') as UserRole;
+        const finalRole = storedRole || 'GENERATOR';
+        setRole(finalRole);
+      } else {
+        setUser(null);
+        router.push('/login');
+      }
+      setIsLoading(false);
+    });
+    return () => unsubscribe();
+  }, [router]);
 
-  const value = useMemo(() => ({ role, setRole, currentUserId }), [role, currentUserId]);
+  useEffect(() => {
+    // This mapping is for mock data purposes. In a real app,
+    // the user's ID would be consistent regardless of role.
+    if (user) {
+      if (role === 'GENERATOR') {
+          setCurrentUserId('comp-1');
+      } else if (role === 'TRANSFORMER') {
+          setCurrentUserId('comp-3');
+      } else if (role === 'BOTH') {
+          // The "admin" user is mapped to comp-3, but has access to both roles' features
+          setCurrentUserId('comp-3');
+      }
+    } else {
+        setCurrentUserId(null);
+    }
+  }, [role, user]);
+
+  const value = useMemo(() => ({ user, role, setRole, currentUserId, isLoading }), [user, role, currentUserId, isLoading]);
 
   return <RoleContext.Provider value={value}>{children}</RoleContext.Provider>;
 };
@@ -87,30 +114,76 @@ const navItems: NavItem[] = [
 
 const settingsNav: NavItem[] = [
     { href: "/dashboard/settings", label: "Ajustes", icon: Settings, roles: ["GENERATOR", "TRANSFORMER", "BOTH"] },
-    { href: "/logout", label: "Cerrar Sesión", icon: LogOut, roles: ["GENERATOR", "TRANSFORMER", "BOTH"] },
-]
+];
 
 function DashboardContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { role } = useRole();
+  const { role, user, isLoading } = useRole();
   const { setOpenMobile } = useSidebar();
-  const [isMounted, setIsMounted] = useState(false);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
+  const router = useRouter();
 
   const handleLinkClick = () => {
     setOpenMobile(false);
   };
 
+  const handleLogout = async () => {
+    await signOut(auth);
+    localStorage.removeItem('userRole');
+    router.push('/login');
+  }
+
   const filteredNavItems = navItems.filter(item => item.roles.includes(role));
+
+  const UserInfo = () => (
+     <div className="flex items-center gap-3 p-2 group-data-[collapsible=icon]:justify-center">
+        <Avatar className="size-9">
+          {user?.photoURL && <AvatarImage src={user.photoURL} alt={user.displayName || user.email || 'User'} />}
+          <AvatarFallback>{user?.email?.charAt(0).toUpperCase() || 'U'}</AvatarFallback>
+        </Avatar>
+        <div className="flex flex-col group-data-[collapsible=icon]:hidden">
+          <span className="text-sm font-medium text-foreground truncate">{user?.displayName || 'Usuario'}</span>
+          <span className="text-xs text-muted-foreground truncate">{user?.email}</span>
+        </div>
+      </div>
+  );
+
+  const UserInfoSkeleton = () => (
+     <div className="flex items-center gap-3 p-2 group-data-[collapsible=icon]:justify-center">
+        <Skeleton className="size-9 rounded-full" />
+        <div className="flex flex-col gap-1 group-data-[collapsible=icon]:hidden">
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-3 w-32" />
+        </div>
+      </div>
+  );
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen">
+          <div className="hidden md:flex flex-col justify-between w-[var(--sidebar-width-icon)] lg:w-[var(--sidebar-width)] border-r p-2">
+            <div>
+              <Skeleton className="h-12 w-36 mb-4" />
+              <div className="space-y-2">
+                {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
+              </div>
+            </div>
+            <div>
+              <Skeleton className="h-10 w-full mb-2" />
+              <UserInfoSkeleton />
+            </div>
+          </div>
+          <main className="flex-1 p-8">
+            <Skeleton className="h-full w-full" />
+          </main>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen">
       <Sidebar>
         <SidebarHeader>
-          <Link href="/" className="flex items-center gap-2 p-2">
+           <Link href="/" className="flex items-center gap-2 p-2">
             <Logo className="size-12 shrink-0" />
             <span className="text-xl font-semibold group-data-[collapsible=icon]:hidden bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">
               EcoConnect
@@ -119,7 +192,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
         </SidebarHeader>
         <SidebarContent>
           <SidebarMenu>
-            {isMounted && filteredNavItems.map((item) => (
+            {filteredNavItems.map((item) => (
               <SidebarMenuItem key={item.href}>
                 <Link href={item.href} onClick={handleLinkClick}>
                   <SidebarMenuButton
@@ -149,17 +222,14 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                 </Link>
               </SidebarMenuItem>
             ))}
+             <SidebarMenuItem>
+                <SidebarMenuButton onClick={handleLogout} tooltip="Cerrar Sesión">
+                    <LogOut />
+                    <span>Cerrar Sesión</span>
+                </SidebarMenuButton>
+            </SidebarMenuItem>
           </SidebarMenu>
-          <div className="flex items-center gap-3 p-2 group-data-[collapsible=icon]:justify-center">
-            <Avatar className="size-9">
-              <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
-              <AvatarFallback>CN</AvatarFallback>
-            </Avatar>
-            <div className="flex flex-col group-data-[collapsible=icon]:hidden">
-              <span className="text-sm font-medium text-foreground">Usuario Admin</span>
-              <span className="text-xs text-muted-foreground">admin@ecoconnect.com</span>
-            </div>
-          </div>
+          {user && <UserInfo />}
         </SidebarFooter>
       </Sidebar>
       <div className="flex-1 flex flex-col md:ml-[var(--sidebar-width-icon)] lg:ml-[var(--sidebar-width)] transition-[margin-left] duration-200">

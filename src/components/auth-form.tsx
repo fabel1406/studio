@@ -1,3 +1,4 @@
+// src/components/auth-form.tsx
 "use client";
 
 import { useForm } from "react-hook-form";
@@ -22,6 +23,10 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
+import { auth } from "@/lib/firebase";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
+import { useState } from "react";
+import { Loader2 } from "lucide-react";
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Dirección de correo electrónico no válida." }),
@@ -43,6 +48,7 @@ type AuthFormProps = {
 export function AuthForm({ mode }: AuthFormProps) {
   const { toast } = useToast();
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
 
   const schema = mode === "login" ? loginSchema : registerSchema;
 
@@ -55,16 +61,57 @@ export function AuthForm({ mode }: AuthFormProps) {
     },
   });
 
-  function onSubmit(values: z.infer<typeof schema>) {
-    console.log(values);
-    toast({
-      title: mode === "login" ? "Inicio de Sesión Exitoso" : "Registro Exitoso",
-      description: "Redirigiendo al panel de control...",
-    });
-    // Simulate API call and redirect
-    setTimeout(() => {
+  async function onSubmit(values: z.infer<typeof schema>) {
+    setIsLoading(true);
+    try {
+        if (mode === 'register') {
+            const { email, password, role } = values as z.infer<typeof registerSchema>;
+            await createUserWithEmailAndPassword(auth, email, password);
+            // In a real app, you would save the role to Firestore or Realtime Database here.
+            localStorage.setItem('userRole', role); // Using localStorage for mock purposes
+        } else {
+            const { email, password } = values as z.infer<typeof loginSchema>;
+            await signInWithEmailAndPassword(auth, email, password);
+            // In a real app, you'd fetch the role from your database after login.
+            // For this mock, we'll assign a role based on the email.
+            if (email.toLowerCase() === 'admin@ecoconnect.com') {
+              localStorage.setItem('userRole', 'BOTH');
+            } else if (email.includes('generator')) {
+               localStorage.setItem('userRole', 'GENERATOR');
+            } else {
+               localStorage.setItem('userRole', 'TRANSFORMER');
+            }
+        }
+        toast({
+            title: mode === "login" ? "Inicio de Sesión Exitoso" : "Registro Exitoso",
+            description: "Redirigiendo al panel de control...",
+        });
         router.push("/dashboard");
-    }, 1000);
+
+    } catch (error: any) {
+        console.error("Authentication error:", error);
+        let description = "Ha ocurrido un error inesperado.";
+        switch (error.code) {
+            case 'auth/email-already-in-use':
+                description = "Este correo electrónico ya está en uso. Por favor, inicia sesión.";
+                break;
+            case 'auth/user-not-found':
+            case 'auth/wrong-password':
+            case 'auth/invalid-credential':
+                description = "Correo electrónico o contraseña incorrectos.";
+                break;
+            case 'auth/weak-password':
+                description = "La contraseña es demasiado débil. Debe tener al menos 6 caracteres.";
+                break;
+        }
+        toast({
+            title: "Error de autenticación",
+            description: description,
+            variant: "destructive",
+        });
+    } finally {
+        setIsLoading(false);
+    }
   }
 
   return (
@@ -77,7 +124,7 @@ export function AuthForm({ mode }: AuthFormProps) {
             <FormItem>
               <FormLabel>Correo Electrónico</FormLabel>
               <FormControl>
-                <Input placeholder="nombre@ejemplo.com" {...field} />
+                <Input placeholder="nombre@ejemplo.com" {...field} disabled={isLoading} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -90,7 +137,7 @@ export function AuthForm({ mode }: AuthFormProps) {
             <FormItem>
               <FormLabel>Contraseña</FormLabel>
               <FormControl>
-                <Input type="password" placeholder="********" {...field} />
+                <Input type="password" placeholder="********" {...field} disabled={isLoading} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -103,7 +150,7 @@ export function AuthForm({ mode }: AuthFormProps) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Soy un...</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isLoading}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecciona tu rol" />
@@ -120,7 +167,8 @@ export function AuthForm({ mode }: AuthFormProps) {
             )}
           />
         )}
-        <Button type="submit" className="w-full">
+        <Button type="submit" className="w-full" disabled={isLoading}>
+          {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           {mode === "login" ? "Iniciar Sesión" : "Crear Cuenta"}
         </Button>
       </form>
