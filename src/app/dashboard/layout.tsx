@@ -34,7 +34,6 @@ type RoleContextType = {
   role: UserRole;
   setRole: (role: UserRole) => void;
   currentUserId: string | null;
-  isLoading: boolean;
 };
 
 const RoleContext = createContext<RoleContextType | null>(null);
@@ -52,20 +51,16 @@ const RoleProvider = ({ children }: { children: React.ReactNode }) => {
   const [role, setRole] = useState<UserRole>("GENERATOR");
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const router = useRouter();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         setUser(user);
-        // In a real app, role would be fetched from a database.
-        // We use localStorage as a mock for this demo.
         const storedRole = localStorage.getItem('userRole') as UserRole;
         const finalRole = storedRole || 'GENERATOR';
         setRole(finalRole);
       } else {
         setUser(null);
-        // Do not redirect here immediately. Let the consuming component handle it.
       }
       setIsLoading(false);
     });
@@ -73,15 +68,12 @@ const RoleProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   useEffect(() => {
-    // This mapping is for mock data purposes. In a real app,
-    // the user's ID would be consistent regardless of role.
     if (user) {
       if (role === 'GENERATOR') {
           setCurrentUserId('comp-1');
       } else if (role === 'TRANSFORMER') {
           setCurrentUserId('comp-3');
       } else if (role === 'BOTH') {
-          // The "admin" user is mapped to comp-3, but has access to both roles' features
           setCurrentUserId('comp-3');
       }
     } else {
@@ -89,9 +81,22 @@ const RoleProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [role, user]);
 
-  const value = useMemo(() => ({ user, role, setRole, currentUserId, isLoading }), [user, role, currentUserId, isLoading]);
+  const value = useMemo(() => ({ user, role, setRole, currentUserId }), [user, role, currentUserId]);
 
-  return <RoleContext.Provider value={value}>{children}</RoleContext.Provider>;
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Logo className="h-16 w-16 animate-pulse" />
+          <p className="text-muted-foreground">Verificando sesión...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <RoleContext.Provider value={value}>{children}</RoleContext.Provider>
+  );
 };
 
 
@@ -118,16 +123,15 @@ const settingsNav: NavItem[] = [
 
 function DashboardContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { role, user, isLoading } = useRole();
+  const { role, user } = useRole();
   const { setOpenMobile } = useSidebar();
   const router = useRouter();
 
   useEffect(() => {
-    // Handle redirection only when loading is complete and user is null.
-    if (!isLoading && !user) {
+    if (!user) {
         router.push('/login');
     }
-  }, [isLoading, user, router]);
+  }, [user, router]);
 
 
   const handleLinkClick = () => {
@@ -155,25 +159,8 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       </div>
   );
 
-  const UserInfoSkeleton = () => (
-     <div className="flex items-center gap-3 p-2 group-data-[collapsible=icon]:justify-center">
-        <Skeleton className="size-9 rounded-full" />
-        <div className="flex flex-col gap-1 group-data-[collapsible=icon]:hidden">
-          <Skeleton className="h-4 w-24" />
-          <Skeleton className="h-3 w-32" />
-        </div>
-      </div>
-  );
-
-  if (isLoading || !user) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <Logo className="h-16 w-16 animate-pulse" />
-          <p className="text-muted-foreground">Cargando tu sesión...</p>
-        </div>
-      </div>
-    );
+  if (!user) {
+    return null; // The useEffect above will handle the redirect.
   }
 
   return (
@@ -254,3 +241,4 @@ export default function DashboardLayout({
     </RoleProvider>
   )
 }
+
