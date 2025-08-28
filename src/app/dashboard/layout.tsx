@@ -51,7 +51,6 @@ const RoleProvider = ({ children }: { children: React.ReactNode }) => {
   const [role, setRole] = useState<UserRole>("GENERATOR");
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const router = useRouter();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -62,7 +61,7 @@ const RoleProvider = ({ children }: { children: React.ReactNode }) => {
         setRole(finalRole);
       } else {
         setUser(null);
-        router.push('/login');
+        // Do not redirect here immediately. Let the consuming component handle it.
       }
       setIsLoading(false);
     });
@@ -128,10 +127,14 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   const { role, user } = useRole();
   const { setOpenMobile } = useSidebar();
   const router = useRouter();
-  
-  if (!user) {
-    return null; // The RoleProvider handles the redirect.
-  }
+
+  useEffect(() => {
+    // Handle redirection only when loading is complete and user is null.
+    if (!isLoading && !user) {
+        router.push('/login');
+    }
+  }, [isLoading, user, router]);
+
 
   const handleLinkClick = () => {
     setOpenMobile(false);
@@ -157,6 +160,27 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
         </div>
       </div>
   );
+
+  const UserInfoSkeleton = () => (
+     <div className="flex items-center gap-3 p-2 group-data-[collapsible=icon]:justify-center">
+        <Skeleton className="size-9 rounded-full" />
+        <div className="flex flex-col gap-1 group-data-[collapsible=icon]:hidden">
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-3 w-32" />
+        </div>
+      </div>
+  );
+
+  if (isLoading || !user) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Logo className="h-16 w-16 animate-pulse" />
+          <p className="text-muted-foreground">Cargando tu sesión...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen">
