@@ -15,13 +15,12 @@ const firebaseConfig = {
 let app: FirebaseApp;
 let auth: Auth;
 
-// This check ensures that Firebase is only initialized on the client-side
 if (typeof window !== 'undefined' && !getApps().length) {
-    app = initializeApp(firebaseConfig);
-    auth = getAuth(app);
-} else if (getApps().length) {
-    app = getApp();
-    auth = getAuth(app);
+  app = initializeApp(firebaseConfig);
+  auth = getAuth(app);
+} else if (typeof window !== 'undefined' && getApps().length > 0) {
+  app = getApp();
+  auth = getAuth(app);
 }
 
 // @ts-ignore
