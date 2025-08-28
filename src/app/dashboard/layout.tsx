@@ -65,12 +65,12 @@ const RoleProvider = ({ children }: { children: React.ReactNode }) => {
         setRole(finalRole);
       } else {
         setUser(null);
-        router.push('/login');
+        // Do not redirect here immediately. Let the consuming component handle it.
       }
       setIsLoading(false);
     });
     return () => unsubscribe();
-  }, [router]);
+  }, []);
 
   useEffect(() => {
     // This mapping is for mock data purposes. In a real app,
@@ -122,6 +122,14 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   const { setOpenMobile } = useSidebar();
   const router = useRouter();
 
+  useEffect(() => {
+    // Handle redirection only when loading is complete and user is null.
+    if (!isLoading && !user) {
+        router.push('/login');
+    }
+  }, [isLoading, user, router]);
+
+
   const handleLinkClick = () => {
     setOpenMobile(false);
   };
@@ -157,24 +165,13 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       </div>
   );
 
-  if (isLoading) {
+  if (isLoading || !user) {
     return (
-      <div className="flex min-h-screen">
-          <div className="hidden md:flex flex-col justify-between w-[var(--sidebar-width-icon)] lg:w-[var(--sidebar-width)] border-r p-2">
-            <div>
-              <Skeleton className="h-12 w-36 mb-4" />
-              <div className="space-y-2">
-                {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-10 w-full" />)}
-              </div>
-            </div>
-            <div>
-              <Skeleton className="h-10 w-full mb-2" />
-              <UserInfoSkeleton />
-            </div>
-          </div>
-          <main className="flex-1 p-8">
-            <Skeleton className="h-full w-full" />
-          </main>
+      <div className="flex h-screen items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Logo className="h-16 w-16 animate-pulse" />
+          <p className="text-muted-foreground">Cargando tu sesión...</p>
+        </div>
       </div>
     );
   }
