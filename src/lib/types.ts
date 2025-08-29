@@ -1,3 +1,4 @@
+// src/lib/types.ts
 export type Company = {
   id: string;
   name: string;
@@ -90,4 +91,6 @@ export type Negotiation = {
     status: 'SENT' | 'ACCEPTED' | 'REJECTED';
     createdAt: string;
     messages: NegotiationMessage[];
+    commissionRate?: number;
+    commissionValue?: number;
 }

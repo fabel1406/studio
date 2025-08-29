@@ -6,6 +6,8 @@ import { getResidueById } from './residue-service';
 // In-memory array to act as a database
 let negotiationsDB: Negotiation[] = [];
 
+// Define the platform's commission rate (e.g., 5%)
+const COMMISSION_RATE = 0.05;
 
 const rehydrateNegotiation = (negotiation: Negotiation): Negotiation => {
     const residue = getResidueById(negotiation.residueId);
@@ -148,6 +150,15 @@ export const updateNegotiationStatus = (id: string, status: Negotiation['status'
     if (index === -1) throw new Error("Negotiation not found");
 
     negotiationsDB[index].status = status;
+
+    // Calculate and store commission if the deal is accepted and there's a price
+    if (status === 'ACCEPTED' && negotiationsDB[index].offerPrice) {
+        const negotiation = negotiationsDB[index];
+        negotiation.commissionRate = COMMISSION_RATE;
+        negotiation.commissionValue = negotiation.quantity * negotiation.offerPrice * COMMISSION_RATE;
+        console.log(`Commission calculated for negotiation ${id}: $${negotiation.commissionValue}`);
+    }
+
     return rehydrateNegotiation(negotiationsDB[index]);
 };
 
