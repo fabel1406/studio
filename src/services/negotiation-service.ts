@@ -34,6 +34,7 @@ type NewNegotiationFromResidue = {
     residue: Residue;
     initiatorId: string; // Transformer's ID
     quantity: number;
+    offerPrice?: number; // Price from the residue itself
 }
 
 type NewNegotiationFromNeed = {
@@ -74,6 +75,10 @@ export const addNegotiation = (data: NewNegotiationFromResidue | NewNegotiationF
     }
 
     if (data.type === 'request') {
+        const initialMessageContent = data.offerPrice
+            ? `Ha solicitado ${data.quantity} ${data.residue.unit} de ${data.residue.type} al precio de $${data.offerPrice}/${data.residue.unit}.`
+            : `Ha solicitado ${data.quantity} ${data.residue.unit} de ${data.residue.type}.`;
+
         newNegotiation = {
             id: `neg-${Date.now()}`,
             residueId: data.residue.id,
@@ -81,12 +86,13 @@ export const addNegotiation = (data: NewNegotiationFromResidue | NewNegotiationF
             supplierId: data.residue.companyId, // The Generator is the supplier
             quantity: data.quantity,
             unit: data.residue.unit,
+            offerPrice: data.offerPrice,
             initiatedBy: data.initiatorId,
             status: 'SENT',
             createdAt: new Date().toISOString(),
             messages: [{
                 senderId: data.initiatorId,
-                content: `Ha solicitado ${data.quantity} ${data.residue.unit} de ${data.residue.type}.`,
+                content: initialMessageContent,
                 timestamp: new Date().toISOString()
             }],
         };
@@ -110,7 +116,7 @@ export const addNegotiation = (data: NewNegotiationFromResidue | NewNegotiationF
         };
     }
     
-    negotiationsDB.push(newNegotiation);
+    negotiationsDB.unshift(newNegotiation);
     return rehydrateNegotiation(newNegotiation);
 };
 

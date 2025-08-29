@@ -7,7 +7,7 @@ import { getNegotiationById, updateNegotiationStatus, addMessageToNegotiation } 
 import { useRole } from "../../layout";
 import type { Negotiation } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Send, Pencil, XCircle, CheckCircle } from "lucide-react";
+import { ArrowLeft, Send, Pencil, XCircle, CheckCircle, DollarSign } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -128,7 +128,10 @@ export default function NegotiationDetailPage() {
                                     {negotiation.offerPrice !== undefined && (
                                         <div>
                                             <h3 className="font-semibold text-muted-foreground mb-2">Precio Ofertado</h3>
-                                            <p className="font-bold text-lg">${negotiation.offerPrice} / {negotiation.unit}</p>
+                                             <p className="font-bold text-lg flex items-center gap-1">
+                                                <DollarSign className="h-5 w-5"/>
+                                                {negotiation.offerPrice.toFixed(2)} / {negotiation.unit}
+                                            </p>
                                         </div>
                                     )}
                                 </div>

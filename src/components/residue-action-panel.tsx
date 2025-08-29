@@ -57,6 +57,8 @@ export function ResidueActionPanel({ residue }: ResidueActionPanelProps) {
       residue: residue,
       initiatorId: currentUserId,
       quantity: values.quantity,
+      // Pass the residue's price as the initial offer price
+      offerPrice: residue.pricePerUnit, 
     })
 
     if (result) {
