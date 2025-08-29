@@ -71,8 +71,9 @@ export function AuthForm({ mode }: AuthFormProps) {
             localStorage.setItem('userRole', role); // Using localStorage for mock purposes
              toast({
                 title: "¡Registro Exitoso!",
-                description: "¡Bienvenido a EcoConnect! No olvides completar tu perfil en Ajustes para empezar a negociar.",
+                description: "¡Bienvenido a EcoConnect! Te estamos redirigiendo al panel. No olvides completar tu perfil en Ajustes para empezar a negociar.",
             });
+            router.push("/dashboard");
         } else {
             const { email, password } = values as z.infer<typeof loginSchema>;
             await signInWithEmailAndPassword(auth, email, password);
@@ -87,12 +88,11 @@ export function AuthForm({ mode }: AuthFormProps) {
             }
              toast({
                 title: "Inicio de Sesión Exitoso",
-                description: "Redirigiendo al panel de control...",
+                description: "Redirigiendo al marketplace...",
             });
+            router.push("/dashboard/marketplace");
         }
        
-        router.push("/dashboard");
-
     } catch (error: any) {
         console.error("Authentication error:", error);
         let description = "Ha ocurrido un error inesperado.";
