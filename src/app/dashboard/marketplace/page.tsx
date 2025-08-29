@@ -7,7 +7,7 @@ import { ResidueCard } from "@/components/residue-card";
 import { NeedCard } from "@/components/need-card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ListFilter, PlusCircle, Sparkles, Loader2 } from "lucide-react";
+import { ListFilter, PlusCircle, Sparkles, Loader2, X } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -18,7 +18,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Link from "next/link";
 import { useRole } from '../layout';
-import type { Match, Residue, Need } from '@/lib/types';
+import type { Residue, Need } from '@/lib/types';
 import { getMatchSuggestions } from '@/ai/flows/match-suggestions';
 import { getAllNeeds } from '@/services/need-service';
 import { getAllResidues } from '@/services/residue-service';
@@ -30,23 +30,48 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogClose
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
 import { useToast } from '@/hooks/use-toast';
 
 const uniqueResidueTypes = [...new Set(mockResidues.map(r => r.type))];
 const uniqueNeedTypes = [...new Set(mockNeeds.map(r => r.residueType))];
 const allUniqueTypes = [...new Set([...uniqueResidueTypes, ...uniqueNeedTypes])];
 
+const MAX_QUANTITY = Math.max(...mockResidues.map(r => r.quantity), 1000);
+const MAX_PRICE = Math.max(...mockResidues.map(r => r.pricePerUnit || 0), 50);
+
 export default function MarketplacePage() {
   const { role, currentUserId } = useRole();
   const { toast } = useToast();
-  const [typeFilter, setTypeFilter] = useState('ALL_TYPES');
+  
+  // Basic Filters
   const [categoryFilter, setCategoryFilter] = useState('ALL_CATEGORIES');
   const [countryFilter, setCountryFilter] = useState('ALL_COUNTRIES');
-  
+
+  // Advanced Filters State
+  const [isAdvancedSearchOpen, setIsAdvancedSearchOpen] = useState(false);
+  const [nameFilter, setNameFilter] = useState('');
+  const [quantityRange, setQuantityRange] = useState([0, MAX_QUANTITY]);
+  const [priceRange, setPriceRange] = useState([0, MAX_PRICE]);
+
   const [aiSuggestions, setAiSuggestions] = useState<Residue[] | Need[]>([]);
   const [suggestionType, setSuggestionType] = useState<'residue' | 'need' | null>(null);
   const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(true);
 
+  const activeAdvancedFilters = 
+    nameFilter !== '' || 
+    quantityRange[0] !== 0 || quantityRange[1] !== MAX_QUANTITY ||
+    priceRange[0] !== 0 || priceRange[1] !== MAX_PRICE;
 
   useEffect(() => {
     const fetchSuggestions = async () => {
@@ -57,7 +82,7 @@ export default function MarketplacePage() {
         if (role === 'GENERATOR' || role === 'BOTH') {
             const userResidues = getAllResidues().filter(r => r.companyId === currentUserId && r.status === 'ACTIVE');
             if (userResidues.length > 0) {
-                const sourceResidue = userResidues[0]; // Use the first active residue for suggestions
+                const sourceResidue = userResidues[0];
                 const allNeeds = getAllNeeds();
                 const result = await getMatchSuggestions({
                     matchType: 'findTransformers',
@@ -105,20 +130,29 @@ export default function MarketplacePage() {
 
   const filteredResidues = mockResidues.filter(residue => {
     const companyCountry = residue.company?.country.toLowerCase();
-    return (
-      (typeFilter === 'ALL_TYPES' || residue.type === typeFilter) &&
-      (categoryFilter === 'ALL_CATEGORIES' || residue.category === categoryFilter) &&
-      (countryFilter === 'ALL_COUNTRIES' || (companyCountry && companyCountry.includes(countryFilter)))
-    );
+    const typeMatch = nameFilter ? residue.type.toLowerCase().includes(nameFilter.toLowerCase()) : true;
+    const categoryMatch = categoryFilter === 'ALL_CATEGORIES' || residue.category === categoryFilter;
+    const countryMatch = countryFilter === 'ALL_COUNTRIES' || (companyCountry && companyCountry.includes(countryFilter));
+    const quantityMatch = residue.quantity >= quantityRange[0] && residue.quantity <= quantityRange[1];
+    const priceMatch = (residue.pricePerUnit || 0) >= priceRange[0] && (residue.pricePerUnit || 0) <= priceRange[1];
+
+    return typeMatch && categoryMatch && countryMatch && quantityMatch && priceMatch;
   });
 
   const filteredNeeds = mockNeeds.filter(need => {
-    // Assuming needs will also be associated with a company location in the future
-    return (
-      (typeFilter === 'ALL_TYPES' || need.residueType === typeFilter) &&
-      (categoryFilter === 'ALL_CATEGORIES' || need.category === categoryFilter)
-    );
+    const typeMatch = nameFilter ? need.residueType.toLowerCase().includes(nameFilter.toLowerCase()) : true;
+    const categoryMatch = categoryFilter === 'ALL_CATEGORIES' || need.category === categoryFilter;
+    const quantityMatch = need.quantity >= quantityRange[0] && need.quantity <= quantityRange[1];
+    
+    // Needs don't have country/price filters for now
+    return typeMatch && categoryMatch && quantityMatch;
   });
+
+  const resetAdvancedFilters = () => {
+    setNameFilter('');
+    setQuantityRange([0, MAX_QUANTITY]);
+    setPriceRange([0, MAX_PRICE]);
+  }
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -145,7 +179,6 @@ export default function MarketplacePage() {
         </div>
       </div>
       
-      {/* AI Suggestions Carousel */}
       {isLoadingSuggestions ? (
         <Card className="p-6 flex items-center justify-center min-h-[200px]">
           <Loader2 className="mr-2 h-8 w-8 animate-spin" />
@@ -189,18 +222,7 @@ export default function MarketplacePage() {
 
 
       <div className="bg-card p-4 rounded-lg border shadow-sm">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <Select onValueChange={setTypeFilter} defaultValue="ALL_TYPES">
-                <SelectTrigger>
-                    <SelectValue placeholder="Filtrar por tipo" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="ALL_TYPES">Todos los tipos</SelectItem>
-                    {allUniqueTypes.map(type => (
-                        <SelectItem key={type} value={type}>{type}</SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
+        <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-3 gap-4">
             <Select onValueChange={setCategoryFilter} defaultValue="ALL_CATEGORIES">
                 <SelectTrigger>
                     <SelectValue placeholder="Filtrar por categoría" />
@@ -224,9 +246,59 @@ export default function MarketplacePage() {
                     <SelectItem value="francia">Francia</SelectItem>
                 </SelectContent>
             </Select>
-             <Button variant="outline">
-                <ListFilter className="mr-2 h-4 w-4" /> Filtros avanzados
-            </Button>
+             <Dialog open={isAdvancedSearchOpen} onOpenChange={setIsAdvancedSearchOpen}>
+                <DialogTrigger asChild>
+                    <Button variant="outline" className="relative">
+                        <ListFilter className="mr-2 h-4 w-4" /> Filtros avanzados
+                        {activeAdvancedFilters && <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-primary" />}
+                    </Button>
+                </DialogTrigger>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Filtros Avanzados</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-6 py-4">
+                        <div>
+                          <Label htmlFor="name_filter">Nombre del residuo</Label>
+                          <Input id="name_filter" value={nameFilter} onChange={e => setNameFilter(e.target.value)} placeholder="Ej: Alperujo, Serrín..." />
+                        </div>
+                        
+                        <div>
+                           <Label>Rango de Cantidad (TON)</Label>
+                           <p className="text-sm text-center text-muted-foreground">{quantityRange[0]} - {quantityRange[1]}</p>
+                           <Slider
+                                defaultValue={[0, MAX_QUANTITY]}
+                                value={quantityRange}
+                                onValueChange={setQuantityRange}
+                                max={MAX_QUANTITY}
+                                step={1}
+                            />
+                        </div>
+
+                        <div>
+                           <Label>Rango de Precio ($ / TON)</Label>
+                           <p className="text-sm text-center text-muted-foreground">${priceRange[0]} - ${priceRange[1]}</p>
+                           <Slider
+                                defaultValue={[0, MAX_PRICE]}
+                                value={priceRange}
+                                onValueChange={setPriceRange}
+                                max={MAX_PRICE}
+                                step={1}
+                            />
+                        </div>
+                    </div>
+                     <DialogFooter>
+                      {activeAdvancedFilters && (
+                        <Button variant="ghost" onClick={resetAdvancedFilters} className="mr-auto">
+                          <X className="mr-2 h-4 w-4" /> Limpiar filtros
+                        </Button>
+                      )}
+                      <DialogClose asChild>
+                          <Button>Aplicar</Button>
+                      </DialogClose>
+                  </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
       </div>
 
