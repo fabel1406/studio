@@ -9,6 +9,7 @@ import { Building, Globe, Mail, MapPin, Phone, CheckCircle, Package, List } from
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ResidueCard } from "@/components/residue-card";
 import { NeedCard } from "@/components/need-card";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 type CompanyProfilePageProps = {
     params: { id: string };
@@ -115,17 +116,3 @@ export default function CompanyProfilePage({ params }: CompanyProfilePageProps) 
         </div>
     );
 }
-
-// Minimal Avatar component to avoid import errors if it's not globally available
-// In a real app, this should be in its own file.
-const Avatar = ({ className, children }: { className?: string, children: React.ReactNode }) => (
-  <div className={`relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full ${className}`}>
-    {children}
-  </div>
-);
-
-const AvatarFallback = ({ className, children }: { className?: string, children: React.ReactNode }) => (
-  <span className={`flex h-full w-full items-center justify-center rounded-full bg-muted ${className}`}>
-    {children}
-  </span>
-);
