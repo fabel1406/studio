@@ -106,7 +106,7 @@ const findTransformersPrompt = ai.definePrompt({
   prompt: `
     Eres un agente de matchmaking experto para un marketplace B2B de residuos orgánicos.
     Tu objetivo es ayudar a un GENERADOR DE RESIDUOS a encontrar las mejores empresas TRANSFORMADORAS que necesiten su residuo.
-    Tu respuesta SIEMPRE debe ser en español.
+    Tu respuesta SIEMPRE debe estar en español.
 
     Se te proporcionará un "Residuo de Origen" y una lista de "Necesidades Disponibles" de empresas transformadoras.
 
@@ -141,7 +141,7 @@ const findGeneratorsPrompt = ai.definePrompt({
   prompt: `
     Eres un agente de matchmaking experto para un marketplace B2B de residuos orgánicos.
     Tu objetivo es ayudar a una empresa TRANSFORMADORA a encontrar los mejores GENERADORES DE RESIDUOS para sus necesidades.
-    Tu respuesta SIEMPRE debe ser en español.
+    Tu respuesta SIEMPRE debe estar en español.
 
     Se te proporcionará una "Necesidad de Origen" y una lista de "Residuos Disponibles" de empresas generadoras.
 
