@@ -69,6 +69,10 @@ export function AuthForm({ mode }: AuthFormProps) {
             await createUserWithEmailAndPassword(auth, email, password);
             // In a real app, you would save the role to Firestore or Realtime Database here.
             localStorage.setItem('userRole', role); // Using localStorage for mock purposes
+             toast({
+                title: "¡Registro Exitoso!",
+                description: "¡Bienvenido a EcoConnect! No olvides completar tu perfil en Ajustes para empezar a negociar.",
+            });
         } else {
             const { email, password } = values as z.infer<typeof loginSchema>;
             await signInWithEmailAndPassword(auth, email, password);
@@ -81,11 +85,12 @@ export function AuthForm({ mode }: AuthFormProps) {
             } else {
                localStorage.setItem('userRole', 'TRANSFORMER');
             }
+             toast({
+                title: "Inicio de Sesión Exitoso",
+                description: "Redirigiendo al panel de control...",
+            });
         }
-        toast({
-            title: mode === "login" ? "Inicio de Sesión Exitoso" : "Registro Exitoso",
-            description: "Redirigiendo al panel de control...",
-        });
+       
         router.push("/dashboard");
 
     } catch (error: any) {
