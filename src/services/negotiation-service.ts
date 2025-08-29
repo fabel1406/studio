@@ -1,3 +1,4 @@
+
 // src/services/negotiation-service.ts
 import type { Negotiation, NegotiationMessage, Residue, Need } from '@/lib/types';
 import { mockCompanies } from '@/lib/data';
@@ -9,8 +10,8 @@ let negotiationsDB: Negotiation[] = [];
 // Define the platform's commission rate (e.g., 3%)
 const COMMISSION_RATE = 0.03;
 
-const rehydrateNegotiation = (negotiation: Negotiation): Negotiation => {
-    const residue = getResidueById(negotiation.residueId);
+const rehydrateNegotiation = async (negotiation: Negotiation): Promise<Negotiation> => {
+    const residue = await getResidueById(negotiation.residueId);
     
     const hydratedResidue = residue || {
         id: negotiation.residueId,
@@ -57,7 +58,7 @@ const checkExistingNegotiation = (requesterId: string, supplierId: string, resid
     );
 };
 
-export const addNegotiation = (data: NewNegotiationFromResidue | NewNegotiationFromNeed): Negotiation | null => {
+export const addNegotiation = async (data: NewNegotiationFromResidue | NewNegotiationFromNeed): Promise<Negotiation | null> => {
     let newNegotiation: Negotiation;
     let requesterId: string, supplierId: string, residueId: string;
 
@@ -123,8 +124,8 @@ export const addNegotiation = (data: NewNegotiationFromResidue | NewNegotiationF
 };
 
 
-export const getAllNegotiationsForUser = (userId: string): { sent: Negotiation[], received: Negotiation[] } => {
-    const allNegotiations = negotiationsDB.map(rehydrateNegotiation);
+export const getAllNegotiationsForUser = async (userId: string): Promise<{ sent: Negotiation[], received: Negotiation[] }> => {
+    const allNegotiations = await Promise.all(negotiationsDB.map(rehydrateNegotiation));
     
     // "Sent" are negotiations the user initiated.
     const sent = allNegotiations
@@ -140,12 +141,12 @@ export const getAllNegotiationsForUser = (userId: string): { sent: Negotiation[]
 };
 
 
-export const getNegotiationById = (id: string): Negotiation | undefined => {
+export const getNegotiationById = async (id: string): Promise<Negotiation | undefined> => {
     const negotiation = negotiationsDB.find(n => n.id === id);
     return negotiation ? rehydrateNegotiation(negotiation) : undefined;
 };
 
-export const updateNegotiationStatus = (id: string, status: Negotiation['status']): Negotiation => {
+export const updateNegotiationStatus = async (id: string, status: Negotiation['status']): Promise<Negotiation> => {
     const index = negotiationsDB.findIndex(n => n.id === id);
     if (index === -1) throw new Error("Negotiation not found");
 
@@ -162,7 +163,7 @@ export const updateNegotiationStatus = (id: string, status: Negotiation['status'
     return rehydrateNegotiation(negotiationsDB[index]);
 };
 
-export const updateNegotiationDetails = (id: string, quantity: number, price?: number): Negotiation => {
+export const updateNegotiationDetails = async (id: string, quantity: number, price?: number): Promise<Negotiation> => {
     const negotiationToUpdate = negotiationsDB.find(n => n.id === id);
     if (!negotiationToUpdate) throw new Error("Negotiation not found");
 
@@ -189,7 +190,7 @@ export const updateNegotiationDetails = (id: string, quantity: number, price?: n
     return rehydrateNegotiation(negotiationToUpdate);
 };
 
-export const addMessageToNegotiation = (id: string, message: NegotiationMessage): Negotiation => {
+export const addMessageToNegotiation = async (id: string, message: NegotiationMessage): Promise<Negotiation> => {
     const index = negotiationsDB.findIndex(n => n.id === id);
     if (index === -1) throw new Error("Negotiation not found");
     
@@ -197,6 +198,6 @@ export const addMessageToNegotiation = (id: string, message: NegotiationMessage)
     return rehydrateNegotiation(negotiationsDB[index]);
 }
 
-export const deleteNegotiation = (id: string): void => {
+export const deleteNegotiation = async (id: string): Promise<void> => {
     negotiationsDB = negotiationsDB.filter(n => n.id !== id);
 };

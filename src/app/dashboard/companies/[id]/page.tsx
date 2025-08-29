@@ -1,3 +1,4 @@
+
 // src/app/dashboard/companies/[id]/page.tsx
 import { notFound } from "next/navigation";
 import { getCompanyById } from "@/services/company-service";
@@ -11,15 +12,12 @@ import { ResidueCard } from "@/components/residue-card";
 import { NeedCard } from "@/components/need-card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
-// Fixed for Next.js 15: params is now a Promise
 export default async function CompanyProfilePage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
-  // Await the params Promise to get the actual parameters
   const { id } = await params;
-  
   const company = await getCompanyById(id);
 
   if (!company) {

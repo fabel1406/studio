@@ -22,15 +22,15 @@ export const getAllResidues = async (): Promise<Residue[]> => {
     return Promise.resolve(residuesDB.map(rehydrateResidue));
 };
 
-export const getResidueById = (id: string): Residue | undefined => {
+export const getResidueById = async (id: string): Promise<Residue | undefined> => {
     const residue = residuesDB.find(r => r.id === id);
-    if (!residue) return undefined;
-    return rehydrateResidue(residue);
+    if (!residue) return Promise.resolve(undefined);
+    return Promise.resolve(rehydrateResidue(residue));
 };
 
 type NewResidueData = Omit<Residue, 'id' | 'companyId' | 'availabilityDate' | 'photos' | 'company'>;
 
-export const addResidue = (residueData: NewResidueData): Residue => {
+export const addResidue = async (residueData: NewResidueData): Promise<Residue> => {
     const newResidue: Residue = {
         ...residueData,
         id: `res-${Date.now()}`,
@@ -40,10 +40,10 @@ export const addResidue = (residueData: NewResidueData): Residue => {
     };
     
     residuesDB.push(newResidue);
-    return rehydrateResidue(newResidue);
+    return Promise.resolve(rehydrateResidue(newResidue));
 };
 
-export const updateResidue = (updatedResidueData: Partial<Residue> & { id: string }): Residue => {
+export const updateResidue = async (updatedResidueData: Partial<Residue> & { id: string }): Promise<Residue> => {
     const index = residuesDB.findIndex(r => r.id === updatedResidueData.id);
     if (index === -1) {
         throw new Error("Residue not found");
@@ -56,9 +56,10 @@ export const updateResidue = (updatedResidueData: Partial<Residue> & { id: strin
 
     residuesDB[index] = updatedResidue;
     
-    return rehydrateResidue(updatedResidue);
+    return Promise.resolve(rehydrateResidue(updatedResidue));
 };
 
-export const deleteResidue = (id: string): void => {
+export const deleteResidue = async (id: string): Promise<void> => {
     residuesDB = residuesDB.filter(r => r.id !== id);
+    return Promise.resolve();
 };

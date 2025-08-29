@@ -1,3 +1,4 @@
+
 // src/app/dashboard/needs/[id]/page.tsx
 import { getNeedById } from "@/services/need-service";
 import { mockCompanies } from "@/lib/data";
@@ -10,8 +11,9 @@ import Link from "next/link";
 import { OfferDialogWrapper } from "./offer-dialog-wrapper";
 import { AnalysisPanel } from "@/components/analysis-panel";
 
-export default function NeedDetailsPage({ params }: { params: { id: string } }) {
-  const need = getNeedById(params.id);
+export default async function NeedDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const need = await getNeedById(id);
 
   if (!need) {
     notFound();

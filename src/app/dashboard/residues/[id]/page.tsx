@@ -1,3 +1,4 @@
+
 import { getResidueById } from "@/services/residue-service";
 import Image from "next/image";
 import Link from "next/link";
@@ -9,14 +10,15 @@ import { ResidueActionPanel } from "@/components/residue-action-panel";
 import { AnalysisPanel } from "@/components/analysis-panel";
 import { getCompanyById } from "@/services/company-service";
 
-export default function ResiduePage({ params }: { params: { id: string } }) {
-  const residue = getResidueById(params.id);
+export default async function ResiduePage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const residue = await getResidueById(id);
 
   if (!residue) {
     notFound();
   }
 
-  const company = getCompanyById(residue.companyId);
+  const company = await getCompanyById(residue.companyId);
 
   const details = [
     { icon: Scale, label: "Cantidad", value: `${residue.quantity} ${residue.unit}` },

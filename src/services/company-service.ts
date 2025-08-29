@@ -1,3 +1,4 @@
+
 // src/services/company-service.ts
 import type { Company } from '@/lib/types';
 import { mockCompanies } from '@/lib/data';

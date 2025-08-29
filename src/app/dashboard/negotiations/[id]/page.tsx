@@ -1,3 +1,4 @@
+
 // src/app/dashboard/negotiations/[id]/page.tsx
 "use client";
 
@@ -35,7 +36,8 @@ const statusMap: {[key: string]: {text: string, variant: 'default' | 'secondary'
 };
 
 export default function NegotiationDetailPage() {
-    const { id } = useParams<{ id: string }>();
+    const params = useParams<{ id: string }>();
+    const id = params?.id;
     const router = useRouter();
     const { currentUserId } = useRole();
     const [negotiation, setNegotiation] = useState<Negotiation | null>(null);
@@ -44,26 +46,25 @@ export default function NegotiationDetailPage() {
 
     useEffect(() => {
         if (id) {
-            const fetchedNegotiation = getNegotiationById(id);
-            setNegotiation(fetchedNegotiation || null);
-            setIsLoading(false);
+            getNegotiationById(id).then(fetchedNegotiation => {
+              setNegotiation(fetchedNegotiation || null);
+              setIsLoading(false);
+            });
         }
     }, [id]);
 
     const handleUpdateStatus = (status: Negotiation['status']) => {
         if (!negotiation) return;
-        const updatedNegotiation = updateNegotiationStatus(negotiation.id, status);
-        setNegotiation(updatedNegotiation);
+        updateNegotiationStatus(negotiation.id, status).then(setNegotiation);
     };
 
     const handleSendMessage = (content: string) => {
         if (!negotiation || !currentUserId) return;
-        const updatedNegotiation = addMessageToNegotiation(negotiation.id, {
+        addMessageToNegotiation(negotiation.id, {
             senderId: currentUserId,
             content,
             timestamp: new Date().toISOString(),
-        });
-        setNegotiation(updatedNegotiation);
+        }).then(setNegotiation);
     };
     
     const handleOfferUpdated = (updatedNegotiation: Negotiation) => {
