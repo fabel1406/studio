@@ -65,14 +65,14 @@ export function AnalysisPanel({ item, type }: AnalysisPanelProps) {
         try {
             let result;
             if (type === 'residue') {
-                const allNeeds: Need[] = getAllNeeds();
+                const allNeeds: Need[] = await getAllNeeds();
                 result = await getMatchSuggestions({
                     matchType: 'findTransformers',
                     sourceResidue: item,
                     availableNeeds: allNeeds,
                 });
             } else { // type === 'need'
-                const allResidues: Residue[] = getAllResidues();
+                const allResidues: Residue[] = await getAllResidues();
                 result = await getMatchSuggestions({
                     matchType: 'findGenerators',
                     sourceNeed: item,
