@@ -23,6 +23,8 @@ const CompanySchema = z.object({
   country: z.string(),
   lat: z.number().optional(),
   lng: z.number().optional(),
+  type: z.enum(['GENERATOR', 'TRANSFORMER', 'BOTH']),
+  verificationStatus: z.enum(['PENDING', 'VERIFIED', 'REJECTED']),
 });
 
 const ResidueSchema = z.object({
