@@ -76,7 +76,7 @@ export function ResidueCard({ residue, isRecommendation = false, priority = fals
         </div>
       </CardContent>
       <CardFooter className="p-4 pt-0">
-        <div className="w-full flex flex-col sm:flex-row gap-2">
+        <div className="w-full grid grid-cols-2 gap-2">
             <Button asChild className="w-full">
                 <Link href={`/dashboard/residues/${residue.id}`}>
                     Ver Detalles <ArrowRight className="ml-2 h-4 w-4" />
