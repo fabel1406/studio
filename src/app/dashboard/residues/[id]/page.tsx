@@ -5,9 +5,8 @@ import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, Droplets, MapPin, Scale, TestTube2, DollarSign, Mail, Phone, Globe } from "lucide-react";
-import { ResidueDetails } from "@/components/residue-details";
 import { ResidueActionPanel } from "@/components/residue-action-panel";
-import { Button } from "@/components/ui/button";
+import { AnalysisPanel } from "@/components/analysis-panel";
 
 export default function ResiduePage({ params }: { params: { id: string } }) {
   const residue = mockResidues.find((r) => r.id === params.id);
@@ -47,7 +46,7 @@ export default function ResiduePage({ params }: { params: { id: string } }) {
             </Card>
 
             {/* AI Enhanced Details */}
-            <ResidueDetails residue={residue} />
+            <AnalysisPanel item={residue} type="residue" />
 
         </div>
 

@@ -8,6 +8,7 @@ import { Calendar, Layers, MapPin, Repeat, Mail, Phone, Globe, PackageCheck } fr
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { OfferDialogWrapper } from "./offer-dialog-wrapper";
+import { AnalysisPanel } from "@/components/analysis-panel";
 
 export default function NeedDetailsPage({ params }: { params: { id: string } }) {
   const need = getNeedById(params.id);
@@ -46,26 +47,8 @@ export default function NeedDetailsPage({ params }: { params: { id: string } }) 
                 </p>
               </CardContent>
             </Card>
-             <Card>
-                 <CardHeader>
-                    <CardTitle>Detalles de la Necesidad</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <ul className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {details.map(item => (
-                            <li key={item.label} className="flex items-center gap-4">
-                                <div className="flex-shrink-0 bg-primary/10 text-primary p-2 rounded-lg">
-                                    <item.icon className="h-5 w-5" />
-                                </div>
-                                <div>
-                                    <p className="text-sm text-muted-foreground">{item.label}</p>
-                                    <p className="font-medium text-foreground">{item.value}</p>
-                                </div>
-                            </li>
-                        ))}
-                    </ul>
-                </CardContent>
-            </Card>
+
+            <AnalysisPanel item={need} type="need" />
 
           </div>
 
