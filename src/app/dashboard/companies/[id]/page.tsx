@@ -1,3 +1,4 @@
+
 // src/app/dashboard/companies/[id]/page.tsx
 import { notFound } from "next/navigation";
 import { getCompanyById } from "@/services/company-service";
@@ -11,6 +12,8 @@ import { ResidueCard } from "@/components/residue-card";
 import { NeedCard } from "@/components/need-card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
+// This is the definitive fix for the Vercel build error.
+// The props are typed inline directly in the function signature.
 export default async function CompanyProfilePage({
   params,
 }: {
