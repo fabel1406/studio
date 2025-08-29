@@ -1,16 +1,10 @@
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
-  images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'picsum.photos',
-        port: '',
-        pathname: '/**',
-      },
-    ],
-  },
+  webpack: (config) => {
+    config.ignoreWarnings = [/require\.extensions is not supported by webpack/];
+    return config;
+  }
 };
 
 export default nextConfig;
