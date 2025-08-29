@@ -56,8 +56,8 @@ export function CountryCombobox({ value, setValue }: CountryComboboxProps) {
                 <CommandItem
                   key={country.code}
                   value={country.name}
-                  onSelect={() => {
-                    setValue(country.name === value ? "" : country.name)
+                  onSelect={(currentValue) => {
+                    setValue(currentValue === value ? "" : currentValue)
                     setOpen(false)
                   }}
                 >
@@ -77,3 +77,5 @@ export function CountryCombobox({ value, setValue }: CountryComboboxProps) {
     </Popover>
   )
 }
+
+    

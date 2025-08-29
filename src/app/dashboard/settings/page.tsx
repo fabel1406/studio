@@ -79,11 +79,7 @@ export default function SettingsPage() {
     }, [role, user, form]);
 
     useEffect(() => {
-        // When country changes, check if the current city is valid
-        const citiesInCountry = getCitiesByCountry(selectedCountry).map(c => c.name);
-        if (!citiesInCountry.includes(form.getValues('city'))) {
-            form.setValue('city', '');
-        }
+        form.setValue('city', '');
     }, [selectedCountry, form]);
 
 
@@ -163,7 +159,7 @@ export default function SettingsPage() {
                                         render={({ field }) => (
                                             <FormItem className="flex flex-col">
                                                 <FormLabel>País</FormLabel>
-                                                <CountryCombobox value={field.value} setValue={(value) => form.setValue('country', value)} />
+                                                <CountryCombobox value={field.value} setValue={field.onChange} />
                                                 <FormMessage />
                                             </FormItem>
                                         )}
@@ -177,7 +173,7 @@ export default function SettingsPage() {
                                                 <CityCombobox 
                                                   country={selectedCountry} 
                                                   value={field.value} 
-                                                  setValue={(value) => form.setValue('city', value)} 
+                                                  setValue={field.onChange}
                                                   disabled={!selectedCountry} 
                                                 />
                                                 <FormMessage />
@@ -270,3 +266,5 @@ export default function SettingsPage() {
         </div>
     );
 }
+
+    

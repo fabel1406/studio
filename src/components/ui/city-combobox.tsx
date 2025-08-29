@@ -30,15 +30,7 @@ interface CityComboboxProps {
 
 export function CityCombobox({ country, value, setValue, disabled }: CityComboboxProps) {
   const [open, setOpen] = React.useState(false)
-  const [cities, setCities] = React.useState<City[]>([]);
-
-  React.useEffect(() => {
-    if (country) {
-      setCities(getCitiesByCountry(country));
-    } else {
-      setCities([]);
-    }
-  }, [country]);
+  const cities = React.useMemo(() => getCitiesByCountry(country), [country]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -48,7 +40,7 @@ export function CityCombobox({ country, value, setValue, disabled }: CityCombobo
           role="combobox"
           aria-expanded={open}
           className="w-full justify-between"
-          disabled={disabled}
+          disabled={disabled || cities.length === 0}
         >
           {value
             ? cities.find((city) => city.name === value)?.name
@@ -66,8 +58,8 @@ export function CityCombobox({ country, value, setValue, disabled }: CityCombobo
                 <CommandItem
                   key={city.name}
                   value={city.name}
-                  onSelect={() => {
-                    setValue(city.name === value ? "" : city.name)
+                  onSelect={(currentValue) => {
+                    setValue(currentValue === value ? "" : currentValue)
                     setOpen(false)
                   }}
                 >
@@ -87,3 +79,5 @@ export function CityCombobox({ country, value, setValue, disabled }: CityCombobo
     </Popover>
   )
 }
+
+    

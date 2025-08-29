@@ -44,12 +44,10 @@ import { Slider } from "@/components/ui/slider";
 import { useToast } from '@/hooks/use-toast';
 import { CountryCombobox } from '@/components/ui/country-combobox';
 import { CityCombobox } from '@/components/ui/city-combobox';
-import { getAllCountries, getCitiesByCountry, City } from '@/lib/locations';
 
-const allCountries = getAllCountries();
 const uniqueResidueTypes = [...new Set(mockResidues.map(r => r.type))];
 const uniqueNeedTypes = [...new Set(mockNeeds.map(n => n.residueType))];
-const allUniqueTypes = [...new Set([...uniqueResidueTypes, ...uniqueNeedTypes])];
+const allUniqueTypes = [...new Set([...uniqueResidueTypes, ...uniqueNeedTypes])].sort();
 
 const MAX_QUANTITY = Math.max(...mockResidues.map(r => r.quantity), 1000);
 const MAX_PRICE = Math.max(...mockResidues.map(r => r.pricePerUnit || 0), 50);
@@ -63,8 +61,6 @@ export default function MarketplacePage() {
   const [categoryFilter, setCategoryFilter] = useState('ALL_CATEGORIES');
   const [countryFilter, setCountryFilter] = useState('');
   const [cityFilter, setCityFilter] = useState('');
-  const [cities, setCities] = useState<City[]>([]);
-
 
   // Advanced Filters State
   const [isAdvancedSearchOpen, setIsAdvancedSearchOpen] = useState(false);
@@ -83,6 +79,12 @@ export default function MarketplacePage() {
     quantityRange[0] !== 0 || quantityRange[1] !== MAX_QUANTITY ||
     priceRange[0] !== 0 || priceRange[1] !== MAX_PRICE ||
     customTypeFilter !== '';
+    
+  useEffect(() => {
+    // When country changes, reset city
+    setCityFilter('');
+  }, [countryFilter]);
+
 
   const fetchSuggestions = async () => {
     if (!currentUserId) return;
@@ -134,17 +136,6 @@ export default function MarketplacePage() {
       setIsLoadingSuggestions(false);
     }
   };
-
-
-  useEffect(() => {
-    if (countryFilter) {
-      setCities(getCitiesByCountry(countryFilter));
-    } else {
-      setCities([]);
-    }
-    setCityFilter('');
-  }, [countryFilter]);
-
 
   const filteredResidues = mockResidues.filter(residue => {
     const companyCountry = residue.company?.country;
@@ -430,3 +421,5 @@ export default function MarketplacePage() {
     </div>
   );
 }
+
+    
