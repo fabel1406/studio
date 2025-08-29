@@ -41,7 +41,7 @@ export function CountryCombobox({ value, setValue }: CountryComboboxProps) {
           className="w-full justify-between"
         >
           {value
-            ? countries.find((country) => country.name.toLowerCase() === value.toLowerCase())?.name
+            ? countries.find((country) => country.name === value)?.name
             : "Selecciona un país..."}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
@@ -56,15 +56,15 @@ export function CountryCombobox({ value, setValue }: CountryComboboxProps) {
                 <CommandItem
                   key={country.code}
                   value={country.name}
-                  onSelect={(currentValue) => {
-                    setValue(currentValue.toLowerCase() === value.toLowerCase() ? "" : currentValue)
+                  onSelect={() => {
+                    setValue(country.name === value ? "" : country.name)
                     setOpen(false)
                   }}
                 >
                   <Check
                     className={cn(
                       "mr-2 h-4 w-4",
-                      value.toLowerCase() === country.name.toLowerCase() ? "opacity-100" : "opacity-0"
+                      value === country.name ? "opacity-100" : "opacity-0"
                     )}
                   />
                   {country.name}

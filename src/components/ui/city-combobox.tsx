@@ -51,7 +51,7 @@ export function CityCombobox({ country, value, setValue, disabled }: CityCombobo
           disabled={disabled}
         >
           {value
-            ? cities.find((city) => city.name.toLowerCase() === value.toLowerCase())?.name
+            ? cities.find((city) => city.name === value)?.name
             : "Selecciona una ciudad..."}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
@@ -66,15 +66,15 @@ export function CityCombobox({ country, value, setValue, disabled }: CityCombobo
                 <CommandItem
                   key={city.name}
                   value={city.name}
-                  onSelect={(currentValue) => {
-                    setValue(currentValue.toLowerCase() === value.toLowerCase() ? "" : currentValue)
+                  onSelect={() => {
+                    setValue(city.name === value ? "" : city.name)
                     setOpen(false)
                   }}
                 >
                   <Check
                     className={cn(
                       "mr-2 h-4 w-4",
-                      value.toLowerCase() === city.name.toLowerCase() ? "opacity-100" : "opacity-0"
+                      value === city.name ? "opacity-100" : "opacity-0"
                     )}
                   />
                   {city.name}
