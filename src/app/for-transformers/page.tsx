@@ -75,6 +75,7 @@ export default function ForTransformersPage() {
                   height={600}
                   className="rounded-xl shadow-2xl"
                   data-ai-hint="industria energia"
+                  priority
                 />
               </div>
             </div>

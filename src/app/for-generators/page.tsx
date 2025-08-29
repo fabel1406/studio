@@ -75,6 +75,7 @@ export default function ForGeneratorsPage() {
                   height={600}
                   className="rounded-xl shadow-2xl"
                   data-ai-hint="industria agricultura"
+                  priority
                 />
               </div>
             </div>
