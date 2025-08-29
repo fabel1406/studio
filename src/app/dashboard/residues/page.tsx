@@ -1,8 +1,8 @@
 // src/app/dashboard/residues/page.tsx
 "use client";
 
-import { useState, useEffect } from 'react';
-import { columns } from './components/columns';
+import React, { useState, useEffect, useMemo } from 'react';
+import { columns as createColumns } from './components/columns';
 import { DataTable } from './components/data-table';
 import type { Residue } from '@/lib/types';
 import Link from 'next/link';
@@ -18,27 +18,30 @@ export default function ResiduesPage() {
   const { role, currentUserId } = useRole();
 
   useEffect(() => {
-    // Fetch initial data on component mount
     if (currentUserId) {
-        const userResidues = getAllResidues().filter(r => r.companyId === currentUserId);
-        setResidues(userResidues);
+        getAllResidues().then(allResidues => {
+            const userResidues = allResidues.filter(r => r.companyId === currentUserId);
+            setResidues(userResidues);
+        });
     }
   }, [currentUserId]);
 
   const deleteResidue = (residueId: string, residueType: string) => {
-    deleteResidueService(residueId);
-    // Refetch data to reflect the deletion
-    if (currentUserId) {
-        const userResidues = getAllResidues().filter(r => r.companyId === currentUserId);
-        setResidues(userResidues);
-    }
-    toast({
-      title: "Residuo Eliminado",
-      description: `La publicación para "${residueType}" ha sido eliminada.`,
+    deleteResidueService(residueId).then(() => {
+      if (currentUserId) {
+        getAllResidues().then(allResidues => {
+            const userResidues = allResidues.filter(r => r.companyId === currentUserId);
+            setResidues(userResidues);
+        });
+      }
+      toast({
+        title: "Residuo Eliminado",
+        description: `La publicación para "${residueType}" ha sido eliminada.`,
+      });
     });
   };
 
-  const dynamicColumns = columns({ deleteResidue });
+  const columns = useMemo(() => createColumns({ deleteResidue }), [deleteResidue]);
 
   return (
     <div className="h-full flex-1 flex-col space-y-8 p-8 md:flex">
@@ -60,7 +63,7 @@ export default function ResiduesPage() {
       
       {residues.length > 0 ? (
         <div className="w-full overflow-x-auto">
-          <DataTable data={residues} columns={dynamicColumns} />
+          <DataTable data={residues} columns={columns} />
         </div>
       ) : (
          <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed shadow-sm h-96">

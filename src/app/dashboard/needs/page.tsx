@@ -1,9 +1,9 @@
 // src/app/dashboard/needs/page.tsx
 "use client";
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import type { Need } from '@/lib/types';
-import { columns } from './components/columns';
+import { columns as createColumns } from './components/columns';
 import { DataTable } from './components/data-table';
 import { getAllNeeds, deleteNeed as deleteNeedService } from '@/services/need-service';
 import { useToast } from '@/hooks/use-toast';
@@ -18,25 +18,28 @@ export default function NeedsPage() {
   const { role, currentUserId } = useRole();
 
   useEffect(() => {
-    // In a real app, this would fetch data for the current user.
-    // We filter by a mock company ID based on role.
     if(currentUserId) {
-        setNeeds(getAllNeeds().filter(n => n.companyId === currentUserId));
+        getAllNeeds().then(allNeeds => {
+            setNeeds(allNeeds.filter(n => n.companyId === currentUserId));
+        })
     }
   }, [role, currentUserId]);
 
   const deleteNeed = (needId: string, residueType: string) => {
-    deleteNeedService(needId);
-    if(currentUserId) {
-        setNeeds(getAllNeeds().filter(n => n.companyId === currentUserId));
-    }
-    toast({
-      title: "Necesidad Eliminada",
-      description: `Tu solicitud para "${residueType}" ha sido eliminada.`,
-    });
+    deleteNeedService(needId).then(() => {
+      if(currentUserId) {
+          getAllNeeds().then(allNeeds => {
+              setNeeds(allNeeds.filter(n => n.companyId === currentUserId));
+          })
+      }
+      toast({
+        title: "Necesidad Eliminada",
+        description: `Tu solicitud para "${residueType}" ha sido eliminada.`,
+      });
+    })
   };
 
-  const dynamicColumns = columns({ deleteNeed });
+  const columns = useMemo(() => createColumns({ deleteNeed }), [deleteNeed]);
 
   return (
     <div className="h-full flex-1 flex-col space-y-8 p-8 md:flex">
@@ -57,7 +60,7 @@ export default function NeedsPage() {
       </div>
       
       {needs.length > 0 ? (
-        <DataTable data={needs} columns={dynamicColumns} />
+        <DataTable data={needs} columns={columns} />
       ) : (
         <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed shadow-sm h-96">
           <div className="flex flex-col items-center gap-2 text-center">

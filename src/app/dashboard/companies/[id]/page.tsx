@@ -11,22 +11,24 @@ import { ResidueCard } from "@/components/residue-card";
 import { NeedCard } from "@/components/need-card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
-type CompanyProfilePageProps = {
-    params: { id: string };
-    searchParams: { [key: string]: string | string[] | undefined };
-};
+export default async function CompanyProfilePage({
+  params,
+}: {
+  params: { id: string };
+}) {
+  const company = await getCompanyById(params.id);
 
-export default function CompanyProfilePage({ params }: CompanyProfilePageProps) {
-    const company = getCompanyById(params.id);
+  if (!company) {
+    notFound();
+  }
 
-    if (!company) {
-        notFound();
-    }
+  const allResidues = await getAllResidues();
+  const allNeeds = await getAllNeeds();
 
-  const companyResidues = getAllResidues().filter(
+  const companyResidues = allResidues.filter(
     (r) => r.companyId === company.id && r.status === "ACTIVE"
   );
-  const companyNeeds = getAllNeeds().filter(
+  const companyNeeds = allNeeds.filter(
     (n) => n.companyId === company.id && n.status === "ACTIVE"
   );
 
