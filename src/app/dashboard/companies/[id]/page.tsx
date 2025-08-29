@@ -71,7 +71,7 @@ export default function CompanyProfilePage({ params }: { params: { id: string } 
             </Card>
 
             <Tabs defaultValue="residues" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 max-w-lg mx-auto">
+                <TabsList className="grid grid-cols-1 sm:grid-cols-2 max-w-lg mx-auto">
                   <TabsTrigger value="residues">
                     <List className="mr-2 h-4 w-4" />
                     Residuos Ofertados ({companyResidues.length})
