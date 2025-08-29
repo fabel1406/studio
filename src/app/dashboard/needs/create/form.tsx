@@ -80,20 +80,23 @@ export default function NeedForm() {
     const id = searchParams.get('id');
     if (id) {
       setNeedId(id);
-      const need = getNeedById(id);
-      if (need) {
-        const isStandardType = uniqueResidueTypes.includes(need.residueType);
-        form.reset({
-          residueType: isStandardType ? need.residueType : 'Otro',
-          customResidueType: isStandardType ? '' : need.residueType,
-          category: need.category,
-          quantity: need.quantity,
-          unit: need.unit,
-          frequency: need.frequency,
-          status: need.status,
-          specifications: need.specifications || "",
-        });
+      const fetchNeed = async () => {
+        const need = await getNeedById(id);
+        if (need) {
+          const isStandardType = uniqueResidueTypes.includes(need.residueType);
+          form.reset({
+            residueType: isStandardType ? need.residueType : 'Otro',
+            customResidueType: isStandardType ? '' : need.residueType,
+            category: need.category,
+            quantity: need.quantity,
+            unit: need.unit,
+            frequency: need.frequency,
+            status: need.status,
+            specifications: need.specifications || "",
+          });
+        }
       }
+      fetchNeed();
     }
   }, [searchParams, form]);
 

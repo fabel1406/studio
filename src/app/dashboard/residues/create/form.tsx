@@ -86,20 +86,23 @@ export default function ResidueForm() {
     const id = searchParams.get('id');
     if (id) {
       setResidueId(id);
-      const residue = getResidueById(id);
-      if (residue) {
-        const isStandardType = uniqueResidueTypes.includes(residue.type);
-        form.reset({
-          type: isStandardType ? residue.type : 'Otro',
-          customType: isStandardType ? '' : residue.type,
-          category: residue.category,
-          quantity: residue.quantity,
-          unit: residue.unit,
-          status: residue.status,
-          pricePerUnit: residue.pricePerUnit,
-          description: residue.description || "",
-        });
+      const fetchResidue = async () => {
+        const residue = await getResidueById(id);
+        if (residue) {
+          const isStandardType = uniqueResidueTypes.includes(residue.type);
+          form.reset({
+            type: isStandardType ? residue.type : 'Otro',
+            customType: isStandardType ? '' : residue.type,
+            category: residue.category,
+            quantity: residue.quantity,
+            unit: residue.unit,
+            status: residue.status,
+            pricePerUnit: residue.pricePerUnit,
+            description: residue.description || "",
+          });
+        }
       }
+      fetchResidue();
     }
   }, [searchParams, form]);
 
