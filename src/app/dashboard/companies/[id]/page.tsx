@@ -10,7 +10,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ResidueCard } from "@/components/residue-card";
 import { NeedCard } from "@/components/need-card";
 
-export default function CompanyProfilePage({ params }: { params: { id: string } }) {
+type CompanyProfilePageProps = {
+    params: { id: string };
+    searchParams: { [key: string]: string | string[] | undefined };
+}
+
+export default function CompanyProfilePage({ params }: CompanyProfilePageProps) {
     const company = getCompanyById(params.id);
 
     if (!company) {
