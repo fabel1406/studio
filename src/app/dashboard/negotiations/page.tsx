@@ -1,3 +1,4 @@
+
 // src/app/dashboard/negotiations/page.tsx
 "use client";
 
@@ -24,40 +25,41 @@ const statusMap: {[key: string]: {text: string, variant: 'default' | 'secondary'
 };
 
 export default function NegotiationsPage() {
-  const { role } = useRole();
+  const { role, currentUserId } = useRole();
   const { toast } = useToast();
   const [sentNegotiations, setSentNegotiations] = useState<Negotiation[]>([]);
   const [receivedNegotiations, setReceivedNegotiations] = useState<Negotiation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
-  // This logic determines the user ID based on the role for mocking purposes.
-  // In a real app, this would come from an authentication context.
-  const getCurrentUserId = useCallback(() => {
-    if (role === 'TRANSFORMER') return 'comp-3';
-    // GENERATOR or BOTH default to comp-1 for this mock.
-    // A real app would have a single user ID from auth.
-    return 'comp-1';
-  }, [role]);
-
-  
-  const fetchNegotiations = useCallback(() => {
-    const currentUserId = getCurrentUserId();
+  const fetchNegotiations = useCallback(async () => {
+    if (!currentUserId) {
+        setIsLoading(false);
+        return;
+    };
     setIsLoading(true);
-    const { sent, received } = getAllNegotiationsForUser(currentUserId);
-    
-    setSentNegotiations(sent);
-    setReceivedNegotiations(received);
-    
-    setIsLoading(false);
-  }, [getCurrentUserId]);
+    try {
+        const { sent, received } = await getAllNegotiationsForUser(currentUserId);
+        setSentNegotiations(sent);
+        setReceivedNegotiations(received);
+    } catch (error) {
+        console.error("Failed to fetch negotiations:", error);
+        toast({
+            title: "Error",
+            description: "No se pudieron cargar las negociaciones.",
+            variant: "destructive"
+        });
+    } finally {
+        setIsLoading(false);
+    }
+  }, [currentUserId, toast]);
 
   useEffect(() => {
     fetchNegotiations();
   }, [fetchNegotiations]);
 
-  const handleHideNegotiation = (id: string) => {
-    hideNegotiationFromUI(id);
-    fetchNegotiations(); // Re-fetch to update the list
+  const handleHideNegotiation = async (id: string) => {
+    await hideNegotiationFromUI(id);
+    await fetchNegotiations(); // Re-fetch to update the list
     toast({
         title: "Negociación Ocultada",
         description: "La negociación ha sido eliminada de tu historial."
@@ -65,7 +67,7 @@ export default function NegotiationsPage() {
   }
 
   const renderNegotiationList = (negotiations: Negotiation[], listType: 'sent' | 'received') => {
-      const currentUserId = getCurrentUserId();
+      if (!currentUserId) return null;
 
       if (isLoading) return <p>Cargando negociaciones...</p>;
       
@@ -187,7 +189,7 @@ export default function NegotiationsPage() {
     }
   };
   
-  const currentTabs = TABS_CONFIG[role];
+  const currentTabs = role ? TABS_CONFIG[role] : TABS_CONFIG.GENERATOR;
   const defaultTab = currentTabs.received.value;
 
   return (
@@ -232,3 +234,5 @@ export default function NegotiationsPage() {
     </div>
   );
 }
+
+    

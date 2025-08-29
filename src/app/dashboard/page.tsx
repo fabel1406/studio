@@ -1,3 +1,4 @@
+
 // src/app/dashboard/page.tsx
 "use client";
 
@@ -22,25 +23,29 @@ export default function DashboardOverviewPage() {
     const [recentNegotiations, setRecentNegotiations] = useState<Negotiation[]>([]);
 
     useEffect(() => {
-        if (currentUserId) {
-            // Fetch active listings
-            const userResidues = getAllResidues().filter(r => r.companyId === currentUserId && r.status === 'ACTIVE');
-            setActiveListings(userResidues.length);
+        async function loadDashboardData() {
+            if (currentUserId) {
+                // Fetch active listings
+                const allUserResidues = await getAllResidues();
+                const userResidues = allUserResidues.filter(r => r.companyId === currentUserId && r.status === 'ACTIVE');
+                setActiveListings(userResidues.length);
 
-            // Fetch negotiations
-            const { sent, received } = getAllNegotiationsForUser(currentUserId);
-            const allNegotiations = [...sent, ...received];
-            const activeNegotiations = allNegotiations.filter(n => n.status === 'SENT');
-            setActiveNegotiationsCount(activeNegotiations.length);
+                // Fetch negotiations
+                const { sent, received } = await getAllNegotiationsForUser(currentUserId);
+                const allNegotiations = [...sent, ...received];
+                const activeNegotiations = allNegotiations.filter(n => n.status === 'SENT');
+                setActiveNegotiationsCount(activeNegotiations.length);
 
-            // Set recent negotiations for display
-            const sortedNegotiations = allNegotiations.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-            setRecentNegotiations(sortedNegotiations.slice(0, 5));
+                // Set recent negotiations for display
+                const sortedNegotiations = allNegotiations.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+                setRecentNegotiations(sortedNegotiations.slice(0, 5));
 
-            // Calculate total CO2 avoided
-            const co2 = mockImpactMetrics.reduce((sum, item) => sum + item.co2Avoided, 0);
-            setTotalCo2Avoided(co2);
+                // Calculate total CO2 avoided
+                const co2 = mockImpactMetrics.reduce((sum, item) => sum + item.co2Avoided, 0);
+                setTotalCo2Avoided(co2);
+            }
         }
+        loadDashboardData();
     }, [currentUserId]);
 
     return (
@@ -146,3 +151,5 @@ export default function DashboardOverviewPage() {
         </div>
     );
 }
+
+    

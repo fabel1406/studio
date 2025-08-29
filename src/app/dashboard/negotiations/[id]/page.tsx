@@ -36,8 +36,8 @@ const statusMap: {[key: string]: {text: string, variant: 'default' | 'secondary'
 };
 
 export default function NegotiationDetailPage() {
-    const params = useParams<{ id: string }>();
-    const id = params?.id;
+    const params = useParams();
+    const id = typeof params?.id === 'string' ? params.id : '';
     const router = useRouter();
     const { currentUserId } = useRole();
     const [negotiation, setNegotiation] = useState<Negotiation | null>(null);
@@ -53,18 +53,20 @@ export default function NegotiationDetailPage() {
         }
     }, [id]);
 
-    const handleUpdateStatus = (status: Negotiation['status']) => {
+    const handleUpdateStatus = async (status: Negotiation['status']) => {
         if (!negotiation) return;
-        updateNegotiationStatus(negotiation.id, status).then(setNegotiation);
+        const updatedNegotiation = await updateNegotiationStatus(negotiation.id, status);
+        setNegotiation(updatedNegotiation);
     };
 
-    const handleSendMessage = (content: string) => {
+    const handleSendMessage = async (content: string) => {
         if (!negotiation || !currentUserId) return;
-        addMessageToNegotiation(negotiation.id, {
+        const updatedNegotiation = await addMessageToNegotiation(negotiation.id, {
             senderId: currentUserId,
             content,
             timestamp: new Date().toISOString(),
-        }).then(setNegotiation);
+        });
+        setNegotiation(updatedNegotiation);
     };
     
     const handleOfferUpdated = (updatedNegotiation: Negotiation) => {
@@ -235,3 +237,5 @@ export default function NegotiationDetailPage() {
         </>
     );
 }
+
+    

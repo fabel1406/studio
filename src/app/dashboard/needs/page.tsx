@@ -1,3 +1,4 @@
+
 // src/app/dashboard/needs/page.tsx
 "use client";
 
@@ -18,19 +19,20 @@ export default function NeedsPage() {
   const { role, currentUserId } = useRole();
 
   useEffect(() => {
-    if(currentUserId) {
-        getAllNeeds().then(allNeeds => {
-            setNeeds(allNeeds.filter(n => n.companyId === currentUserId));
-        })
+    async function loadNeeds() {
+      if(currentUserId) {
+          const allNeeds = await getAllNeeds();
+          setNeeds(allNeeds.filter(n => n.companyId === currentUserId));
+      }
     }
+    loadNeeds();
   }, [role, currentUserId]);
 
   const deleteNeed = (needId: string, residueType: string) => {
-    deleteNeedService(needId).then(() => {
+    deleteNeedService(needId).then(async () => {
       if(currentUserId) {
-          getAllNeeds().then(allNeeds => {
-              setNeeds(allNeeds.filter(n => n.companyId === currentUserId));
-          })
+          const allNeeds = await getAllNeeds();
+          setNeeds(allNeeds.filter(n => n.companyId === currentUserId));
       }
       toast({
         title: "Necesidad Eliminada",
@@ -81,3 +83,5 @@ export default function NeedsPage() {
     </div>
   );
 }
+
+    

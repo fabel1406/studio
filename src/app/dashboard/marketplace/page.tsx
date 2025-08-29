@@ -1,3 +1,4 @@
+
 // src/app/dashboard/marketplace/page.tsx
 "use client";
 
@@ -94,10 +95,11 @@ export default function MarketplacePage() {
 
     try {
       if (role === 'GENERATOR' || role === 'BOTH') {
-          const userResidues = getAllResidues().filter(r => r.companyId === currentUserId && r.status === 'ACTIVE');
+          const allUserResidues = await getAllResidues();
+          const userResidues = allUserResidues.filter(r => r.companyId === currentUserId && r.status === 'ACTIVE');
           if (userResidues.length > 0) {
               const sourceResidue = userResidues[0];
-              const allNeeds = getAllNeeds();
+              const allNeeds = await getAllNeeds();
               const result = await getMatchSuggestions({
                   matchType: 'findTransformers',
                   sourceResidue: sourceResidue,
@@ -112,10 +114,11 @@ export default function MarketplacePage() {
       }
       
       if (role === 'TRANSFORMER') {
-          const userNeeds = getAllNeeds().filter(n => n.companyId === currentUserId && n.status === 'ACTIVE');
+          const allUserNeeds = await getAllNeeds();
+          const userNeeds = allUserNeeds.filter(n => n.companyId === currentUserId && n.status === 'ACTIVE');
           if (userNeeds.length > 0) {
               const sourceNeed = userNeeds[0];
-              const allResidues = getAllResidues();
+              const allResidues = await getAllResidues();
                const result = await getMatchSuggestions({
                   matchType: 'findGenerators',
                   sourceNeed: sourceNeed,
@@ -440,3 +443,5 @@ export default function MarketplacePage() {
     </div>
   );
 }
+
+    

@@ -1,3 +1,4 @@
+
 // src/app/dashboard/matches/page.tsx
 "use client";
 
@@ -39,12 +40,18 @@ export default function MatchesPage() {
     const [allNeeds, setAllNeeds] = useState<Need[]>([]);
 
     useEffect(() => {
-        if(currentUserId) {
-            setUserResidues(getAllResidues().filter(r => r.companyId === currentUserId));
-            setUserNeeds(getAllNeeds().filter(n => n.companyId === currentUserId));
-            setAllResidues(getAllResidues());
-            setAllNeeds(getAllNeeds());
+        async function loadData() {
+            if(currentUserId) {
+                const fetchedAllResidues = await getAllResidues();
+                const fetchedAllNeeds = await getAllNeeds();
+
+                setUserResidues(fetchedAllResidues.filter(r => r.companyId === currentUserId));
+                setUserNeeds(fetchedAllNeeds.filter(n => n.companyId === currentUserId));
+                setAllResidues(fetchedAllResidues);
+                setAllNeeds(fetchedAllNeeds);
+            }
         }
+        loadData();
     }, [currentUserId]);
 
     const handleFindGeneratorMatches = async (need: Need) => {
@@ -114,7 +121,7 @@ export default function MatchesPage() {
         }
     };
 
-    const handleContact = (sourceType: 'residue' | 'need', match: Match) => {
+    const handleContact = async (sourceType: 'residue' | 'need', match: Match) => {
         if (!currentUserId) return;
 
         if (sourceType === 'residue') {
@@ -123,7 +130,7 @@ export default function MatchesPage() {
             const matchedNeed = allNeeds.find(n => n.id === match.matchedId);
             if (!sourceResidue || !matchedNeed) return;
             
-            addNegotiation({
+            await addNegotiation({
                 type: 'offer',
                 residue: sourceResidue,
                 need: matchedNeed,
@@ -137,7 +144,7 @@ export default function MatchesPage() {
             const matchedResidue = allResidues.find(r => r.id === match.matchedId);
             if (!matchedResidue) return;
 
-            addNegotiation({
+            await addNegotiation({
                 type: 'request',
                 residue: matchedResidue,
                 initiatorId: currentUserId,

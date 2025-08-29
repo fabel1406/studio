@@ -1,3 +1,4 @@
+
 // src/app/dashboard/needs/[id]/offer-dialog-wrapper.tsx
 "use client";
 
@@ -20,14 +21,18 @@ export function OfferDialogWrapper({ need }: { need: Need }) {
 
     useEffect(() => {
         setIsMounted(true);
-        if (canOffer && currentUserId) {
-            const generatorCompanyId = role === 'BOTH' ? 'comp-1' : currentUserId;
-            setUserResidues(getAllResidues().filter(r => 
-                r.companyId === generatorCompanyId && 
-                r.status === 'ACTIVE' &&
-                r.type.toLowerCase() === need.residueType.toLowerCase()
-            ));
+        async function loadResidues() {
+            if (canOffer && currentUserId) {
+                const generatorCompanyId = role === 'BOTH' ? 'comp-1' : currentUserId;
+                const allResidues = await getAllResidues();
+                setUserResidues(allResidues.filter(r => 
+                    r.companyId === generatorCompanyId && 
+                    r.status === 'ACTIVE' &&
+                    r.type.toLowerCase() === need.residueType.toLowerCase()
+                ));
+            }
         }
+        loadResidues();
     }, [canOffer, currentUserId, role, need.residueType]);
 
 
@@ -59,3 +64,5 @@ export function OfferDialogWrapper({ need }: { need: Need }) {
         </>
     );
 }
+
+    

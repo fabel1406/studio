@@ -1,3 +1,4 @@
+
 // src/app/dashboard/residues/page.tsx
 "use client";
 
@@ -18,21 +19,22 @@ export default function ResiduesPage() {
   const { role, currentUserId } = useRole();
 
   useEffect(() => {
-    if (currentUserId) {
-        getAllResidues().then(allResidues => {
-            const userResidues = allResidues.filter(r => r.companyId === currentUserId);
-            setResidues(userResidues);
-        });
+    async function loadResidues() {
+      if (currentUserId) {
+          const allResidues = await getAllResidues();
+          const userResidues = allResidues.filter(r => r.companyId === currentUserId);
+          setResidues(userResidues);
+      }
     }
+    loadResidues();
   }, [currentUserId]);
 
   const deleteResidue = (residueId: string, residueType: string) => {
-    deleteResidueService(residueId).then(() => {
+    deleteResidueService(residueId).then(async () => {
       if (currentUserId) {
-        getAllResidues().then(allResidues => {
-            const userResidues = allResidues.filter(r => r.companyId === currentUserId);
-            setResidues(userResidues);
-        });
+        const allResidues = await getAllResidues();
+        const userResidues = allResidues.filter(r => r.companyId === currentUserId);
+        setResidues(userResidues);
       }
       toast({
         title: "Residuo Eliminado",
@@ -85,3 +87,5 @@ export default function ResiduesPage() {
     </div>
   );
 }
+
+    

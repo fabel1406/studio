@@ -1,3 +1,4 @@
+
 // src/components/need-card.tsx
 "use client";
 
@@ -25,16 +26,20 @@ export function NeedCard({ need, isRecommendation = false }: { need: Need, isRec
 
   useEffect(() => {
     setIsMounted(true);
-    if (canOffer && currentUserId) {
-        // Mock logic: 'BOTH' user (comp-3) can offer residues from their generator counterpart (comp-1)
-        // In a real app, a user with BOTH roles might have multiple company profiles associated with them.
-        const generatorCompanyId = role === 'BOTH' ? 'comp-1' : currentUserId;
-        setUserResidues(getAllResidues().filter(r => 
-            r.companyId === generatorCompanyId && 
-            r.status === 'ACTIVE' &&
-            r.type.toLowerCase() === need.residueType.toLowerCase()
-        ));
+    async function loadResidues() {
+        if (canOffer && currentUserId) {
+            // Mock logic: 'BOTH' user (comp-3) can offer residues from their generator counterpart (comp-1)
+            // In a real app, a user with BOTH roles might have multiple company profiles associated with them.
+            const generatorCompanyId = role === 'BOTH' ? 'comp-1' : currentUserId;
+            const allResidues = await getAllResidues();
+            setUserResidues(allResidues.filter(r => 
+                r.companyId === generatorCompanyId && 
+                r.status === 'ACTIVE' &&
+                r.type.toLowerCase() === need.residueType.toLowerCase()
+            ));
+        }
     }
+    loadResidues();
   }, [canOffer, currentUserId, role, need.residueType]);
 
   if (!isMounted) {
@@ -98,3 +103,5 @@ export function NeedCard({ need, isRecommendation = false }: { need: Need, isRec
     </>
   );
 }
+
+    
