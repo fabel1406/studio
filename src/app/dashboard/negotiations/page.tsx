@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Handshake, ArrowRight, X } from "lucide-react";
+import { Handshake, ArrowRight, X, DollarSign } from "lucide-react";
 import Link from "next/link";
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -115,6 +115,12 @@ export default function NegotiationsPage() {
                         <p className="font-bold text-lg">{neg.quantity} {neg.unit}</p>
                         <p className="text-sm text-muted-foreground">Cantidad</p>
                     </div>
+                    {neg.offerPrice !== undefined && (
+                        <div className="text-center">
+                            <p className="font-bold text-lg">${neg.offerPrice.toFixed(2)}</p>
+                            <p className="text-sm text-muted-foreground">Precio/{neg.unit}</p>
+                        </div>
+                    )}
                         <div className="text-center">
                         <Badge variant={statusInfo.variant}>{statusInfo.text}</Badge>
                         <p className="text-sm text-muted-foreground mt-2">{format(new Date(neg.createdAt), "d MMM, yyyy", { locale: es })}</p>

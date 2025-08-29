@@ -52,19 +52,27 @@ export function ResidueActionPanel({ residue }: ResidueActionPanelProps) {
       return;
     }
     
-    addNegotiation({
+    const result = addNegotiation({
       type: 'request',
       residue: residue,
       initiatorId: currentUserId,
       quantity: values.quantity,
     })
 
-    toast({
-      title: "Solicitud Enviada",
-      description: `Has solicitado ${values.quantity} ${residue.unit} de ${residue.type}. El generador ha sido notificado.`,
-    })
-    router.push('/dashboard/negotiations');
-    router.refresh();
+    if (result) {
+        toast({
+          title: "Solicitud Enviada",
+          description: `Has solicitado ${values.quantity} ${residue.unit} de ${residue.type}. El generador ha sido notificado.`,
+        })
+        router.push('/dashboard/negotiations');
+        router.refresh();
+    } else {
+        toast({
+            title: "Error al enviar la solicitud",
+            description: "Ya tienes una negociación activa para este residuo con esta empresa.",
+            variant: "destructive",
+        })
+    }
   }
 
   // A Transformer or a user with BOTH roles can request a residue from another company.

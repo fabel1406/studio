@@ -45,8 +45,33 @@ type NewNegotiationFromNeed = {
     offerPrice?: number;
 }
 
-export const addNegotiation = (data: NewNegotiationFromResidue | NewNegotiationFromNeed): Negotiation => {
+const checkExistingNegotiation = (requesterId: string, supplierId: string, residueId: string): boolean => {
+    return negotiationsDB.some(n => 
+        n.requesterId === requesterId &&
+        n.supplierId === supplierId &&
+        n.residueId === residueId &&
+        n.status === 'SENT'
+    );
+};
+
+export const addNegotiation = (data: NewNegotiationFromResidue | NewNegotiationFromNeed): Negotiation | null => {
     let newNegotiation: Negotiation;
+    let requesterId: string, supplierId: string, residueId: string;
+
+    if (data.type === 'request') {
+        requesterId = data.initiatorId;
+        supplierId = data.residue.companyId;
+        residueId = data.residue.id;
+    } else { // type === 'offer'
+        requesterId = data.need.companyId;
+        supplierId = data.initiatorId;
+        residueId = data.residue.id;
+    }
+
+    if (checkExistingNegotiation(requesterId, supplierId, residueId)) {
+        console.warn("Attempted to create a duplicate negotiation.");
+        return null; // Or throw an error
+    }
 
     if (data.type === 'request') {
         newNegotiation = {
@@ -79,7 +104,7 @@ export const addNegotiation = (data: NewNegotiationFromResidue | NewNegotiationF
             createdAt: new Date().toISOString(),
             messages: [{
                 senderId: data.initiatorId,
-                content: `Ha ofrecido ${data.quantity} ${data.residue.unit} de ${data.residue.type} para cubrir tu necesidad.`,
+                content: `Ha ofrecido ${data.quantity} ${data.residue.unit} de ${data.residue.type}${data.offerPrice ? ` a $${data.offerPrice}/${data.residue.unit}`: ''} para cubrir tu necesidad.`,
                 timestamp: new Date().toISOString()
             }],
         };

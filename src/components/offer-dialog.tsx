@@ -132,7 +132,7 @@ export function OfferDialog({
             onOfferUpdated(updatedNegotiation);
         }
     } else if (need && selectedResidue) {
-        addNegotiation({
+        const result = addNegotiation({
           type: 'offer',
           residue: selectedResidue,
           need: need,
@@ -140,12 +140,21 @@ export function OfferDialog({
           quantity: data.quantity,
           offerPrice: data.price,
         });
-        toast({
-          title: "¡Oferta Enviada!",
-          description: `Tu oferta para ${need.residueType} ha sido enviada.`,
-        });
-        router.push('/dashboard/negotiations');
-        router.refresh();
+
+        if (result) {
+            toast({
+              title: "¡Oferta Enviada!",
+              description: `Tu oferta para ${need.residueType} ha sido enviada.`,
+            });
+            router.push('/dashboard/negotiations');
+            router.refresh();
+        } else {
+             toast({
+              title: "Error al enviar la oferta",
+              description: "Ya tienes una negociación activa para este residuo con esta empresa.",
+              variant: "destructive",
+            });
+        }
     }
     
     onOpenChange(false);
