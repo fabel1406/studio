@@ -13,7 +13,7 @@ import { OfferDialog } from "./offer-dialog";
 import { useState, useEffect } from "react";
 import { getAllResidues } from "@/services/residue-service";
 
-export function NeedCard({ need }: { need: Need }) {
+export function NeedCard({ need, isRecommendation = false }: { need: Need, isRecommendation?: boolean }) {
   const company = mockCompanies.find(c => c.id === need.companyId);
   const freqMap: {[key: string]: string} = { 'ONCE': 'una vez', 'WEEKLY': 'semanal', 'MONTHLY': 'mensual' };
   const { role, currentUserId } = useRole();
@@ -68,15 +68,17 @@ export function NeedCard({ need }: { need: Need }) {
           </div>
         </CardContent>
         <CardFooter className="p-4 pt-0">
-          {canOffer ? (
-              <Button className="w-full" onClick={() => setIsOfferDialogOpen(true)} disabled={!isMounted}>
-                  <PackageCheck className="mr-2 h-4 w-4" /> Hacer una Oferta
-              </Button>
-          ) : (
-              <Button className="w-full" variant="outline">
-                  Ver Necesidad <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-          )}
+            <div className="w-full flex flex-col sm:flex-row gap-2">
+              {canOffer ? (
+                  <Button className="w-full" onClick={() => setIsOfferDialogOpen(true)} disabled={!isMounted}>
+                      <PackageCheck className="mr-2 h-4 w-4" /> Hacer una Oferta
+                  </Button>
+              ) : (
+                  <Button className="w-full" variant="outline" disabled={true}>
+                      Ver Necesidad <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+              )}
+            </div>
         </CardFooter>
       </Card>
       {isMounted && canOffer && (

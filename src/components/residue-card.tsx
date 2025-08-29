@@ -7,18 +7,23 @@ import type { Residue } from "@/lib/types";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
-import { MapPin, Calendar, ArrowRight } from "lucide-react";
+import { MapPin, Calendar, ArrowRight, PackageCheck } from "lucide-react";
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useState, useEffect } from "react";
+import { useRole } from "@/app/dashboard/layout";
+import { ResidueActionPanel } from "./residue-action-panel";
 
 
-export function ResidueCard({ residue }: { residue: Residue }) {
+export function ResidueCard({ residue, isRecommendation = false }: { residue: Residue, isRecommendation?: boolean }) {
   const [isMounted, setIsMounted] = useState(false);
+  const { role, currentUserId } = useRole();
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
+
+  const canRequest = (role === "TRANSFORMER" || role === "BOTH") && residue.companyId !== currentUserId;
 
   return (
     <Card className="flex flex-col h-full overflow-hidden transition-all duration-300 hover:shadow-lg hover:border-primary/50">
@@ -67,11 +72,20 @@ export function ResidueCard({ residue }: { residue: Residue }) {
         </div>
       </CardContent>
       <CardFooter className="p-4 pt-0">
-        <Button asChild className="w-full">
-            <Link href={`/dashboard/residues/${residue.id}`}>
-                Ver Detalles <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-        </Button>
+        <div className="w-full flex flex-col sm:flex-row gap-2">
+            <Button asChild className="w-full">
+                <Link href={`/dashboard/residues/${residue.id}`}>
+                    Ver Detalles <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+            </Button>
+            {isRecommendation && canRequest && (
+                 <Button asChild variant="secondary" className="w-full">
+                    <Link href={`/dashboard/residues/${residue.id}`}>
+                        <PackageCheck className="mr-2 h-4 w-4" /> Solicitar
+                    </Link>
+                </Button>
+            )}
+        </div>
       </CardFooter>
     </Card>
   );
