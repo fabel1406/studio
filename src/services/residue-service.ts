@@ -9,9 +9,10 @@ let residuesDB = [...mockResidues];
 
 // Helper to rehydrate residue with full company object
 const rehydrateResidue = (residue: Residue): Residue => {
+    const company = mockCompanies.find(c => c.id === residue.companyId);
     return {
         ...residue,
-        company: mockCompanies.find(c => c.id === residue.companyId)
+        company: company,
     };
 };
 

@@ -12,7 +12,6 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'zod';
 import type { Residue, Need, Company } from '@/lib/types';
-import { mockCompanies } from '@/lib/data';
 
 // Define Zod schemas for our main data types to use in the flow
 const CompanySchema = z.object({
@@ -90,7 +89,7 @@ export async function getMatchSuggestions(input: MatchSuggestionsInput): Promise
         const residue = input.availableResidues.find(r => r.id === suggestion.matchedId);
         company = residue?.company;
     }
-    return { ...suggestion, ...suggestion.company, company };
+    return { ...suggestion, company };
   });
 
   return { suggestions: hydratedSuggestions };
@@ -188,4 +187,3 @@ const matchSuggestionsFlow = ai.defineFlow(
     }
   }
 );
-

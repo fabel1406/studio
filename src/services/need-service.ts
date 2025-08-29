@@ -5,9 +5,10 @@ import { mockNeeds, mockCompanies } from '@/lib/data';
 
 // Helper to rehydrate need with full company object
 const rehydrateNeed = (need: Need): Need => {
+    const company = mockCompanies.find(c => c.id === need.companyId);
     return {
         ...need,
-        company: mockCompanies.find(c => c.id === need.companyId)
+        company: company
     };
 };
 
