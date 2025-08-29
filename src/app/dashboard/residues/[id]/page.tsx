@@ -80,7 +80,9 @@ export default function ResiduePage({ params }: { params: { id: string } }) {
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div>
-                            <h3 className="font-semibold text-primary">{company.name}</h3>
+                            <Link href={`/dashboard/companies/${company.id}`} className="font-semibold text-primary hover:underline">
+                              <h3>{company.name}</h3>
+                            </Link>
                             <p className="text-sm text-muted-foreground">{company.description}</p>
                              <Badge variant={company.verificationStatus === 'VERIFIED' ? 'default' : 'destructive'} className="mt-2">
                                 {company.verificationStatus === 'VERIFIED' ? 'VERIFICADO' : 'PENDIENTE'}
