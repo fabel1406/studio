@@ -6,8 +6,8 @@ import { getResidueById } from './residue-service';
 // In-memory array to act as a database
 let negotiationsDB: Negotiation[] = [];
 
-// Define the platform's commission rate (e.g., 5%)
-const COMMISSION_RATE = 0.05;
+// Define the platform's commission rate (e.g., 3%)
+const COMMISSION_RATE = 0.03;
 
 const rehydrateNegotiation = (negotiation: Negotiation): Negotiation => {
     const residue = getResidueById(negotiation.residueId);
