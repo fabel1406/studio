@@ -1,13 +1,13 @@
 // src/app/dashboard/marketplace/page.tsx
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { mockResidues, mockNeeds } from "@/lib/data";
 import { ResidueCard } from "@/components/residue-card";
 import { NeedCard } from "@/components/need-card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ListFilter, PlusCircle } from "lucide-react";
+import { ListFilter, PlusCircle, Sparkles, Loader2 } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -18,16 +18,90 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Link from "next/link";
 import { useRole } from '../layout';
+import type { Match, Residue, Need } from '@/lib/types';
+import { getMatchSuggestions } from '@/ai/flows/match-suggestions';
+import { getAllNeeds } from '@/services/need-service';
+import { getAllResidues } from '@/services/residue-service';
+import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
+import { useToast } from '@/hooks/use-toast';
 
 const uniqueResidueTypes = [...new Set(mockResidues.map(r => r.type))];
 const uniqueNeedTypes = [...new Set(mockNeeds.map(r => r.residueType))];
 const allUniqueTypes = [...new Set([...uniqueResidueTypes, ...uniqueNeedTypes])];
 
 export default function MarketplacePage() {
-  const { role } = useRole();
+  const { role, currentUserId } = useRole();
+  const { toast } = useToast();
   const [typeFilter, setTypeFilter] = useState('ALL_TYPES');
   const [categoryFilter, setCategoryFilter] = useState('ALL_CATEGORIES');
   const [countryFilter, setCountryFilter] = useState('ALL_COUNTRIES');
+  
+  const [aiSuggestions, setAiSuggestions] = useState<Residue[] | Need[]>([]);
+  const [suggestionType, setSuggestionType] = useState<'residue' | 'need' | null>(null);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(true);
+
+
+  useEffect(() => {
+    const fetchSuggestions = async () => {
+      if (!currentUserId) return;
+      setIsLoadingSuggestions(true);
+
+      try {
+        if (role === 'GENERATOR' || role === 'BOTH') {
+            const userResidues = getAllResidues().filter(r => r.companyId === currentUserId && r.status === 'ACTIVE');
+            if (userResidues.length > 0) {
+                const sourceResidue = userResidues[0]; // Use the first active residue for suggestions
+                const allNeeds = getAllNeeds();
+                const result = await getMatchSuggestions({
+                    matchType: 'findTransformers',
+                    sourceResidue: sourceResidue,
+                    availableNeeds: allNeeds,
+                });
+                const suggestedNeeds = result.suggestions.map(s => allNeeds.find(n => n.id === s.matchedId)).filter(Boolean) as Need[];
+                setAiSuggestions(suggestedNeeds);
+                setSuggestionType('need');
+            } else {
+              setAiSuggestions([]);
+            }
+        }
+        
+        if (role === 'TRANSFORMER') {
+            const userNeeds = getAllNeeds().filter(n => n.companyId === currentUserId && n.status === 'ACTIVE');
+            if (userNeeds.length > 0) {
+                const sourceNeed = userNeeds[0];
+                const allResidues = getAllResidues();
+                 const result = await getMatchSuggestions({
+                    matchType: 'findGenerators',
+                    sourceNeed: sourceNeed,
+                    availableResidues: allResidues,
+                });
+                 const suggestedResidues = result.suggestions.map(s => allResidues.find(r => r.id === s.matchedId)).filter(Boolean) as Residue[];
+                setAiSuggestions(suggestedResidues);
+                setSuggestionType('residue');
+            }
+        }
+      } catch (error) {
+        console.error("Failed to fetch AI suggestions:", error);
+        toast({
+            title: "Error de Sugerencias",
+            description: "No se pudieron cargar las recomendaciones de la IA.",
+            variant: "destructive"
+        });
+      } finally {
+        setIsLoadingSuggestions(false);
+      }
+    };
+
+    fetchSuggestions();
+  }, [role, currentUserId, toast]);
+
 
   const filteredResidues = mockResidues.filter(residue => {
     const companyCountry = residue.company?.country.toLowerCase();
@@ -71,6 +145,49 @@ export default function MarketplacePage() {
         </div>
       </div>
       
+      {/* AI Suggestions Carousel */}
+      {isLoadingSuggestions ? (
+        <Card className="p-6 flex items-center justify-center min-h-[200px]">
+          <Loader2 className="mr-2 h-8 w-8 animate-spin" />
+          <p className="text-muted-foreground">Buscando recomendaciones para ti...</p>
+        </Card>
+      ) : aiSuggestions.length > 0 && (
+          <Card className="bg-primary/5 dark:bg-primary/10 border-primary/20">
+              <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                      <Sparkles className="text-primary" />
+                      Recomendado para ti
+                  </CardTitle>
+                  <CardDescription>
+                      {suggestionType === 'need'
+                          ? "Estas son las necesidades que mejor encajan con los residuos que ofreces."
+                          : "Estos son los residuos disponibles que mejor encajan con lo que buscas."
+                      }
+                  </CardDescription>
+              </CardHeader>
+              <Carousel
+                  opts={{ align: "start", loop: false }}
+                  className="w-full px-12"
+              >
+                  <CarouselContent className="-ml-4">
+                      {aiSuggestions.map((item) => (
+                          <CarouselItem key={item.id} className="md:basis-1/2 lg:basis-1/3 pl-4">
+                              <div className="p-1">
+                                  {suggestionType === 'residue'
+                                      ? <ResidueCard residue={item as Residue} />
+                                      : <NeedCard need={item as Need} />
+                                  }
+                              </div>
+                          </CarouselItem>
+                      ))}
+                  </CarouselContent>
+                  <CarouselPrevious />
+                  <CarouselNext />
+              </Carousel>
+          </Card>
+      )}
+
+
       <div className="bg-card p-4 rounded-lg border shadow-sm">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <Select onValueChange={setTypeFilter} defaultValue="ALL_TYPES">
