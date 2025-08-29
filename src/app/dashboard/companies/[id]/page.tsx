@@ -13,7 +13,6 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 type CompanyProfilePageProps = {
     params: { id: string };
-    searchParams: { [key: string]: string | string[] | undefined };
 }
 
 export default function CompanyProfilePage({ params }: CompanyProfilePageProps) {
