@@ -23,9 +23,10 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRole } from "../layout";
 import { Textarea } from "@/components/ui/textarea";
+import { getAllCountries, getCitiesByCountry } from "@/lib/locations";
 
 const profileSchema = z.object({
   companyName: z.string().min(1, "El nombre de la empresa es obligatorio."),
@@ -46,8 +47,9 @@ export default function SettingsPage() {
     const { toast } = useToast();
     const { user, role, setRole } = useRole();
     
-    // In a real app, you would fetch company data here.
-    // For now, we use mock data.
+    const [cities, setCities] = useState<{name: string}[]>([]);
+    const countries = getAllCountries();
+
     const form = useForm<ProfileFormValues>({
         resolver: zodResolver(profileSchema),
         defaultValues: {
@@ -63,6 +65,23 @@ export default function SettingsPage() {
             role: role,
         },
     });
+
+    const selectedCountry = form.watch("country");
+
+    useEffect(() => {
+        if (selectedCountry) {
+            setCities(getCitiesByCountry(selectedCountry));
+            // Don't reset city if it's still valid for the new country
+            const currentCity = form.getValues("city");
+            const countryCities = getCitiesByCountry(selectedCountry).map(c => c.name);
+            if (!countryCities.includes(currentCity)) {
+                 form.setValue("city", "");
+            }
+        } else {
+            setCities([]);
+            form.setValue("city", "");
+        }
+    }, [selectedCountry, form]);
 
     useEffect(() => {
         if (user) {
@@ -151,9 +170,18 @@ export default function SettingsPage() {
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>País</FormLabel>
-                                                <FormControl>
-                                                    <Input placeholder="Ej: España" {...field} />
-                                                </FormControl>
+                                                <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
+                                                    <FormControl>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Selecciona un país" />
+                                                    </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        {countries.map((country) => (
+                                                            <SelectItem key={country.code} value={country.name}>{country.name}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
                                                 <FormMessage />
                                             </FormItem>
                                         )}
@@ -164,9 +192,18 @@ export default function SettingsPage() {
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>Ciudad</FormLabel>
-                                                <FormControl>
-                                                    <Input placeholder="Ej: Madrid" {...field} />
-                                                </FormControl>
+                                                <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value} disabled={!selectedCountry}>
+                                                    <FormControl>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Selecciona una ciudad" />
+                                                    </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        {cities.map((city) => (
+                                                            <SelectItem key={city.name} value={city.name}>{city.name}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
                                                 <FormMessage />
                                             </FormItem>
                                         )}

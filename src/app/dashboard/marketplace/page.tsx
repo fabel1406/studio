@@ -42,7 +42,9 @@ import {
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from '@/hooks/use-toast';
+import { getAllCountries, getCitiesByCountry } from '@/lib/locations';
 
+const allCountries = getAllCountries();
 const uniqueResidueTypes = [...new Set(mockResidues.map(r => r.type))];
 const uniqueNeedTypes = [...new Set(mockNeeds.map(n => n.residueType))];
 const allUniqueTypes = [...new Set([...uniqueResidueTypes, ...uniqueNeedTypes])];
@@ -58,6 +60,9 @@ export default function MarketplacePage() {
   const [typeFilter, setTypeFilter] = useState('ALL_TYPES');
   const [categoryFilter, setCategoryFilter] = useState('ALL_CATEGORIES');
   const [countryFilter, setCountryFilter] = useState('ALL_COUNTRIES');
+  const [cityFilter, setCityFilter] = useState('ALL_CITIES');
+  const [cities, setCities] = useState<{name: string}[]>([]);
+
 
   // Advanced Filters State
   const [isAdvancedSearchOpen, setIsAdvancedSearchOpen] = useState(false);
@@ -129,26 +134,44 @@ export default function MarketplacePage() {
   };
 
 
+  useEffect(() => {
+      if (countryFilter !== 'ALL_COUNTRIES') {
+          setCities(getCitiesByCountry(countryFilter));
+      } else {
+          setCities([]);
+      }
+      setCityFilter('ALL_CITIES');
+  }, [countryFilter]);
+
+
   const filteredResidues = mockResidues.filter(residue => {
-    const companyCountry = residue.company?.country.toLowerCase();
+    const companyCountry = residue.company?.country;
+    const companyCity = residue.company?.city;
+
     const typeMatch = typeFilter === 'ALL_TYPES' || residue.type === typeFilter;
     const customTypeMatch = typeFilter === 'Otros' ? (customTypeFilter ? residue.type.toLowerCase().includes(customTypeFilter.toLowerCase()) : true) : true;
     const categoryMatch = categoryFilter === 'ALL_CATEGORIES' || residue.category === categoryFilter;
-    const countryMatch = countryFilter === 'ALL_COUNTRIES' || (companyCountry && companyCountry.includes(countryFilter));
+    const countryMatch = countryFilter === 'ALL_COUNTRIES' || (companyCountry && companyCountry === countryFilter);
+    const cityMatch = cityFilter === 'ALL_CITIES' || (companyCity && companyCity === cityFilter);
     const quantityMatch = residue.quantity >= quantityRange[0] && residue.quantity <= quantityRange[1];
     const priceMatch = (residue.pricePerUnit || 0) >= priceRange[0] && (residue.pricePerUnit || 0) <= priceRange[1];
 
-    return typeMatch && customTypeMatch && categoryMatch && countryMatch && quantityMatch && priceMatch;
+    return typeMatch && customTypeMatch && categoryMatch && countryMatch && cityMatch && quantityMatch && priceMatch;
   });
 
   const filteredNeeds = mockNeeds.filter(need => {
+    const companyCountry = need.company?.country;
+    const companyCity = need.company?.city;
+
     const typeMatch = typeFilter === 'ALL_TYPES' || need.residueType === typeFilter;
     const customTypeMatch = typeFilter === 'Otros' ? (customTypeFilter ? need.residueType.toLowerCase().includes(customTypeFilter.toLowerCase()) : true) : true;
     const categoryMatch = categoryFilter === 'ALL_CATEGORIES' || need.category === categoryFilter;
+    const countryMatch = countryFilter === 'ALL_COUNTRIES' || (companyCountry && companyCountry === countryFilter);
+    const cityMatch = cityFilter === 'ALL_CITIES' || (companyCity && companyCity === cityFilter);
     const quantityMatch = need.quantity >= quantityRange[0] && need.quantity <= quantityRange[1];
     
-    // Needs don't have country/price filters for now
-    return typeMatch && customTypeMatch && categoryMatch && quantityMatch;
+    // Needs don't have price filters for now
+    return typeMatch && customTypeMatch && categoryMatch && countryMatch && cityMatch && quantityMatch;
   });
 
 
@@ -274,7 +297,7 @@ export default function MarketplacePage() {
       )}
 
       <div className="bg-card p-4 rounded-lg border shadow-sm mt-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <Select onValueChange={setTypeFilter} defaultValue="ALL_TYPES">
                 <SelectTrigger>
                     <SelectValue placeholder="Filtrar por tipo" />
@@ -299,20 +322,9 @@ export default function MarketplacePage() {
                     <SelectItem value="OTHERS">Otros</SelectItem>
                 </SelectContent>
             </Select>
-            <Select onValueChange={setCountryFilter} defaultValue="ALL_COUNTRIES">
-                <SelectTrigger>
-                    <SelectValue placeholder="Filtrar por país" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="ALL_COUNTRIES">Todos los países</SelectItem>
-                    <SelectItem value="españa">España</SelectItem>
-                    <SelectItem value="portugal">Portugal</SelectItem>
-                    <SelectItem value="francia">Francia</SelectItem>
-                </SelectContent>
-            </Select>
              <Dialog open={isAdvancedSearchOpen} onOpenChange={setIsAdvancedSearchOpen}>
                 <DialogTrigger asChild>
-                    <Button variant="outline" className="relative">
+                    <Button variant="outline" className="relative w-full">
                         <ListFilter className="mr-2 h-4 w-4" /> Filtros avanzados
                         {activeAdvancedFilters && <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-primary" />}
                     </Button>
@@ -366,6 +378,33 @@ export default function MarketplacePage() {
                 </DialogContent>
             </Dialog>
         </div>
+        
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
+             <Select onValueChange={setCountryFilter} defaultValue="ALL_COUNTRIES">
+                <SelectTrigger>
+                    <SelectValue placeholder="Filtrar por país" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="ALL_COUNTRIES">Todos los países</SelectItem>
+                    {allCountries.map((country) => (
+                        <SelectItem key={country.code} value={country.name}>{country.name}</SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+
+             <Select onValueChange={setCityFilter} value={cityFilter} disabled={cities.length === 0}>
+                <SelectTrigger>
+                    <SelectValue placeholder="Filtrar por ciudad" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="ALL_CITIES">Todas las ciudades</SelectItem>
+                    {cities.map((city) => (
+                        <SelectItem key={city.name} value={city.name}>{city.name}</SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+        </div>
+
         {typeFilter === 'Otros' && !isAdvancedSearchOpen && (
             <div className="mt-4">
                  <Input value={customTypeFilter} onChange={e => setCustomTypeFilter(e.target.value)} placeholder="Especificar el tipo de residuo que buscas..." />
