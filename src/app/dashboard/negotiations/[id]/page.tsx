@@ -15,6 +15,17 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { NegotiationChat } from "@/components/negotiation-chat";
 import { OfferDialog } from "@/components/offer-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 
 const statusMap: {[key: string]: {text: string, variant: 'default' | 'secondary' | 'outline' | 'destructive'}} = {
@@ -161,9 +172,26 @@ export default function NegotiationDetailPage() {
                                     <>
                                         {canAcceptOrReject && (
                                             <>
-                                                <Button className="w-full" onClick={() => handleUpdateStatus('ACCEPTED')}>
-                                                    <CheckCircle className="mr-2 h-4 w-4" /> Aceptar
-                                                </Button>
+                                                <AlertDialog>
+                                                    <AlertDialogTrigger asChild>
+                                                        <Button className="w-full">
+                                                            <CheckCircle className="mr-2 h-4 w-4" /> Aceptar
+                                                        </Button>
+                                                    </AlertDialogTrigger>
+                                                    <AlertDialogContent>
+                                                        <AlertDialogHeader>
+                                                        <AlertDialogTitle>¿Estás seguro de que quieres aceptar esta oferta?</AlertDialogTitle>
+                                                        <AlertDialogDescription>
+                                                            Esta acción no se puede deshacer. Al aceptar, se cerrará la negociación y se notificará a la otra parte.
+                                                        </AlertDialogDescription>
+                                                        </AlertDialogHeader>
+                                                        <AlertDialogFooter>
+                                                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                                            <AlertDialogAction onClick={() => handleUpdateStatus('ACCEPTED')}>Aceptar</AlertDialogAction>
+                                                        </AlertDialogFooter>
+                                                    </AlertDialogContent>
+                                                </AlertDialog>
+
                                                 <Button className="w-full" variant="destructive" onClick={() => handleUpdateStatus('REJECTED')}>
                                                     <XCircle className="mr-2 h-4 w-4" /> Rechazar
                                                 </Button>

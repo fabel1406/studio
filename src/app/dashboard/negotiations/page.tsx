@@ -91,7 +91,7 @@ export default function NegotiationsPage() {
             const isInitiator = neg.requesterId === currentUserId;
             const otherParty = isInitiator ? neg.supplier : neg.requester;
             
-            const isFinalStatus = neg.status === 'ACCEPTED' || neg.status === 'REJECTED';
+            const isRejected = neg.status === 'REJECTED';
             const statusInfo = statusMap[neg.status];
 
             if (!otherParty || !statusInfo) return null;
@@ -131,7 +131,7 @@ export default function NegotiationsPage() {
                                 Ver Negociación <ArrowRight className="ml-2 h-4 w-4" />
                             </Link>
                         </Button>
-                        {isFinalStatus && (
+                        {isRejected && (
                              <Button variant="ghost" size="icon" onClick={() => handleHideNegotiation(neg.id)} title="Ocultar negociación">
                                 <X className="h-4 w-4" />
                             </Button>
