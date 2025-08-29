@@ -132,7 +132,7 @@ export default function MarketplacePage() {
   const filteredResidues = mockResidues.filter(residue => {
     const companyCountry = residue.company?.country.toLowerCase();
     const typeMatch = typeFilter === 'ALL_TYPES' || residue.type === typeFilter;
-    const customTypeMatch = typeFilter === 'OTROS' ? (customTypeFilter ? residue.type.toLowerCase().includes(customTypeFilter.toLowerCase()) : true) : true;
+    const customTypeMatch = typeFilter === 'Otros' ? (customTypeFilter ? residue.type.toLowerCase().includes(customTypeFilter.toLowerCase()) : true) : true;
     const categoryMatch = categoryFilter === 'ALL_CATEGORIES' || residue.category === categoryFilter;
     const countryMatch = countryFilter === 'ALL_COUNTRIES' || (companyCountry && companyCountry.includes(countryFilter));
     const quantityMatch = residue.quantity >= quantityRange[0] && residue.quantity <= quantityRange[1];
@@ -143,7 +143,7 @@ export default function MarketplacePage() {
 
   const filteredNeeds = mockNeeds.filter(need => {
     const typeMatch = typeFilter === 'ALL_TYPES' || need.residueType === typeFilter;
-    const customTypeMatch = typeFilter === 'OTROS' ? (customTypeFilter ? need.residueType.toLowerCase().includes(customTypeFilter.toLowerCase()) : true) : true;
+    const customTypeMatch = typeFilter === 'Otros' ? (customTypeFilter ? need.residueType.toLowerCase().includes(customTypeFilter.toLowerCase()) : true) : true;
     const categoryMatch = categoryFilter === 'ALL_CATEGORIES' || need.category === categoryFilter;
     const quantityMatch = need.quantity >= quantityRange[0] && need.quantity <= quantityRange[1];
     
@@ -236,7 +236,7 @@ export default function MarketplacePage() {
                     {allUniqueTypes.map((type) => (
                         <SelectItem key={type} value={type}>{type}</SelectItem>
                     ))}
-                    <SelectItem value="OTROS">Otros</SelectItem>
+                    <SelectItem value="Otros">Otros (especificar)</SelectItem>
                 </SelectContent>
             </Select>
             <Select onValueChange={setCategoryFilter} defaultValue="ALL_CATEGORIES">
@@ -274,9 +274,9 @@ export default function MarketplacePage() {
                         <DialogTitle>Filtros Avanzados</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-6 py-4">
-                        {typeFilter === 'OTROS' && (
+                        {typeFilter === 'Otros' && (
                             <div>
-                              <Label htmlFor="custom_type_filter">Nombre del residuo (Otro)</Label>
+                              <Label htmlFor="custom_type_filter">Especificar tipo de residuo</Label>
                               <Input id="custom_type_filter" value={customTypeFilter} onChange={e => setCustomTypeFilter(e.target.value)} placeholder="Ej: Poda de cítricos..." />
                             </div>
                         )}
@@ -318,6 +318,11 @@ export default function MarketplacePage() {
                 </DialogContent>
             </Dialog>
         </div>
+        {typeFilter === 'Otros' && (
+            <div className="mt-4">
+                 <Input value={customTypeFilter} onChange={e => setCustomTypeFilter(e.target.value)} placeholder="Especificar el tipo de residuo que buscas..." />
+            </div>
+        )}
       </div>
 
       <Tabs defaultValue="residues" className="w-full">

@@ -69,13 +69,12 @@ export function NeedCard({ need, isRecommendation = false }: { need: Need, isRec
         </CardContent>
         <CardFooter className="p-4 pt-0">
             <div className="w-full flex flex-col sm:flex-row gap-2">
-              {canOffer ? (
+               <Button className="w-full" variant="outline" disabled={true}>
+                  Ver Detalles <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+              {canOffer && (
                   <Button className="w-full" onClick={() => setIsOfferDialogOpen(true)} disabled={!isMounted}>
-                      <PackageCheck className="mr-2 h-4 w-4" /> Hacer una Oferta
-                  </Button>
-              ) : (
-                  <Button className="w-full" variant="outline" disabled={true}>
-                      Ver Necesidad <ArrowRight className="ml-2 h-4 w-4" />
+                      <PackageCheck className="mr-2 h-4 w-4" /> Hacer Oferta
                   </Button>
               )}
             </div>
