@@ -30,7 +30,7 @@ export function ResidueCard({ residue, isRecommendation = false }: { residue: Re
       <CardHeader className="p-0">
         <div className="relative h-48 w-full">
           <Image
-            src={residue.photos?.[0] || 'https://picsum.photos/600/400'}
+            src={residue.photos?.[0] || '/images/residues/placeholder.jpg'}
             alt={residue.type}
             fill
             style={{objectFit: 'cover'}}

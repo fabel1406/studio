@@ -37,7 +37,7 @@ export default function ResiduePage({ params }: { params: { id: string } }) {
                 <CardContent className="p-0">
                     <div className="relative h-96 w-full rounded-t-lg overflow-hidden">
                     <Image
-                        src={residue.photos?.[0] || 'https://picsum.photos/1200/800'}
+                        src={residue.photos?.[0] || '/images/residues/placeholder.jpg'}
                         alt={residue.type}
                         fill
                         style={{objectFit: 'cover'}}
