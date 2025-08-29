@@ -1,4 +1,3 @@
-
 // src/app/dashboard/companies/[id]/page.tsx
 import { notFound } from "next/navigation";
 import { getCompanyById } from "@/services/company-service";
