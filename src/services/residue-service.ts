@@ -1,3 +1,4 @@
+
 // src/services/residue-service.ts
 import type { Residue } from '@/lib/types';
 import { mockResidues, mockCompanies } from '@/lib/data';
@@ -21,15 +22,15 @@ export const getAllResidues = async (): Promise<Residue[]> => {
     return Promise.resolve(residuesDB.map(rehydrateResidue));
 };
 
-export const getResidueById = async (id: string): Promise<Residue | undefined> => {
+export const getResidueById = (id: string): Residue | undefined => {
     const residue = residuesDB.find(r => r.id === id);
-    if (!residue) return Promise.resolve(undefined);
-    return Promise.resolve(rehydrateResidue(residue));
+    if (!residue) return undefined;
+    return rehydrateResidue(residue);
 };
 
 type NewResidueData = Omit<Residue, 'id' | 'companyId' | 'availabilityDate' | 'photos' | 'company'>;
 
-export const addResidue = async (residueData: NewResidueData): Promise<Residue> => {
+export const addResidue = (residueData: NewResidueData): Residue => {
     const newResidue: Residue = {
         ...residueData,
         id: `res-${Date.now()}`,
@@ -39,10 +40,10 @@ export const addResidue = async (residueData: NewResidueData): Promise<Residue> 
     };
     
     residuesDB.push(newResidue);
-    return Promise.resolve(rehydrateResidue(newResidue));
+    return rehydrateResidue(newResidue);
 };
 
-export const updateResidue = async (updatedResidueData: Partial<Residue> & { id: string }): Promise<Residue> => {
+export const updateResidue = (updatedResidueData: Partial<Residue> & { id: string }): Residue => {
     const index = residuesDB.findIndex(r => r.id === updatedResidueData.id);
     if (index === -1) {
         throw new Error("Residue not found");
@@ -55,10 +56,9 @@ export const updateResidue = async (updatedResidueData: Partial<Residue> & { id:
 
     residuesDB[index] = updatedResidue;
     
-    return Promise.resolve(rehydrateResidue(updatedResidue));
+    return rehydrateResidue(updatedResidue);
 };
 
-export const deleteResidue = async (id: string): Promise<void> => {
+export const deleteResidue = (id: string): void => {
     residuesDB = residuesDB.filter(r => r.id !== id);
-    return Promise.resolve();
 };
