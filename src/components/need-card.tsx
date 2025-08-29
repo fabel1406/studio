@@ -43,8 +43,9 @@ export function NeedCard({ need, isRecommendation = false }: { need: Need, isRec
         <CardHeader className="p-4 min-h-[7rem]">
           <Badge variant="secondary" className="w-fit mb-2">{need.category}</Badge>
           <CardTitle className="text-xl leading-snug">
-              {/* Needs don't have a detail page yet, so we won't link them for now */}
-              {need.residueType}
+              <Link href={`/dashboard/needs/${need.id}`} className="hover:text-primary transition-colors">
+                {need.residueType}
+              </Link>
           </CardTitle>
         </CardHeader>
         <CardContent className="flex-grow p-4 pt-0">
@@ -69,8 +70,10 @@ export function NeedCard({ need, isRecommendation = false }: { need: Need, isRec
         </CardContent>
         <CardFooter className="p-4 pt-0">
             <div className="w-full flex flex-col sm:flex-row gap-2">
-               <Button className="w-full" variant="outline" disabled={true}>
-                  Ver Detalles <ArrowRight className="ml-2 h-4 w-4" />
+               <Button asChild className="w-full" variant="outline">
+                  <Link href={`/dashboard/needs/${need.id}`}>
+                    Ver Detalles <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
               </Button>
               {canOffer && (
                   <Button className="w-full" onClick={() => setIsOfferDialogOpen(true)} disabled={!isMounted}>

@@ -12,7 +12,6 @@ import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useState, useEffect } from "react";
 import { useRole } from "@/app/dashboard/layout";
-import { ResidueActionPanel } from "./residue-action-panel";
 
 
 export function ResidueCard({ residue, isRecommendation = false }: { residue: Residue, isRecommendation?: boolean }) {
