@@ -2,6 +2,6 @@
 import type { Company } from '@/lib/types';
 import { mockCompanies } from '@/lib/data';
 
-export const getCompanyById = (id: string): Company | undefined => {
-    return mockCompanies.find(c => c.id === id);
+export const getCompanyById = async (id: string): Promise<Company | undefined> => {
+    return Promise.resolve(mockCompanies.find(c => c.id === id));
 };
