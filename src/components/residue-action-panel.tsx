@@ -21,7 +21,7 @@ import { useToast } from "@/hooks/use-toast"
 import { Send } from "lucide-react"
 import { addNegotiation } from "@/services/negotiation-service"
 import { useRouter } from "next/navigation"
-import { useRole } from "@/app/dashboard/layout"
+import { useRole } from "@/app/dashboard/role-provider"
 
 type ResidueActionPanelProps = {
   residue: Residue

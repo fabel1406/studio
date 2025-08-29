@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import Link from 'next/link';
-import { useRole } from '../layout';
+import { useRole } from '../role-provider';
 
 export default function NeedsPage() {
   const [needs, setNeeds] = useState<Need[]>([]);

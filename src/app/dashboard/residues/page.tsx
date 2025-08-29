@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getAllResidues, deleteResidue as deleteResidueService } from '@/services/residue-service';
-import { useRole } from '../layout';
+import { useRole } from '../role-provider';
 
 export default function ResiduesPage() {
   const [residues, setResidues] = useState<Residue[]>([]);

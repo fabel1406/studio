@@ -4,7 +4,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter, notFound } from "next/navigation";
 import { getNegotiationById, updateNegotiationStatus, addMessageToNegotiation } from "@/services/negotiation-service";
-import { useRole } from "../../layout";
+import { useRole } from "../../role-provider";
 import type { Negotiation } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Send, Pencil, XCircle, CheckCircle, DollarSign } from "lucide-react";

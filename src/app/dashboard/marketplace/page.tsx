@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import Link from "next/link";
-import { useRole } from '../layout';
+import { useRole } from '../role-provider';
 import type { Residue, Need } from '@/lib/types';
 import { getMatchSuggestions } from '@/ai/flows/match-suggestions';
 import { getAllNeeds } from '@/services/need-service';

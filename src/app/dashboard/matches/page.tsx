@@ -10,7 +10,7 @@ import { getMatchSuggestions } from '@/ai/flows/match-suggestions';
 import { Loader2, Recycle, Send } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { useRole } from '../layout';
+import { useRole } from '../role-provider';
 import { getAllResidues, getResidueById } from '@/services/residue-service';
 import { getAllNeeds, getNeedById } from '@/services/need-service';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';

@@ -11,7 +11,7 @@ import { MapPin, Calendar, ArrowRight, PackageCheck } from "lucide-react";
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useState, useEffect } from "react";
-import { useRole } from "@/app/dashboard/layout";
+import { useRole } from "@/app/dashboard/role-provider";
 
 
 export function ResidueCard({ residue, isRecommendation = false, priority = false }: { residue: Residue, isRecommendation?: boolean, priority?: boolean }) {

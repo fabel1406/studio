@@ -24,7 +24,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState } from "react";
-import { useRole } from "../layout";
+import { useRole } from "../role-provider";
 import { Textarea } from "@/components/ui/textarea";
 import { getAllCountries, getCitiesByCountry, type City } from "@/lib/locations";
 

@@ -8,7 +8,7 @@ import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { Layers, MapPin, Repeat, ArrowRight, PackageCheck } from "lucide-react";
 import { mockCompanies } from "@/lib/data";
-import { useRole } from "@/app/dashboard/layout";
+import { useRole } from "@/app/dashboard/role-provider";
 import { OfferDialog } from "./offer-dialog";
 import { useState, useEffect } from "react";
 import { getAllResidues } from "@/services/residue-service";

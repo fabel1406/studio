@@ -13,7 +13,7 @@ import { es } from 'date-fns/locale';
 import { useEffect, useState, useCallback } from "react";
 import { getAllNegotiationsForUser, deleteNegotiation as hideNegotiationFromUI } from "@/services/negotiation-service";
 import type { Negotiation } from "@/lib/types";
-import { useRole } from "../layout";
+import { useRole } from "../role-provider";
 import { useToast } from "@/hooks/use-toast";
 
 

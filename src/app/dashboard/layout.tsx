@@ -19,20 +19,21 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Logo } from "@/components/logo";
 import { BarChart2, Leaf, Recycle, Settings, LogOut, LayoutDashboard, Search, List, PackagePlus, Handshake } from "lucide-react";
 import type { LucideIcon } from 'lucide-react';
-import { Footer } from "@/components/footer";
 import React, { useEffect } from 'react';
 import { DashboardHeader } from "@/components/dashboard-header";
 import { ScrollToTop } from "@/components/scroll-to-top";
-import { auth } from "@/lib/firebase";
 import { signOut } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 import { useRole, RoleProvider } from "./role-provider";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Footer } from "@/components/footer";
+
 
 type NavItem = {
   href: string;
   label: string;
   icon: LucideIcon;
-  roles: string[];
+  roles: ("GENERATOR" | "TRANSFORMER" | "BOTH")[];
 };
 
 const navItems: NavItem[] = [

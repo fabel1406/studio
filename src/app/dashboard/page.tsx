@@ -7,7 +7,7 @@ import { ArrowRight, BarChart2, Handshake, Leaf } from "lucide-react";
 import Link from "next/link";
 import ImpactCharts from "@/components/impact-charts";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { useRole } from "./layout";
+import { useRole } from "./role-provider";
 import { useEffect, useState } from "react";
 import { getAllResidues } from "@/services/residue-service";
 import { getAllNegotiationsForUser } from "@/services/negotiation-service";

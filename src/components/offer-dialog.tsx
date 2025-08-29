@@ -35,7 +35,7 @@ import type { Need, Residue, Negotiation } from "@/lib/types";
 import { addNegotiation, updateNegotiationDetails } from "@/services/negotiation-service";
 import { useRouter } from "next/navigation";
 import { useMemo, useEffect } from "react";
-import { useRole } from "@/app/dashboard/layout";
+import { useRole } from "@/app/dashboard/role-provider";
 
 type OfferDialogProps = {
   isOpen: boolean;
