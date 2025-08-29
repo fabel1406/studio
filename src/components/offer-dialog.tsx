@@ -74,7 +74,10 @@ export function OfferDialog({
   const FormSchema = z.object({
     residueId: z.string({ required_error: "Debes seleccionar un residuo para ofertar." }),
     quantity: z.coerce.number().min(0.1, "La cantidad debe ser mayor que 0."),
-    price: z.coerce.number().optional(),
+    price: z.preprocess(
+      (val) => (val === "" || val === null || val === undefined) ? undefined : Number(val),
+      z.coerce.number({ invalid_type_error: "El precio debe ser un número." }).optional()
+    ),
   }).refine(data => {
     const selectedResidue = compatibleResidues.find(r => r.id === data.residueId);
     if (isEditMode) return true; // Don't check stock when editing, for simplicity. Could be enhanced later.
