@@ -26,7 +26,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState } from "react";
 import { useRole } from "../layout";
 import { Textarea } from "@/components/ui/textarea";
-import { getAllCountries, getCitiesByCountry } from "@/lib/locations";
+import { getCitiesByCountry, type City } from "@/lib/locations";
+import { CountryCombobox } from "@/components/ui/country-combobox";
+import { CityCombobox } from "@/components/ui/city-combobox";
 
 const profileSchema = z.object({
   companyName: z.string().min(1, "El nombre de la empresa es obligatorio."),
@@ -46,9 +48,6 @@ type ProfileFormValues = z.infer<typeof profileSchema>;
 export default function SettingsPage() {
     const { toast } = useToast();
     const { user, role, setRole } = useRole();
-    
-    const [cities, setCities] = useState<{name: string}[]>([]);
-    const countries = getAllCountries();
 
     const form = useForm<ProfileFormValues>({
         resolver: zodResolver(profileSchema),
@@ -69,21 +68,6 @@ export default function SettingsPage() {
     const selectedCountry = form.watch("country");
 
     useEffect(() => {
-        if (selectedCountry) {
-            setCities(getCitiesByCountry(selectedCountry));
-            // Don't reset city if it's still valid for the new country
-            const currentCity = form.getValues("city");
-            const countryCities = getCitiesByCountry(selectedCountry).map(c => c.name);
-            if (!countryCities.includes(currentCity)) {
-                 form.setValue("city", "");
-            }
-        } else {
-            setCities([]);
-            form.setValue("city", "");
-        }
-    }, [selectedCountry, form]);
-
-    useEffect(() => {
         if (user) {
             form.reset({
                 ...form.getValues(),
@@ -93,6 +77,15 @@ export default function SettingsPage() {
             });
         }
     }, [role, user, form]);
+
+    useEffect(() => {
+        // When country changes, check if the current city is valid
+        const citiesInCountry = getCitiesByCountry(selectedCountry).map(c => c.name);
+        if (!citiesInCountry.includes(form.getValues('city'))) {
+            form.setValue('city', '');
+        }
+    }, [selectedCountry, form]);
+
 
     function onSubmit(values: ProfileFormValues) {
         setRole(values.role);
@@ -168,20 +161,9 @@ export default function SettingsPage() {
                                         control={form.control}
                                         name="country"
                                         render={({ field }) => (
-                                            <FormItem>
+                                            <FormItem className="flex flex-col">
                                                 <FormLabel>País</FormLabel>
-                                                <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
-                                                    <FormControl>
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Selecciona un país" />
-                                                    </SelectTrigger>
-                                                    </FormControl>
-                                                    <SelectContent>
-                                                        {countries.map((country) => (
-                                                            <SelectItem key={country.code} value={country.name}>{country.name}</SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
+                                                <CountryCombobox value={field.value} setValue={(value) => form.setValue('country', value)} />
                                                 <FormMessage />
                                             </FormItem>
                                         )}
@@ -190,20 +172,14 @@ export default function SettingsPage() {
                                         control={form.control}
                                         name="city"
                                         render={({ field }) => (
-                                            <FormItem>
+                                            <FormItem className="flex flex-col">
                                                 <FormLabel>Ciudad</FormLabel>
-                                                <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value} disabled={!selectedCountry}>
-                                                    <FormControl>
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Selecciona una ciudad" />
-                                                    </SelectTrigger>
-                                                    </FormControl>
-                                                    <SelectContent>
-                                                        {cities.map((city) => (
-                                                            <SelectItem key={city.name} value={city.name}>{city.name}</SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
+                                                <CityCombobox 
+                                                  country={selectedCountry} 
+                                                  value={field.value} 
+                                                  setValue={(value) => form.setValue('city', value)} 
+                                                  disabled={!selectedCountry} 
+                                                />
                                                 <FormMessage />
                                             </FormItem>
                                         )}

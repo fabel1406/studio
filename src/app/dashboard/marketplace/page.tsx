@@ -42,7 +42,9 @@ import {
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from '@/hooks/use-toast';
-import { getAllCountries, getCitiesByCountry } from '@/lib/locations';
+import { CountryCombobox } from '@/components/ui/country-combobox';
+import { CityCombobox } from '@/components/ui/city-combobox';
+import { getAllCountries, getCitiesByCountry, City } from '@/lib/locations';
 
 const allCountries = getAllCountries();
 const uniqueResidueTypes = [...new Set(mockResidues.map(r => r.type))];
@@ -59,9 +61,9 @@ export default function MarketplacePage() {
   // Basic Filters
   const [typeFilter, setTypeFilter] = useState('ALL_TYPES');
   const [categoryFilter, setCategoryFilter] = useState('ALL_CATEGORIES');
-  const [countryFilter, setCountryFilter] = useState('ALL_COUNTRIES');
-  const [cityFilter, setCityFilter] = useState('ALL_CITIES');
-  const [cities, setCities] = useState<{name: string}[]>([]);
+  const [countryFilter, setCountryFilter] = useState('');
+  const [cityFilter, setCityFilter] = useState('');
+  const [cities, setCities] = useState<City[]>([]);
 
 
   // Advanced Filters State
@@ -135,12 +137,12 @@ export default function MarketplacePage() {
 
 
   useEffect(() => {
-      if (countryFilter !== 'ALL_COUNTRIES') {
-          setCities(getCitiesByCountry(countryFilter));
-      } else {
-          setCities([]);
-      }
-      setCityFilter('ALL_CITIES');
+    if (countryFilter) {
+      setCities(getCitiesByCountry(countryFilter));
+    } else {
+      setCities([]);
+    }
+    setCityFilter('');
   }, [countryFilter]);
 
 
@@ -151,8 +153,8 @@ export default function MarketplacePage() {
     const typeMatch = typeFilter === 'ALL_TYPES' || residue.type === typeFilter;
     const customTypeMatch = typeFilter === 'Otros' ? (customTypeFilter ? residue.type.toLowerCase().includes(customTypeFilter.toLowerCase()) : true) : true;
     const categoryMatch = categoryFilter === 'ALL_CATEGORIES' || residue.category === categoryFilter;
-    const countryMatch = countryFilter === 'ALL_COUNTRIES' || (companyCountry && companyCountry === countryFilter);
-    const cityMatch = cityFilter === 'ALL_CITIES' || (companyCity && companyCity === cityFilter);
+    const countryMatch = !countryFilter || (companyCountry && companyCountry === countryFilter);
+    const cityMatch = !cityFilter || (companyCity && companyCity === cityFilter);
     const quantityMatch = residue.quantity >= quantityRange[0] && residue.quantity <= quantityRange[1];
     const priceMatch = (residue.pricePerUnit || 0) >= priceRange[0] && (residue.pricePerUnit || 0) <= priceRange[1];
 
@@ -166,8 +168,8 @@ export default function MarketplacePage() {
     const typeMatch = typeFilter === 'ALL_TYPES' || need.residueType === typeFilter;
     const customTypeMatch = typeFilter === 'Otros' ? (customTypeFilter ? need.residueType.toLowerCase().includes(customTypeFilter.toLowerCase()) : true) : true;
     const categoryMatch = categoryFilter === 'ALL_CATEGORIES' || need.category === categoryFilter;
-    const countryMatch = countryFilter === 'ALL_COUNTRIES' || (companyCountry && companyCountry === countryFilter);
-    const cityMatch = cityFilter === 'ALL_CITIES' || (companyCity && companyCity === cityFilter);
+    const countryMatch = !countryFilter || (companyCountry && companyCountry === countryFilter);
+    const cityMatch = !cityFilter || (companyCity && companyCity === cityFilter);
     const quantityMatch = need.quantity >= quantityRange[0] && need.quantity <= quantityRange[1];
     
     // Needs don't have price filters for now
@@ -380,29 +382,8 @@ export default function MarketplacePage() {
         </div>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-             <Select onValueChange={setCountryFilter} defaultValue="ALL_COUNTRIES">
-                <SelectTrigger>
-                    <SelectValue placeholder="Filtrar por país" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="ALL_COUNTRIES">Todos los países</SelectItem>
-                    {allCountries.map((country) => (
-                        <SelectItem key={country.code} value={country.name}>{country.name}</SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
-
-             <Select onValueChange={setCityFilter} value={cityFilter} disabled={cities.length === 0}>
-                <SelectTrigger>
-                    <SelectValue placeholder="Filtrar por ciudad" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="ALL_CITIES">Todas las ciudades</SelectItem>
-                    {cities.map((city) => (
-                        <SelectItem key={city.name} value={city.name}>{city.name}</SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
+            <CountryCombobox value={countryFilter} setValue={setCountryFilter} />
+            <CityCombobox country={countryFilter} value={cityFilter} setValue={setCityFilter} disabled={!countryFilter} />
         </div>
 
         {typeFilter === 'Otros' && !isAdvancedSearchOpen && (
