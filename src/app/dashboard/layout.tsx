@@ -20,92 +20,20 @@ import { Logo } from "@/components/logo";
 import { BarChart2, Leaf, Recycle, Settings, LogOut, LayoutDashboard, Search, List, PackagePlus, Handshake } from "lucide-react";
 import type { LucideIcon } from 'lucide-react';
 import { Footer } from "@/components/footer";
-import React, { createContext, useContext, useState, useMemo, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { DashboardHeader } from "@/components/dashboard-header";
 import { ScrollToTop } from "@/components/scroll-to-top";
 import { auth } from "@/lib/firebase";
-import { onAuthStateChanged, signOut, type User } from "firebase/auth";
+import { signOut } from "firebase/auth";
+import { useRole, RoleProvider } from "./role-provider";
 import { Skeleton } from "@/components/ui/skeleton";
-
-type UserRole = "GENERATOR" | "TRANSFORMER" | "BOTH";
-
-type RoleContextType = {
-  user: User | null;
-  role: UserRole;
-  setRole: (role: UserRole) => void;
-  currentUserId: string | null;
-};
-
-const RoleContext = createContext<RoleContextType | null>(null);
-
-export const useRole = () => {
-  const context = useContext(RoleContext);
-  if (!context) {
-    throw new Error("useRole must be used within a RoleProvider");
-  }
-  return context;
-};
-
-const RoleProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [role, setRole] = useState<UserRole>("GENERATOR");
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setUser(user);
-        const storedRole = localStorage.getItem('userRole') as UserRole;
-        const finalRole = storedRole || 'GENERATOR';
-        setRole(finalRole);
-      } else {
-        setUser(null);
-        // Do not redirect here immediately. Let the consuming component handle it.
-      }
-      setIsLoading(false);
-    });
-    return () => unsubscribe();
-  }, [router]);
-
-  useEffect(() => {
-    if (user) {
-      if (role === 'GENERATOR') {
-          setCurrentUserId('comp-1');
-      } else if (role === 'TRANSFORMER') {
-          setCurrentUserId('comp-3');
-      } else if (role === 'BOTH') {
-          setCurrentUserId('comp-3');
-      }
-    } else {
-        setCurrentUserId(null);
-    }
-  }, [role, user]);
-
-  const value = useMemo(() => ({ user, role, setRole, currentUserId }), [user, role, currentUserId]);
-
-  if (isLoading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <Logo className="h-16 w-16 animate-pulse" />
-          <p className="text-muted-foreground">Verificando sesión...</p>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <RoleContext.Provider value={value}>{children}</RoleContext.Provider>
-  );
-};
 
 
 type NavItem = {
   href: string;
   label: string;
   icon: LucideIcon;
-  roles: UserRole[];
+  roles: string[]; // UserRole type is in RoleProvider now
 };
 
 const navItems: NavItem[] = [
@@ -124,7 +52,7 @@ const settingsNav: NavItem[] = [
 
 function DashboardContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { role, user } = useRole();
+  const { role, user, isLoading } = useRole();
   const { setOpenMobile } = useSidebar();
   const router = useRouter();
 
@@ -134,7 +62,6 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
         router.push('/login');
     }
   }, [isLoading, user, router]);
-
 
   const handleLinkClick = () => {
     setOpenMobile(false);
@@ -232,7 +159,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                 </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
-          {user && <UserInfo />}
+          {user ? <UserInfo /> : <UserInfoSkeleton />}
         </SidebarFooter>
       </Sidebar>
       <div className="flex-1 flex flex-col md:ml-[var(--sidebar-width-icon)] lg:ml-[var(--sidebar-width)] transition-[margin-left] duration-200">
@@ -260,4 +187,3 @@ export default function DashboardLayout({
     </RoleProvider>
   )
 }
-

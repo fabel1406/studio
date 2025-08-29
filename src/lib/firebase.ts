@@ -15,14 +15,17 @@ const firebaseConfig = {
 let app: FirebaseApp;
 let auth: Auth;
 
-if (typeof window !== 'undefined' && !getApps().length) {
-  app = initializeApp(firebaseConfig);
+if (typeof window !== 'undefined') {
+  if (!getApps().length) {
+    app = initializeApp(firebaseConfig);
+  } else {
+    app = getApp();
+  }
   auth = getAuth(app);
-} else if (typeof window !== 'undefined' && getApps().length > 0) {
-  app = getApp();
-  auth = getAuth(app);
+} else {
+  // Handle server-side case if necessary, though auth is mostly client-side
+  // For now, we can leave them undefined on the server if not used there.
 }
 
 // @ts-ignore
 export { app, auth };
-
