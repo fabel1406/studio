@@ -26,9 +26,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useEffect, useState } from "react";
 import { useRole } from "../layout";
 import { Textarea } from "@/components/ui/textarea";
-import { getCitiesByCountry, type City } from "@/lib/locations";
-import { CountryCombobox } from "@/components/ui/country-combobox";
-import { CityCombobox } from "@/components/ui/city-combobox";
+import { getAllCountries, getCitiesByCountry, type City } from "@/lib/locations";
+
+const allCountries = getAllCountries();
 
 const profileSchema = z.object({
   companyName: z.string().min(1, "El nombre de la empresa es obligatorio."),
@@ -66,6 +66,7 @@ export default function SettingsPage() {
     });
 
     const selectedCountry = form.watch("country");
+    const citiesForSelectedCountry = getCitiesByCountry(selectedCountry);
 
     useEffect(() => {
         if (user) {
@@ -157,9 +158,20 @@ export default function SettingsPage() {
                                         control={form.control}
                                         name="country"
                                         render={({ field }) => (
-                                            <FormItem className="flex flex-col">
+                                            <FormItem>
                                                 <FormLabel>País</FormLabel>
-                                                <CountryCombobox value={field.value} setValue={field.onChange} />
+                                                <Select onValueChange={field.onChange} value={field.value}>
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Selecciona un país" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        {allCountries.map((country) => (
+                                                            <SelectItem key={country.code} value={country.name}>{country.name}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
                                                 <FormMessage />
                                             </FormItem>
                                         )}
@@ -168,14 +180,20 @@ export default function SettingsPage() {
                                         control={form.control}
                                         name="city"
                                         render={({ field }) => (
-                                            <FormItem className="flex flex-col">
+                                            <FormItem>
                                                 <FormLabel>Ciudad</FormLabel>
-                                                <CityCombobox 
-                                                  country={selectedCountry} 
-                                                  value={field.value} 
-                                                  setValue={field.onChange}
-                                                  disabled={!selectedCountry} 
-                                                />
+                                                <Select onValueChange={field.onChange} value={field.value} disabled={!selectedCountry}>
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Selecciona una ciudad" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        {citiesForSelectedCountry.map((city) => (
+                                                            <SelectItem key={city.name} value={city.name}>{city.name}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
                                                 <FormMessage />
                                             </FormItem>
                                         )}
