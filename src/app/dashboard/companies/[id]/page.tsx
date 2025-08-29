@@ -11,14 +11,16 @@ import { ResidueCard } from "@/components/residue-card";
 import { NeedCard } from "@/components/need-card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
-// This is the definitive fix for the Vercel build error.
-// The props are typed inline directly in the function signature.
+// Fixed for Next.js 15: params is now a Promise
 export default async function CompanyProfilePage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  const company = await getCompanyById(params.id);
+  // Await the params Promise to get the actual parameters
+  const { id } = await params;
+  
+  const company = await getCompanyById(id);
 
   if (!company) {
     notFound();
