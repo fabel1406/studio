@@ -411,8 +411,8 @@ export default function MarketplacePage() {
         <TabsContent value="residues">
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 mt-6">
             {filteredResidues.length > 0 ? (
-              filteredResidues.map((residue) => (
-                <ResidueCard key={residue.id} residue={residue} />
+              filteredResidues.map((residue, index) => (
+                <ResidueCard key={residue.id} residue={residue} priority={index < 4} />
               ))
             ) : (
               <div className="col-span-full text-center py-16 text-muted-foreground">
@@ -440,5 +440,3 @@ export default function MarketplacePage() {
     </div>
   );
 }
-
-    

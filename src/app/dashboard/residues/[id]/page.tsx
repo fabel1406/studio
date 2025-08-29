@@ -1,4 +1,4 @@
-import { mockResidues, mockCompanies } from "@/lib/data";
+import { getResidueById } from "@/services/residue-service";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -7,15 +7,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, Droplets, MapPin, Scale, TestTube2, DollarSign, Mail, Phone, Globe } from "lucide-react";
 import { ResidueActionPanel } from "@/components/residue-action-panel";
 import { AnalysisPanel } from "@/components/analysis-panel";
+import { getCompanyById } from "@/services/company-service";
 
 export default function ResiduePage({ params }: { params: { id: string } }) {
-  const residue = mockResidues.find((r) => r.id === params.id);
+  const residue = getResidueById(params.id);
 
   if (!residue) {
     notFound();
   }
 
-  const company = mockCompanies.find((c) => c.id === residue.companyId);
+  const company = getCompanyById(residue.companyId);
 
   const details = [
     { icon: Scale, label: "Cantidad", value: `${residue.quantity} ${residue.unit}` },
@@ -44,6 +45,7 @@ export default function ResiduePage({ params }: { params: { id: string } }) {
                         style={{objectFit: 'cover'}}
                         data-ai-hint={aiHint}
                         unoptimized
+                        priority
                     />
                     </div>
                 </CardContent>

@@ -14,7 +14,7 @@ import { useState, useEffect } from "react";
 import { useRole } from "@/app/dashboard/layout";
 
 
-export function ResidueCard({ residue, isRecommendation = false }: { residue: Residue, isRecommendation?: boolean }) {
+export function ResidueCard({ residue, isRecommendation = false, priority = false }: { residue: Residue, isRecommendation?: boolean, priority?: boolean }) {
   const [isMounted, setIsMounted] = useState(false);
   const { role, currentUserId } = useRole();
 
@@ -25,7 +25,7 @@ export function ResidueCard({ residue, isRecommendation = false }: { residue: Re
   const canRequest = (role === "TRANSFORMER" || role === "BOTH") && residue.companyId !== currentUserId;
   const aiHint = residue.type.toLowerCase().split(' ').slice(0, 2).join(' ');
 
-  const imagePath = residue.photos?.[0] || '/images/residues/placeholder.jpg';
+  const imagePath = residue.photos?.[0] || `/images/residues/placeholder.jpg`;
 
   return (
     <Card className="flex flex-col h-full overflow-hidden transition-all duration-300 hover:shadow-lg hover:border-primary/50">
@@ -38,6 +38,7 @@ export function ResidueCard({ residue, isRecommendation = false }: { residue: Re
             style={{objectFit: 'cover'}}
             data-ai-hint={aiHint}
             unoptimized // Useful for local images during development
+            priority={priority}
           />
            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
            <div className="absolute bottom-4 left-4">
