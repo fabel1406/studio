@@ -21,7 +21,7 @@ export function NeedCard({ need, isRecommendation = false }: { need: Need, isRec
   const [userResidues, setUserResidues] = useState<Residue[]>([]);
   const [isOfferDialogOpen, setIsOfferDialogOpen] = useState(false);
   
-  const canOffer = role === 'GENERATOR' || role === 'BOTH';
+  const canOffer = (role === 'GENERATOR' || role === 'BOTH') && need.companyId !== currentUserId;
 
   useEffect(() => {
     setIsMounted(true);
@@ -29,9 +29,13 @@ export function NeedCard({ need, isRecommendation = false }: { need: Need, isRec
         // Mock logic: 'BOTH' user (comp-3) can offer residues from their generator counterpart (comp-1)
         // In a real app, a user with BOTH roles might have multiple company profiles associated with them.
         const generatorCompanyId = role === 'BOTH' ? 'comp-1' : currentUserId;
-        setUserResidues(getAllResidues().filter(r => r.companyId === generatorCompanyId && r.status === 'ACTIVE'));
+        setUserResidues(getAllResidues().filter(r => 
+            r.companyId === generatorCompanyId && 
+            r.status === 'ACTIVE' &&
+            r.type.toLowerCase() === need.residueType.toLowerCase()
+        ));
     }
-  }, [canOffer, currentUserId, role]);
+  }, [canOffer, currentUserId, role, need.residueType]);
 
   if (!isMounted) {
     return null; // or a skeleton loader
@@ -75,8 +79,8 @@ export function NeedCard({ need, isRecommendation = false }: { need: Need, isRec
                     Ver Detalles <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>
               </Button>
-              {canOffer && (
-                  <Button className="w-full" onClick={() => setIsOfferDialogOpen(true)} disabled={!isMounted}>
+              {isMounted && canOffer && (
+                  <Button className="w-full" onClick={() => setIsOfferDialogOpen(true)}>
                       <PackageCheck className="mr-2 h-4 w-4" /> Hacer Oferta
                   </Button>
               )}

@@ -77,7 +77,7 @@ export function ResidueCard({ residue, isRecommendation = false }: { residue: Re
                     Ver Detalles <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
             </Button>
-            {isRecommendation && canRequest && (
+            {isMounted && canRequest && (
                  <Button asChild variant="secondary" className="w-full">
                     <Link href={`/dashboard/residues/${residue.id}`}>
                         <PackageCheck className="mr-2 h-4 w-4" /> Solicitar
