@@ -23,6 +23,7 @@ export function ResidueCard({ residue, isRecommendation = false }: { residue: Re
   }, []);
 
   const canRequest = (role === "TRANSFORMER" || role === "BOTH") && residue.companyId !== currentUserId;
+  const aiHint = residue.type.toLowerCase().split(' ').slice(0, 2).join(' ');
 
   return (
     <Card className="flex flex-col h-full overflow-hidden transition-all duration-300 hover:shadow-lg hover:border-primary/50">
@@ -33,7 +34,7 @@ export function ResidueCard({ residue, isRecommendation = false }: { residue: Re
             alt={residue.type}
             fill
             style={{objectFit: 'cover'}}
-            data-ai-hint="residuo organico"
+            data-ai-hint={aiHint}
           />
            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
            <div className="absolute bottom-4 left-4">

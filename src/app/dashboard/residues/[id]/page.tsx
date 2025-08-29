@@ -26,6 +26,8 @@ export default function ResiduePage({ params }: { params: { id: string } }) {
     { icon: DollarSign, label: "Precio", value: residue.pricePerUnit ? `$${residue.pricePerUnit} / ${residue.unit}`: "Negociable" },
   ];
 
+  const aiHint = residue.type.toLowerCase().split(' ').slice(0, 2).join(' ');
+
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="grid gap-8 md:grid-cols-3">
@@ -39,7 +41,7 @@ export default function ResiduePage({ params }: { params: { id: string } }) {
                         alt={residue.type}
                         fill
                         style={{objectFit: 'cover'}}
-                        data-ai-hint="materia organica"
+                        data-ai-hint={aiHint}
                     />
                     </div>
                 </CardContent>
