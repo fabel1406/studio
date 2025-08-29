@@ -28,12 +28,11 @@ import { signOut } from "firebase/auth";
 import { useRole, RoleProvider } from "./role-provider";
 import { Skeleton } from "@/components/ui/skeleton";
 
-
 type NavItem = {
   href: string;
   label: string;
   icon: LucideIcon;
-  roles: string[]; // UserRole type is in RoleProvider now
+  roles: string[];
 };
 
 const navItems: NavItem[] = [
@@ -68,9 +67,13 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   };
 
   const handleLogout = async () => {
-    await signOut(auth);
-    localStorage.removeItem('userRole');
-    router.push('/login');
+    try {
+      await signOut(auth);
+      localStorage.removeItem('userRole');
+      router.push('/login');
+    } catch (error) {
+      console.error("Error signing out: ", error);
+    }
   }
 
   const filteredNavItems = navItems.filter(item => item.roles.includes(role));
