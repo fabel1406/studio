@@ -14,6 +14,7 @@ type RoleContextType = {
   role: UserRole;
   setRole: (role: UserRole) => void;
   currentUserId: string | null;
+  isLoading: boolean;
 };
 
 const RoleContext = createContext<RoleContextType | null>(null);
@@ -63,7 +64,7 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [role, user]);
 
-  const value = useMemo(() => ({ user, role, setRole, currentUserId }), [user, role, currentUserId]);
+  const value = useMemo(() => ({ user, role, setRole, currentUserId, isLoading }), [user, role, currentUserId, isLoading]);
   
   if (isLoading) {
     return (
