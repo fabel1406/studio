@@ -27,6 +27,7 @@ export default function ResiduePage({ params }: { params: { id: string } }) {
   ];
 
   const aiHint = residue.type.toLowerCase().split(' ').slice(0, 2).join(' ');
+  const imagePath = residue.photos?.[0] || '/images/residues/placeholder.jpg';
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -37,11 +38,12 @@ export default function ResiduePage({ params }: { params: { id: string } }) {
                 <CardContent className="p-0">
                     <div className="relative h-96 w-full rounded-t-lg overflow-hidden">
                     <Image
-                        src={residue.photos?.[0] || '/images/residues/placeholder.jpg'}
+                        src={imagePath}
                         alt={residue.type}
                         fill
                         style={{objectFit: 'cover'}}
                         data-ai-hint={aiHint}
+                        unoptimized
                     />
                     </div>
                 </CardContent>
