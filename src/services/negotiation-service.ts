@@ -85,6 +85,7 @@ export const addNegotiation = async (data: NewNegotiationFromResidue | NewNegoti
         newNegotiation = {
             id: `neg-${Date.now()}`,
             residueId: data.residue.id,
+            residue: data.residue,
             requesterId: data.initiatorId, // The Transformer is the requester
             supplierId: data.residue.companyId, // The Generator is the supplier
             quantity: data.quantity,
@@ -103,6 +104,7 @@ export const addNegotiation = async (data: NewNegotiationFromResidue | NewNegoti
         newNegotiation = {
             id: `neg-${Date.now()}`,
             residueId: data.residue.id,
+            residue: data.residue,
             requesterId: data.need.companyId, // The Transformer who created the need is the requester
             supplierId: data.initiatorId, // The Generator making the offer is the supplier
             quantity: data.quantity,
