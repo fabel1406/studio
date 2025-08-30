@@ -41,6 +41,11 @@ const registerSchema = z.object({
   }),
 });
 
+// Create a combined schema that makes `role` optional for use in the form hook
+const formSchema = z.union([loginSchema, registerSchema]);
+type FormValues = z.infer<typeof formSchema>;
+
+
 type AuthFormProps = {
   mode: "login" | "register";
 };
@@ -52,7 +57,7 @@ export function AuthForm({ mode }: AuthFormProps) {
 
   const schema = mode === "login" ? loginSchema : registerSchema;
 
-  const form = useForm<z.infer<typeof schema>>({
+  const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
       email: "",
@@ -61,7 +66,7 @@ export function AuthForm({ mode }: AuthFormProps) {
     },
   });
 
-  async function onSubmit(values: z.infer<typeof schema>) {
+  async function onSubmit(values: FormValues) {
     setIsLoading(true);
     try {
         if (mode === 'register') {
