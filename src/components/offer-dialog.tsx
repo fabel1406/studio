@@ -116,14 +116,14 @@ export function OfferDialog({
   const selectedResidueId = form.watch("residueId");
   const selectedResidue = compatibleResidues.find(r => r.id === selectedResidueId);
 
-  const onSubmit = (data: z.infer<typeof FormSchema>) => {
+  const onSubmit = async (data: z.infer<typeof FormSchema>) => {
     if (!currentUserId) {
         toast({ title: "Error", description: "No se pudo identificar al usuario.", variant: "destructive" });
         return;
     }
       
     if (isEditMode && negotiationToEdit) {
-        const updatedNegotiation = updateNegotiationDetails(negotiationToEdit.id, data.quantity, data.price);
+        const updatedNegotiation = await updateNegotiationDetails(negotiationToEdit.id, data.quantity, data.price);
         toast({
             title: "¡Oferta Modificada!",
             description: `Tu oferta ha sido actualizada a ${data.quantity} ${updatedNegotiation.unit}.`,
@@ -132,7 +132,7 @@ export function OfferDialog({
             onOfferUpdated(updatedNegotiation);
         }
     } else if (need && selectedResidue) {
-        const result = addNegotiation({
+        const result = await addNegotiation({
           type: 'offer',
           residue: selectedResidue,
           need: need,
