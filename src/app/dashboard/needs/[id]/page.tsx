@@ -1,7 +1,7 @@
 
 // src/app/dashboard/needs/[id]/page.tsx
 import { getNeedById } from "@/services/need-service";
-import { mockCompanies } from "@/lib/data";
+import { getCompanyById } from "@/services/company-service";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -19,7 +19,7 @@ export default async function NeedDetailsPage({ params }: { params: Promise<{ id
     notFound();
   }
 
-  const company = mockCompanies.find((c) => c.id === need.companyId);
+  const company = await getCompanyById(need.companyId);
   const freqMap: {[key: string]: string} = { 'ONCE': 'Solo una vez', 'WEEKLY': 'Semanalmente', 'MONTHLY': 'Mensualmente' };
 
   const details = [
