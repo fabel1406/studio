@@ -103,5 +103,3 @@ export function NeedCard({ need, isRecommendation = false }: { need: Need, isRec
     </>
   );
 }
-
-    

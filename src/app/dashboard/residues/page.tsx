@@ -2,7 +2,7 @@
 // src/app/dashboard/residues/page.tsx
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { columns as createColumns } from './components/columns';
 import { DataTable } from './components/data-table';
 import type { Residue } from '@/lib/types';
@@ -16,34 +16,30 @@ import { useRole } from '../role-provider';
 export default function ResiduesPage() {
   const [residues, setResidues] = useState<Residue[]>([]);
   const { toast } = useToast();
-  const { role, currentUserId } = useRole();
+  const { currentUserId } = useRole();
 
-  useEffect(() => {
-    async function loadResidues() {
-      if (currentUserId) {
-          const allResidues = await getAllResidues();
-          const userResidues = allResidues.filter(r => r.companyId === currentUserId);
-          setResidues(userResidues);
-      }
+  const loadResidues = useCallback(async () => {
+    if (currentUserId) {
+      const allResidues = await getAllResidues();
+      const userResidues = allResidues.filter(r => r.companyId === currentUserId);
+      setResidues(userResidues);
     }
-    loadResidues();
   }, [currentUserId]);
 
-  const deleteResidue = (residueId: string, residueType: string) => {
-    deleteResidueService(residueId).then(async () => {
-      if (currentUserId) {
-        const allResidues = await getAllResidues();
-        const userResidues = allResidues.filter(r => r.companyId === currentUserId);
-        setResidues(userResidues);
-      }
-      toast({
-        title: "Residuo Eliminado",
-        description: `La publicación para "${residueType}" ha sido eliminada.`,
-      });
+  useEffect(() => {
+    loadResidues();
+  }, [loadResidues]);
+
+  const deleteResidue = async (residueId: string, residueType: string) => {
+    await deleteResidueService(residueId);
+    await loadResidues();
+    toast({
+      title: "Residuo Eliminado",
+      description: `La publicación para "${residueType}" ha sido eliminada.`,
     });
   };
 
-  const columns = useMemo(() => createColumns({ deleteResidue }), [deleteResidue]);
+  const columns = useMemo(() => createColumns({ deleteResidue }), [residues]);
 
   return (
     <div className="h-full flex-1 flex-col space-y-8 p-8 md:flex">
@@ -87,5 +83,3 @@ export default function ResiduesPage() {
     </div>
   );
 }
-
-    

@@ -3,7 +3,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useParams, useRouter, notFound } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { getNegotiationById, updateNegotiationStatus, addMessageToNegotiation } from "@/services/negotiation-service";
 import { useRole } from "../../role-provider";
 import type { Negotiation } from "@/lib/types";
@@ -27,6 +27,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { notFound } from "next/navigation";
 
 
 const statusMap: {[key: string]: {text: string, variant: 'default' | 'secondary' | 'outline' | 'destructive'}} = {
@@ -45,12 +46,14 @@ export default function NegotiationDetailPage() {
     const [isEditOfferOpen, setIsEditOfferOpen] = useState(false);
 
     useEffect(() => {
-        if (id) {
-            getNegotiationById(id).then(fetchedNegotiation => {
-              setNegotiation(fetchedNegotiation || null);
-              setIsLoading(false);
-            });
+        async function fetchNegotiation() {
+            if (id) {
+                const fetchedNegotiation = await getNegotiationById(id);
+                setNegotiation(fetchedNegotiation || null);
+                setIsLoading(false);
+            }
         }
+        fetchNegotiation();
     }, [id]);
 
     const handleUpdateStatus = async (status: Negotiation['status']) => {
@@ -237,5 +240,3 @@ export default function NegotiationDetailPage() {
         </>
     );
 }
-
-    

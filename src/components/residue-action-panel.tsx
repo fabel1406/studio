@@ -1,3 +1,4 @@
+
 // src/components/residue-action-panel.tsx
 "use client"
 
@@ -46,13 +47,13 @@ export function ResidueActionPanel({ residue }: ResidueActionPanelProps) {
     },
   })
 
-  const onSubmit = (values: z.infer<typeof actionSchema>) => {
+  const onSubmit = async (values: z.infer<typeof actionSchema>) => {
     if (!currentUserId) {
       toast({ title: "Error", description: "Usuario no identificado.", variant: "destructive" });
       return;
     }
     
-    const result = addNegotiation({
+    const result = await addNegotiation({
       type: 'request',
       residue: residue,
       initiatorId: currentUserId,

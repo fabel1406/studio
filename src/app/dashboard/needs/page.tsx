@@ -2,7 +2,7 @@
 // src/app/dashboard/needs/page.tsx
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import type { Need } from '@/lib/types';
 import { columns as createColumns } from './components/columns';
 import { DataTable } from './components/data-table';
@@ -18,30 +18,27 @@ export default function NeedsPage() {
   const { toast } = useToast();
   const { role, currentUserId } = useRole();
 
-  useEffect(() => {
-    async function loadNeeds() {
-      if(currentUserId) {
-          const allNeeds = await getAllNeeds();
-          setNeeds(allNeeds.filter(n => n.companyId === currentUserId));
-      }
+  const loadNeeds = useCallback(async () => {
+    if (currentUserId) {
+      const allNeeds = await getAllNeeds();
+      setNeeds(allNeeds.filter(n => n.companyId === currentUserId));
     }
-    loadNeeds();
-  }, [role, currentUserId]);
+  }, [currentUserId]);
 
-  const deleteNeed = (needId: string, residueType: string) => {
-    deleteNeedService(needId).then(async () => {
-      if(currentUserId) {
-          const allNeeds = await getAllNeeds();
-          setNeeds(allNeeds.filter(n => n.companyId === currentUserId));
-      }
-      toast({
-        title: "Necesidad Eliminada",
-        description: `Tu solicitud para "${residueType}" ha sido eliminada.`,
-      });
-    })
+  useEffect(() => {
+    loadNeeds();
+  }, [loadNeeds]);
+
+  const deleteNeed = async (needId: string, residueType: string) => {
+    await deleteNeedService(needId);
+    await loadNeeds();
+    toast({
+      title: "Necesidad Eliminada",
+      description: `Tu solicitud para "${residueType}" ha sido eliminada.`,
+    });
   };
 
-  const columns = useMemo(() => createColumns({ deleteNeed }), [deleteNeed]);
+  const columns = useMemo(() => createColumns({ deleteNeed }), [needs]);
 
   return (
     <div className="h-full flex-1 flex-col space-y-8 p-8 md:flex">
@@ -83,5 +80,3 @@ export default function NeedsPage() {
     </div>
   );
 }
-
-    
