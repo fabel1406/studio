@@ -152,17 +152,17 @@ export const updateNegotiationStatus = async (id: string, status: Negotiation['s
     const index = negotiationsDB.findIndex(n => n.id === id);
     if (index === -1) throw new Error("Negotiation not found");
 
-    negotiationsDB[index].status = status;
+    const negotiation = negotiationsDB[index];
+    negotiation.status = status;
 
     // Calculate and store commission if the deal is accepted and there's a price
-    if (status === 'ACCEPTED' && negotiationsDB[index].offerPrice) {
-        const negotiation = negotiationsDB[index];
+    if (status === 'ACCEPTED' && typeof negotiation.offerPrice === 'number') {
         negotiation.commissionRate = COMMISSION_RATE;
         negotiation.commissionValue = negotiation.quantity * negotiation.offerPrice * COMMISSION_RATE;
         console.log(`Commission calculated for negotiation ${id}: $${negotiation.commissionValue}`);
     }
 
-    return rehydrateNegotiation(negotiationsDB[index]);
+    return rehydrateNegotiation(negotiation);
 };
 
 export const updateNegotiationDetails = async (id: string, quantity: number, price?: number): Promise<Negotiation> => {
