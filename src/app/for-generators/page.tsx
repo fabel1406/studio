@@ -69,13 +69,14 @@ export default function ForGeneratorsPage() {
               </div>
               <div className="hidden lg:block relative">
                 <Image
-                  src="https://picsum.photos/seed/agriculture-industry/800/600"
+                  src="/images/residues/alperujo.jpg"
                   alt="Materia orgánica siendo procesada"
                   width={800}
                   height={600}
                   className="rounded-xl shadow-2xl"
                   data-ai-hint="industria agricultura"
                   priority
+                  unoptimized
                 />
               </div>
             </div>

@@ -69,13 +69,14 @@ export default function ForTransformersPage() {
               </div>
               <div className="hidden lg:block relative">
                 <Image
-                  src="https://picsum.photos/seed/energy-industry/800/600"
+                  src="/images/residues/poda-olivo.jpg"
                   alt="Planta de biogás"
                   width={800}
                   height={600}
                   className="rounded-xl shadow-2xl"
                   data-ai-hint="industria energia"
                   priority
+                  unoptimized
                 />
               </div>
             </div>

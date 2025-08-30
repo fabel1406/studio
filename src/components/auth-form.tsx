@@ -160,7 +160,7 @@ export function AuthForm({ mode }: AuthFormProps) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Soy un...</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isLoading}>
+                <Select onValueChange={field.onChange} defaultValue={field.value as string} disabled={isLoading}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecciona tu rol" />
