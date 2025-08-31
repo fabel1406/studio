@@ -7,9 +7,9 @@ export function Logo(props: { className?: string }) {
         <Image
           src="/images/logo.png"
           alt="EcoConnect Logo"
-          fill
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          className="rounded-full object-contain"
+          width={40}
+          height={40}
+          className="rounded-full object-contain h-full w-full"
           priority 
         />
     </div>
