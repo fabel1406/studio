@@ -1,8 +1,8 @@
 // src/app/for-generators/page.tsx
 import PublicLayout from "@/app/(public)/layout";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle, DollarSign, Leaf, Zap } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { DollarSign, Leaf, Zap } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -133,7 +133,6 @@ export default function ForGeneratorsPage() {
                 </div>
             </div>
         </section>
-
       </div>
     </PublicLayout>
   );
