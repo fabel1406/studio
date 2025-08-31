@@ -2,7 +2,7 @@
 
 import PublicLayout from "@/app/(public)/layout";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle } from "lucide-react";
 import Image from "next/image";
 
@@ -63,13 +63,17 @@ export default function AboutPage() {
                         </div>
                         <div className="mt-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                             {values.map((value) => (
-                                <div key={value.title} className="text-center">
-                                    <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-primary/10 text-primary mb-4">
-                                        <CheckCircle className="h-8 w-8" />
-                                    </div>
-                                    <h3 className="text-xl font-semibold">{value.title}</h3>
-                                    <p className="mt-2 text-muted-foreground">{value.description}</p>
-                                </div>
+                                <Card key={value.title} className="text-center shadow-lg hover:shadow-primary/20 transition-all duration-300 transform hover:-translate-y-2">
+                                    <CardHeader>
+                                        <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-primary/10 text-primary">
+                                            <CheckCircle className="h-8 w-8" />
+                                        </div>
+                                        <CardTitle className="mt-4 text-2xl font-semibold">{value.title}</CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="text-muted-foreground">
+                                        <p>{value.description}</p>
+                                    </CardContent>
+                                </Card>
                             ))}
                         </div>
                     </div>
