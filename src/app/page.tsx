@@ -9,7 +9,7 @@ export default function Home() {
   return (
     <PublicLayout>
       <div className="bg-background text-foreground">
-        <section className="relative pt-16 pb-24 sm:pt-24 sm:pb-32 lg:pt-32 lg:pb-40 overflow-hidden">
+        <section className="relative pt-16 pb-24 sm:pt-24 sm:pb-28 lg:pt-32 lg:pb-32 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-background to-secondary/10 dark:from-primary/10 dark:via-background dark:to-secondary/20"></div>
           <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative">
             <div className="grid lg:grid-cols-1 gap-12 items-center">
