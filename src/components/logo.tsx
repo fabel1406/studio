@@ -1,4 +1,5 @@
 import Image from 'next/image';
+import { cn } from "@/lib/utils";
 
 export function Logo(props: { className?: string }) {
   return (
@@ -7,7 +8,7 @@ export function Logo(props: { className?: string }) {
       alt="EcoConnect Logo"
       width={40}
       height={40}
-      className={props.className}
+      className={cn("rounded-full", props.className)}
       priority 
     />
   );
