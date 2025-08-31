@@ -123,7 +123,7 @@ export default function ForTransformersPage() {
                                 {step.number}
                             </div>
                             <div className={`md:w-1/2 ${index % 2 === 0 ? 'md:pl-12' : 'md:pr-12'}`}>
-                                <Card className="p-8 shadow-xl">
+                                <Card className="p-8 shadow-lg hover:shadow-primary/20 transition-all duration-300 transform hover:-translate-y-2">
                                     <h3 className="text-2xl font-bold mb-3">{step.title}</h3>
                                     <p className="text-muted-foreground">{step.description}</p>
                                 </Card>
