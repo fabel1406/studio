@@ -25,14 +25,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
-import { auth } from "@/lib/firebase";
-import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  updateProfile,
-  sendEmailVerification,
-} from "firebase/auth";
 import { useRole } from "@/app/dashboard/role-provider";
+import { createClient } from "@/lib/supabase/client";
 
 
 const loginSchema = z.object({
@@ -64,6 +58,7 @@ export function AuthForm({ mode, onVerificationSent }: AuthFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { setRole } = useRole();
   const schema = mode === "login" ? loginSchema : registerSchema;
+  const supabase = createClient();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -76,25 +71,30 @@ export function AuthForm({ mode, onVerificationSent }: AuthFormProps) {
 
   async function onSubmit(values: FormValues) {
     setIsLoading(true);
-    try {
-      if (mode === 'register') {
-        const { email, password, role, companyName } = values as z.infer<typeof registerSchema>;
-        
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
+    
+    if (mode === 'register') {
+      const { email, password, role, companyName } = values as z.infer<typeof registerSchema>;
+      
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${location.origin}/auth/callback`,
+          data: {
+            company_name: companyName,
+            app_role: role,
+          }
+        },
+      })
 
-        // Update user profile with company name and role
-        // Note: Firebase Auth doesn't have a native 'role' field. 
-        // We store it in localStorage and could also use Firestore or a custom claims system.
-        await updateProfile(user, { displayName: companyName });
-
-        // For this app, we'll manage role on the client side.
+      if (error) {
+        toast({
+          title: "Error en el registro",
+          description: error.message || "No se pudo crear la cuenta.",
+          variant: "destructive",
+        });
+      } else {
         setRole(role);
-        
-        // This is a placeholder for sending a verification email
-        // In a real Supabase/Firebase project, this would be configured in the backend
-        // await sendEmailVerification(user);
-
         if (onVerificationSent) {
           onVerificationSent();
         } else {
@@ -103,50 +103,32 @@ export function AuthForm({ mode, onVerificationSent }: AuthFormProps) {
                 description: "Revisa tu correo para verificar tu cuenta.",
             });
         }
-        
-      } else { // Login mode
-        const { email, password } = values as z.infer<typeof loginSchema>;
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      }
 
-        // Fetch user role from localStorage, as Firebase Auth doesn't store it by default
-        const storedRole = localStorage.getItem('userRole') as "GENERATOR" | "TRANSFORMER" | "BOTH" | null;
-        if(storedRole) setRole(storedRole);
-        
+    } else { // Login mode
+      const { email, password } = values as z.infer<typeof loginSchema>;
+      const { error, data } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
+
+      if (error) {
+        toast({
+          title: "Error de autenticación",
+          description: error.message || "Correo electrónico o contraseña incorrectos.",
+          variant: "destructive",
+        });
+      } else if (data.user) {
+        const userRole = data.user.user_metadata?.app_role;
+        if(userRole) {
+            setRole(userRole);
+        }
         router.push("/dashboard");
         router.refresh();
       }
-    } catch (error: any) {
-      console.error("Authentication error:", error);
-      const errorCode = error.code || 'auth/unknown-error';
-      let friendlyMessage = "Ha ocurrido un error inesperado.";
-      
-      switch(errorCode) {
-        case 'auth/user-not-found':
-        case 'auth/wrong-password':
-          friendlyMessage = "Correo electrónico o contraseña incorrectos.";
-          break;
-        case 'auth/email-already-in-use':
-          friendlyMessage = "Este correo electrónico ya está registrado.";
-          break;
-        case 'auth/weak-password':
-          friendlyMessage = "La contraseña es demasiado débil. Debe tener al menos 6 caracteres.";
-          break;
-        case 'auth/invalid-email':
-           friendlyMessage = "El formato del correo electrónico no es válido.";
-           break;
-        default:
-          console.log(errorCode); // Log other errors for debugging
-          break;
-      }
-      
-      toast({
-        title: "Error de autenticación",
-        description: friendlyMessage,
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
     }
+    
+    setIsLoading(false);
   }
 
   return (

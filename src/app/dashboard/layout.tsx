@@ -49,7 +49,7 @@ const settingsNav: NavItem[] = [
 
 function DashboardContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { role, user, isLoading, logout } = useRole();
+  const { role, user, companyName, isLoading, logout } = useRole();
   const { setOpenMobile } = useSidebar();
 
   const handleLinkClick = () => {
@@ -65,11 +65,11 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   const UserInfo = () => (
      <div className="flex items-center gap-3 p-2 group-data-[collapsible=icon]:justify-center">
         <Avatar className="size-9">
-          {user?.photoURL && <AvatarImage src={user.photoURL} alt={user.displayName || user.email || 'User'} />}
-          <AvatarFallback>{user?.displayName?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'U'}</AvatarFallback>
+          {user?.user_metadata?.avatar_url && <AvatarImage src={user.user_metadata.avatar_url} alt={companyName} />}
+          <AvatarFallback>{companyName.charAt(0).toUpperCase() || 'U'}</AvatarFallback>
         </Avatar>
         <div className="flex flex-col group-data-[collapsible=icon]:hidden">
-          <span className="text-sm font-medium text-foreground truncate">{user?.displayName || 'Usuario'}</span>
+          <span className="text-sm font-medium text-foreground truncate">{companyName}</span>
           <span className="text-xs text-muted-foreground truncate">{user?.email}</span>
         </div>
       </div>
@@ -139,7 +139,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                 </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>
-          {user ? <UserInfo /> : <UserInfoSkeleton />}
+          {user && companyName ? <UserInfo /> : <UserInfoSkeleton />}
         </SidebarFooter>
       </Sidebar>
       <div className="flex-1 flex flex-col md:ml-[var(--sidebar-width-icon)] lg:ml-[var(--sidebar-width)] transition-[margin-left] duration-200">

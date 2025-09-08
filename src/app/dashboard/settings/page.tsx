@@ -28,8 +28,7 @@ import { useRole } from "../role-provider";
 import { Textarea } from "@/components/ui/textarea";
 import { getAllCountries, getCitiesByCountry, type City } from "@/lib/locations";
 import { useRouter } from "next/navigation";
-import { auth } from "@/lib/firebase";
-import { updateProfile } from "firebase/auth";
+import { createClient } from "@/lib/supabase/client";
 
 const allCountries = getAllCountries();
 
@@ -51,20 +50,14 @@ type ProfileFormValues = z.infer<typeof profileSchema>;
 export default function SettingsPage() {
     const { toast } = useToast();
     const router = useRouter();
-    const { user, role, setRole } = useRole();
+    const { user, role, setRole, companyName } = useRole();
+    const supabase = createClient();
 
     const form = useForm<ProfileFormValues>({
         resolver: zodResolver(profileSchema),
         defaultValues: {
-            companyName: "Usuario EcoConnect",
+            companyName: "",
             email: "",
-            description: "Empresa de la plataforma EcoConnect.",
-            country: "España",
-            city: "Madrid",
-            address: "Calle Ficticia 123",
-            contactEmail: "",
-            phone: "+34 123 456 789",
-            website: "https://www.ecoconnect.com",
             role: role,
         },
     });
@@ -74,14 +67,21 @@ export default function SettingsPage() {
 
     useEffect(() => {
         if (user) {
+            const metadata = user.user_metadata;
             form.reset({
-                ...form.getValues(),
+                companyName: metadata.company_name || '',
                 email: user.email || '',
-                companyName: user.displayName || user.email?.split('@')[0] ||'Usuario EcoConnect',
-                role,
+                role: metadata.app_role || role,
+                description: metadata.description || '',
+                country: metadata.country || 'España',
+                city: metadata.city || '',
+                address: metadata.address || '',
+                contactEmail: metadata.contactEmail || '',
+                phone: metadata.phone || '',
+                website: metadata.website || '',
             });
         }
-    }, [role, user, form]);
+    }, [user, role, form]);
 
     useEffect(() => {
         if (form.formState.isDirty) {
@@ -91,33 +91,34 @@ export default function SettingsPage() {
 
 
     async function onSubmit(values: ProfileFormValues) {
-        if (!auth.currentUser) {
-            toast({ title: "Error", description: "No estás autenticado.", variant: "destructive" });
-            return;
-        }
-
-        setRole(values.role); // Update context and localStorage
+        setRole(values.role); // Update local context
         
-        try {
-            await updateProfile(auth.currentUser, {
-                displayName: values.companyName
+        const { error } = await supabase.auth.updateUser({
+            data: { 
+                company_name: values.companyName,
+                app_role: values.role,
+                description: values.description,
+                country: values.country,
+                city: values.city,
+                address: values.address,
+                contactEmail: values.contactEmail,
+                phone: values.phone,
+                website: values.website
+            }
+        })
+        
+        if (error) {
+             toast({
+                title: "Error al actualizar",
+                description: error.message || "No se pudo guardar la información del perfil.",
+                variant: "destructive"
             });
-
-             // In a real app, you would also save other profile details to Firestore or Realtime Database here.
-            console.log("Saving profile data:", values);
-            
+        } else {
             toast({
                 title: "Perfil Actualizado",
                 description: "La información de tu empresa ha sido guardada.",
             });
             router.refresh();
-
-        } catch (error) {
-             toast({
-                title: "Error al actualizar",
-                description: "No se pudo guardar la información del perfil.",
-                variant: "destructive"
-            });
         }
     }
 
@@ -233,7 +234,7 @@ export default function SettingsPage() {
                                         <FormItem>
                                             <FormLabel>Dirección</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="Calle, número, código postal" {...field} />
+                                                <Input placeholder="Calle, número, código postal" {...field} value={field.value ?? ''} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>

@@ -3,19 +3,20 @@
 
 import React, { createContext, useContext, useState, useMemo, useEffect } from 'react';
 import { useRouter } from "next/navigation";
-import { type User, onAuthStateChanged, signOut } from "firebase/auth";
+import { type User } from "@supabase/supabase-js";
 import { Logo } from "@/components/logo";
-import { auth } from "@/lib/firebase";
+import { createClient } from "@/lib/supabase/client";
 
 type UserRole = "GENERATOR" | "TRANSFORMER" | "BOTH";
 
 type RoleContextType = {
   user: User | null;
+  companyName: string;
   role: UserRole;
   setRole: (role: UserRole) => void;
   currentUserId: string | null;
   isLoading: boolean;
-  logout: () => void;
+  logout: () => Promise<void>;
 };
 
 const RoleContext = createContext<RoleContextType | null>(null);
@@ -30,25 +31,45 @@ export const useRole = () => {
 
 export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [companyName, setCompanyName] = useState<string>("");
   const [role, setInternalRole] = useState<UserRole>("GENERATOR");
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
+  const supabase = createClient();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
-      if (user) {
-        const savedRole = localStorage.getItem('userRole') as UserRole;
-        if (savedRole) {
-          setInternalRole(savedRole);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        const currentUser = session?.user || null;
+        setUser(currentUser);
+        setCurrentUserId(currentUser?.id || null);
+
+        if (currentUser) {
+          const userRole = currentUser.user_metadata?.app_role as UserRole;
+          const userCompanyName = currentUser.user_metadata?.company_name || currentUser.email?.split('@')[0] || "Usuario";
+          
+          if(userRole) setInternalRole(userRole);
+          setCompanyName(userCompanyName);
+          
+          // Persist role for quick access on reload
+          localStorage.setItem('userRole', userRole || "GENERATOR");
+        } else {
+            // Clear on logout
+            localStorage.removeItem('userRole');
+        }
+        
+        if (event === 'INITIAL_SESSION') {
+            setIsLoading(false);
         }
       }
-      setIsLoading(false);
-    });
+    );
 
-    return () => unsubscribe();
-  }, []);
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [supabase]);
+
   
   useEffect(() => {
     if (!isLoading && !user) {
@@ -60,29 +81,17 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
   const setRole = (newRole: UserRole) => {
     setInternalRole(newRole);
     localStorage.setItem('userRole', newRole);
+    // Optionally update Supabase user metadata here
+    supabase.auth.updateUser({ data: { app_role: newRole } });
   }
   
   const logout = async () => {
-      await signOut(auth);
-      localStorage.removeItem('userRole');
+      await supabase.auth.signOut();
       router.push('/login');
+      router.refresh();
   }
 
-  useEffect(() => {
-    if (user) {
-       if (role === 'GENERATOR') {
-          setCurrentUserId('comp-1');
-      } else if (role === 'TRANSFORMER') {
-          setCurrentUserId('comp-3');
-      } else if (role === 'BOTH') {
-          setCurrentUserId('comp-1'); // Default to generator for now
-      }
-    } else {
-        setCurrentUserId(null);
-    }
-  }, [role, user]);
-
-  const value = useMemo(() => ({ user, role, setRole, currentUserId, isLoading, logout }), [user, role, currentUserId, isLoading]);
+  const value = useMemo(() => ({ user, role, setRole, currentUserId, isLoading, logout, companyName }), [user, role, currentUserId, isLoading, companyName]);
   
   if (isLoading) {
     return (
