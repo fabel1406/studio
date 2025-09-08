@@ -12,8 +12,17 @@ import { useRole } from "./role-provider";
 import { useEffect, useState } from "react";
 import { getAllResidues } from "@/services/residue-service";
 import { getAllNegotiationsForUser } from "@/services/negotiation-service";
-import { mockImpactMetrics } from "@/lib/data";
-import type { Negotiation } from "@/lib/types";
+import type { Negotiation, ImpactMetric } from "@/lib/types";
+
+// Temporary mock data until a real service is implemented
+const mockImpactMetrics: ImpactMetric[] = [
+  { label: 'Ene', co2Avoided: 350, wasteDiverted: 500, savings: 2000 },
+  { label: 'Feb', co2Avoided: 400, wasteDiverted: 550, savings: 2200 },
+  { label: 'Mar', co2Avoided: 300, wasteDiverted: 480, savings: 1900 },
+  { label: 'Abr', co2Avoided: 500, wasteDiverted: 620, savings: 2500 },
+  { label: 'May', co2Avoided: 450, wasteDiverted: 600, savings: 2400 },
+  { label: 'Jun', co2Avoided: 600, wasteDiverted: 750, savings: 3000 },
+];
 
 export default function DashboardOverviewPage() {
     const { currentUserId } = useRole();

@@ -1,11 +1,22 @@
+
 // src/app/dashboard/impact/page.tsx
 "use client";
 
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import ImpactCharts from "@/components/impact-charts";
-import { mockImpactMetrics } from "@/lib/data";
+import type { ImpactMetric } from "@/lib/types";
 import { BarChart, DollarSign, Globe, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
+
+// Temporary mock data until a real service is implemented
+const mockImpactMetrics: ImpactMetric[] = [
+  { label: 'Ene', co2Avoided: 350, wasteDiverted: 500, savings: 2000 },
+  { label: 'Feb', co2Avoided: 400, wasteDiverted: 550, savings: 2200 },
+  { label: 'Mar', co2Avoided: 300, wasteDiverted: 480, savings: 1900 },
+  { label: 'Abr', co2Avoided: 500, wasteDiverted: 620, savings: 2500 },
+  { label: 'May', co2Avoided: 450, wasteDiverted: 600, savings: 2400 },
+  { label: 'Jun', co2Avoided: 600, wasteDiverted: 750, savings: 3000 },
+];
 
 export default function ImpactPage() {
     const [totalWasteDiverted, setTotalWasteDiverted] = useState(0);

@@ -1,4 +1,3 @@
-
 // src/components/need-card.tsx
 "use client";
 
@@ -8,14 +7,13 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "./ui/card"
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { Layers, MapPin, Repeat, ArrowRight, PackageCheck } from "lucide-react";
-import { mockCompanies } from "@/lib/data";
 import { useRole } from "@/app/dashboard/role-provider";
 import { OfferDialog } from "./offer-dialog";
 import { useState, useEffect } from "react";
 import { getAllResidues } from "@/services/residue-service";
 
 export function NeedCard({ need, isRecommendation = false }: { need: Need, isRecommendation?: boolean }) {
-  const company = mockCompanies.find(c => c.id === need.companyId);
+  const company = need.company;
   const freqMap: {[key: string]: string} = { 'ONCE': 'una vez', 'WEEKLY': 'semanal', 'MONTHLY': 'mensual' };
   const { role, currentUserId } = useRole();
   const [isMounted, setIsMounted] = useState(false);
