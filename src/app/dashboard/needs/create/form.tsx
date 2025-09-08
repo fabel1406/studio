@@ -1,4 +1,3 @@
-
 // src/app/dashboard/needs/create/form.tsx
 "use client"
 
@@ -130,7 +129,11 @@ export default function NeedForm() {
 
   async function onSubmit(data: NeedFormValues) {
     if (!companyId) {
-      toast({ title: "Error", description: "No se ha podido identificar la empresa. Por favor, inicia sesión de nuevo.", variant: "destructive" });
+      toast({ 
+        title: "Error de autenticación", 
+        description: "No se ha podido identificar tu empresa. Por favor, recarga la página o inicia sesión de nuevo.", 
+        variant: "destructive" 
+      });
       return;
     }
 

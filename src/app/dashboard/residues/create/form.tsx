@@ -1,4 +1,3 @@
-
 // src/app/dashboard/residues/create/form.tsx
 "use client"
 
@@ -133,7 +132,11 @@ export default function ResidueForm() {
 
   async function onSubmit(data: ResidueFormValues) {
     if (!companyId) {
-      toast({ title: "Error", description: "No se ha podido identificar la empresa. Por favor, inicia sesión de nuevo.", variant: "destructive" });
+      toast({ 
+        title: "Error de autenticación", 
+        description: "No se ha podido identificar tu empresa. Por favor, recarga la página o inicia sesión de nuevo.", 
+        variant: "destructive" 
+      });
       return;
     }
 
