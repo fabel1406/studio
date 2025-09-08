@@ -28,6 +28,7 @@ import { useRole } from "../role-provider";
 import { Textarea } from "@/components/ui/textarea";
 import { getAllCountries, getCitiesByCountry, type City } from "@/lib/locations";
 import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase";
 
 const allCountries = getAllCountries();
 
@@ -75,7 +76,7 @@ export default function SettingsPage() {
             form.reset({
                 ...form.getValues(),
                 email: user.email || '',
-                companyName: user.displayName || 'Usuario EcoConnect',
+                companyName: user.user_metadata.companyName || user.email?.split('@')[0] ||'Usuario EcoConnect',
                 role,
             });
         }
@@ -88,9 +89,26 @@ export default function SettingsPage() {
     }, [selectedCountry, form]);
 
 
-    function onSubmit(values: ProfileFormValues) {
-        setRole(values.role);
-        localStorage.setItem('userRole', values.role); // Persist role change for this demo
+    async function onSubmit(values: ProfileFormValues) {
+        setRole(values.role); // Update context and localStorage
+        const supabase = createClient();
+        
+        const { data, error } = await supabase.auth.updateUser({
+            data: { 
+                role: values.role,
+                companyName: values.companyName,
+             }
+        })
+
+        if (error) {
+             toast({
+                title: "Error al actualizar",
+                description: "No se pudo guardar la información del perfil. " + error.message,
+                variant: "destructive"
+            });
+            return;
+        }
+        
         console.log("Saving profile data:", values);
         toast({
             title: "Perfil Actualizado",
@@ -289,5 +307,3 @@ export default function SettingsPage() {
         </div>
     );
 }
-
-    
