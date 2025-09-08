@@ -59,16 +59,14 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
             localStorage.removeItem('userRole');
         }
         
-        if (event === 'INITIAL_SESSION') {
-            setIsLoading(false);
-        }
+        setIsLoading(false);
       }
     );
 
     return () => {
       subscription.unsubscribe();
     };
-  }, [supabase]);
+  }, [supabase, router]);
 
   
   useEffect(() => {
@@ -78,11 +76,10 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
   }, [user, isLoading, router]);
 
 
-  const setRole = (newRole: UserRole) => {
+  const setRole = async (newRole: UserRole) => {
     setInternalRole(newRole);
     localStorage.setItem('userRole', newRole);
-    // Optionally update Supabase user metadata here
-    supabase.auth.updateUser({ data: { app_role: newRole } });
+    await supabase.auth.updateUser({ data: { app_role: newRole } });
   }
   
   const logout = async () => {
