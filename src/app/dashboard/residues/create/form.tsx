@@ -31,7 +31,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import type { Residue } from "@/lib/types"
 import { getResidueById, addResidue, updateResidue } from "@/services/residue-service"
 import { mockResidues } from "@/lib/data"
+import { getAllCountries, getCitiesByCountry } from "@/lib/locations";
 
+const allCountries = getAllCountries();
 
 const residueFormSchema = z.object({
   type: z.string().min(1, { message: "Debes seleccionar o especificar un tipo." }),
@@ -45,6 +47,8 @@ const residueFormSchema = z.object({
   ),
   status: z.enum(['ACTIVE', 'RESERVED', 'CLOSED'], { required_error: "Debes seleccionar un estado." }),
   description: z.string().max(300, { message: "La descripción no puede exceder los 300 caracteres." }).optional(),
+  country: z.string().min(1, "El país es obligatorio."),
+  city: z.string().min(1, "La ciudad es obligatoria."),
 }).refine(data => {
     if (data.type === 'Otro' && (!data.customType || data.customType.length < 2)) {
         return false;
@@ -75,12 +79,16 @@ export default function ResidueForm() {
         description: "",
         status: 'ACTIVE',
         unit: 'TON',
-        category: undefined
+        category: undefined,
+        country: "España",
+        city: "",
     },
     mode: "onChange",
   })
 
   const selectedResidueType = form.watch("type");
+  const selectedCountry = form.watch("country");
+  const citiesForSelectedCountry = getCitiesByCountry(selectedCountry);
   
   useEffect(() => {
     const id = searchParams.get('id');
@@ -99,12 +107,19 @@ export default function ResidueForm() {
             status: residue.status,
             pricePerUnit: residue.pricePerUnit,
             description: residue.description || "",
+            country: residue.company?.country || 'España',
+            city: residue.company?.city || '',
           });
         }
       }
       fetchResidue();
     }
   }, [searchParams, form]);
+
+  useEffect(() => {
+    if(!form.formState.isDirty) return;
+    form.setValue('city', '');
+  }, [selectedCountry, form]);
 
 
   function onSubmit(data: ResidueFormValues) {
@@ -273,6 +288,50 @@ export default function ResidueForm() {
                         <FormMessage />
                         </FormItem>
                     )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="country"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>País de Origen del Residuo</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value}>
+                                    <FormControl>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Selecciona un país" />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        {allCountries.map((country) => (
+                                            <SelectItem key={country.code} value={country.name}>{country.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="city"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Ciudad</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value} disabled={!selectedCountry}>
+                                    <FormControl>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Selecciona una ciudad" />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        {citiesForSelectedCountry.map((city) => (
+                                            <SelectItem key={city.name} value={city.name}>{city.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )}
                     />
                     <FormField
                         control={form.control}

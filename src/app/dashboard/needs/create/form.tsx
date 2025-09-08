@@ -30,6 +30,9 @@ import { useToast } from "@/hooks/use-toast"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { mockResidues } from "@/lib/data"
 import { addNeed, getNeedById, updateNeed } from "@/services/need-service"
+import { getAllCountries, getCitiesByCountry } from "@/lib/locations"
+
+const allCountries = getAllCountries();
 
 const needFormSchema = z.object({
   residueType: z.string({ required_error: "Debes seleccionar un tipo de residuo." }),
@@ -40,6 +43,8 @@ const needFormSchema = z.object({
   frequency: z.enum(['ONCE', 'WEEKLY', 'MONTHLY'], { required_error: "Debes seleccionar una frecuencia." }),
   specifications: z.string().max(500, { message: "La descripción no puede exceder los 500 caracteres." }).optional(),
   status: z.enum(['ACTIVE', 'PAUSED', 'CLOSED']),
+  country: z.string().min(1, "El país es obligatorio."),
+  city: z.string().min(1, "La ciudad es obligatoria."),
 }).refine(data => {
     if (data.residueType === 'Otro' && (!data.customResidueType || data.customResidueType.trim().length < 2)) {
         return false;
@@ -72,9 +77,15 @@ export default function NeedForm() {
       frequency: 'MONTHLY',
       specifications: "",
       status: 'ACTIVE',
+      country: "España",
+      city: "",
     },
     mode: "onChange",
   })
+  
+  const selectedResidueType = form.watch("residueType");
+  const selectedCountry = form.watch("country");
+  const citiesForSelectedCountry = getCitiesByCountry(selectedCountry);
   
   useEffect(() => {
     const id = searchParams.get('id');
@@ -93,6 +104,8 @@ export default function NeedForm() {
             frequency: need.frequency,
             status: need.status,
             specifications: need.specifications || "",
+            country: need.company?.country || 'España',
+            city: need.company?.city || '',
           });
         }
       }
@@ -100,7 +113,10 @@ export default function NeedForm() {
     }
   }, [searchParams, form]);
 
-  const selectedResidueType = form.watch("residueType");
+  useEffect(() => {
+    if(!form.formState.isDirty) return;
+    form.setValue('city', '');
+  }, [selectedCountry, form]);
 
   function onSubmit(data: NeedFormValues) {
     const finalData = {
@@ -109,7 +125,7 @@ export default function NeedForm() {
     };
 
     if (needId) {
-        updateNeed({ ...finalData, id: needId, companyId: 'comp-1' }); // companyId would be dynamic
+        updateNeed({ ...finalData, id: needId, companyId: 'comp-3' }); // companyId would be dynamic
          toast({
             title: "¡Necesidad Actualizada!",
             description: `Tu solicitud de "${finalData.residueType}" ha sido actualizada.`,
@@ -261,6 +277,50 @@ export default function NeedForm() {
                                 ¿Con qué frecuencia necesitas este residuo?
                             </FormDescription>
                             <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="country"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>País de Origen de la Necesidad</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value}>
+                                    <FormControl>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Selecciona un país" />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        {allCountries.map((country) => (
+                                            <SelectItem key={country.code} value={country.name}>{country.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="city"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Ciudad</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value} disabled={!selectedCountry}>
+                                    <FormControl>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Selecciona una ciudad" />
+                                        </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                        {citiesForSelectedCountry.map((city) => (
+                                            <SelectItem key={city.name} value={city.name}>{city.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                                <FormMessage />
                             </FormItem>
                         )}
                     />

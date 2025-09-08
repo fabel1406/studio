@@ -2,6 +2,7 @@
 // src/services/need-service.ts
 import type { Need } from '@/lib/types';
 import { mockNeeds, mockCompanies } from '@/lib/data';
+import { getCompanyById } from './company-service';
 
 // Helper to rehydrate need with full company object
 const rehydrateNeed = (need: Need): Need => {
@@ -26,26 +27,41 @@ export const getNeedById = async (id: string): Promise<Need | undefined> => {
     return Promise.resolve(need ? rehydrateNeed(need) : undefined);
 };
 
-export const addNeed = async (needData: Omit<Need, 'id' | 'companyId' | 'company'>): Promise<Need> => {
+export const addNeed = async (needData: Omit<Need, 'id' | 'companyId' | 'company'> & { city: string, country: string }): Promise<Need> => {
+    const companyId = 'comp-3'; // Mock current user's company (a transformer)
+    const company = await getCompanyById(companyId);
+    
     const newNeed: Need = {
         ...needData,
         id: `need-${Date.now()}`, // Simple unique ID
-        companyId: 'comp-3', // Mock current user's company (a transformer)
+        companyId,
+        company: {
+            ...company!,
+            city: needData.city,
+            country: needData.country,
+        }
     };
     needsDB.push(newNeed);
     return Promise.resolve(rehydrateNeed(newNeed));
 };
 
-export const updateNeed = async (updatedNeed: Need): Promise<Need> => {
+export const updateNeed = async (updatedNeed: Need & { city: string, country: string }): Promise<Need> => {
     const index = needsDB.findIndex(n => n.id === updatedNeed.id);
 
     if (index === -1) {
         throw new Error("Need not found");
     }
+    
+    const company = await getCompanyById(updatedNeed.companyId);
 
     const newNeed = {
         ...needsDB[index],
         ...updatedNeed,
+        company: {
+            ...company!,
+            city: updatedNeed.city,
+            country: updatedNeed.country,
+        }
     };
     needsDB[index] = newNeed;
     

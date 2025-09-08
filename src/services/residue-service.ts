@@ -2,6 +2,7 @@
 // src/services/residue-service.ts
 import type { Residue } from '@/lib/types';
 import { mockResidues, mockCompanies } from '@/lib/data';
+import { getCompanyById } from './company-service';
 
 // --- In-memory "database" ---
 // Let's treat mockResidues as an in-memory database that can be modified
@@ -29,30 +30,46 @@ export const getResidueById = async (id: string): Promise<Residue | undefined> =
     return Promise.resolve(rehydrateResidue(residue));
 };
 
-type NewResidueData = Omit<Residue, 'id' | 'companyId' | 'availabilityDate' | 'photos' | 'company'>;
+type NewResidueData = Omit<Residue, 'id' | 'companyId' | 'availabilityDate' | 'photos' | 'company'> & { city: string, country: string };
 
 export const addResidue = async (residueData: NewResidueData): Promise<Residue> => {
+    const companyId = 'comp-1'; // Mock current user's company
+    const company = await getCompanyById(companyId);
+
     const newResidue: Residue = {
         ...residueData,
         id: `res-${Date.now()}`,
-        companyId: 'comp-1', // Mock current user's company
+        companyId,
         availabilityDate: new Date().toISOString(),
         photos: [`https://picsum.photos/seed/new${Date.now()}/600/400`],
+        company: {
+            ...company!,
+            city: residueData.city,
+            country: residueData.country
+        }
     };
     
     residuesDB.push(newResidue);
     return Promise.resolve(rehydrateResidue(newResidue));
 };
 
-export const updateResidue = async (updatedResidueData: Partial<Residue> & { id: string }): Promise<Residue> => {
+export const updateResidue = async (updatedResidueData: Partial<Residue> & { id: string, city: string, country: string }): Promise<Residue> => {
     const index = residuesDB.findIndex(r => r.id === updatedResidueData.id);
     if (index === -1) {
         throw new Error("Residue not found");
     }
     
+    const existingResidue = residuesDB[index];
+    const company = await getCompanyById(existingResidue.companyId);
+    
     const updatedResidue = { 
-        ...residuesDB[index], 
-        ...updatedResidueData 
+        ...existingResidue, 
+        ...updatedResidueData,
+        company: {
+            ...company!,
+            city: updatedResidueData.city,
+            country: updatedResidueData.country
+        }
     };
 
     residuesDB[index] = updatedResidue;
