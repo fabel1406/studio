@@ -10,10 +10,11 @@ const supabase = createClient();
 const COMMISSION_RATE = 0.03;
 
 const rehydrateNegotiation = async (negotiation: any): Promise<Negotiation> => {
-    const [residue, requester, supplier] = await Promise.all([
+    const [residue, requester, supplier, messages] = await Promise.all([
         getResidueById(negotiation.residueId),
         getCompanyById(negotiation.requesterId),
         getCompanyById(negotiation.supplierId),
+        supabase.from('negotiation_messages').select('*').eq('negotiation_id', negotiation.id).order('created_at', { ascending: true })
     ]);
 
     const hydratedResidue = residue || {
@@ -32,6 +33,7 @@ const rehydrateNegotiation = async (negotiation: any): Promise<Negotiation> => {
         residue: hydratedResidue,
         requester: requester,
         supplier: supplier,
+        messages: messages.data || [],
     };
 };
 
@@ -71,7 +73,7 @@ const checkExistingNegotiation = async (requesterId: string, supplierId: string,
 };
 
 export const addNegotiation = async (data: NewNegotiationFromResidue | NewNegotiationFromNeed): Promise<Negotiation | null> => {
-    let negotiationData: Omit<Negotiation, 'id' | 'residue' | 'requester' | 'supplier' | 'createdAt'>;
+    let negotiationData: Omit<Negotiation, 'id' | 'residue' | 'requester' | 'supplier' | 'createdAt' | 'messages'>;
     let requesterId: string, supplierId: string, residueId: string;
 
     if (data.type === 'request') {
@@ -102,11 +104,6 @@ export const addNegotiation = async (data: NewNegotiationFromResidue | NewNegoti
         unit: data.residue.unit,
         offerPrice: data.offerPrice,
         status: 'SENT',
-        messages: [{
-            senderId: data.initiatorId,
-            content: initialMessageContent,
-            timestamp: new Date().toISOString()
-        }],
     };
 
     const { data: newNegotiation, error } = await supabase
@@ -119,6 +116,9 @@ export const addNegotiation = async (data: NewNegotiationFromResidue | NewNegoti
         console.error("Error adding negotiation:", error);
         throw error;
     }
+
+    // Now, add the initial message to the new messages table
+    await addMessageToNegotiation(newNegotiation.id, data.initiatorId, initialMessageContent);
 
     return rehydrateNegotiation(newNegotiation);
 };
@@ -195,18 +195,11 @@ export const updateNegotiationDetails = async (id: string, quantity: number, pri
     if (quantity !== originalQuantity) messageContent += ` Nueva cantidad: ${quantity} ${negotiation.unit}.`;
     if (price !== originalPrice) messageContent += ` Nuevo precio: ${price !== undefined ? `$${price}` : 'Negociable'}.`;
 
-    const updatedMessages = [
-        ...negotiation.messages,
-        {
-            senderId: negotiation.initiatedBy,
-            content: messageContent,
-            timestamp: new Date().toISOString(),
-        }
-    ];
+    await addMessageToNegotiation(id, negotiation.initiatedBy, messageContent);
 
     const { data, error } = await supabase
         .from('negotiations')
-        .update({ quantity, offerPrice: price, messages: updatedMessages })
+        .update({ quantity, offerPrice: price })
         .eq('id', id)
         .select()
         .single();
@@ -215,21 +208,22 @@ export const updateNegotiationDetails = async (id: string, quantity: number, pri
     return rehydrateNegotiation(data);
 };
 
-export const addMessageToNegotiation = async (id: string, message: NegotiationMessage): Promise<Negotiation> => {
-    const negotiation = await getNegotiationById(id);
-    if (!negotiation) throw new Error("Negotiation not found");
-    
-    const updatedMessages = [...negotiation.messages, message];
-
+export const addMessageToNegotiation = async (negotiationId: string, senderId: string, content: string): Promise<NegotiationMessage> => {
     const { data, error } = await supabase
-        .from('negotiations')
-        .update({ messages: updatedMessages })
-        .eq('id', id)
+        .from('negotiation_messages')
+        .insert({
+            negotiation_id: negotiationId,
+            sender_id: senderId,
+            content: content
+        })
         .select()
         .single();
 
-    if (error) throw error;
-    return rehydrateNegotiation(data);
+    if (error) {
+        console.error("Error sending message:", error);
+        throw error;
+    }
+    return data;
 }
 
 export const deleteNegotiation = async (id: string): Promise<void> => {

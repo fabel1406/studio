@@ -8,7 +8,7 @@ import { getNegotiationById, updateNegotiationStatus, addMessageToNegotiation } 
 import { useRole } from "../../role-provider";
 import type { Negotiation } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Send, Pencil, XCircle, CheckCircle, DollarSign } from "lucide-react";
+import { ArrowLeft, Send, Pencil, XCircle, CheckCircle, DollarSign, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -40,21 +40,26 @@ export default function NegotiationDetailPage() {
     const params = useParams();
     const id = typeof params?.id === 'string' ? params.id : '';
     const router = useRouter();
-    const { currentUserId } = useRole();
+    const { companyId } = useRole();
     const [negotiation, setNegotiation] = useState<Negotiation | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [isEditOfferOpen, setIsEditOfferOpen] = useState(false);
 
-    useEffect(() => {
-        async function fetchNegotiation() {
-            if (id) {
-                const fetchedNegotiation = await getNegotiationById(id);
-                setNegotiation(fetchedNegotiation || null);
-                setIsLoading(false);
+    const fetchNegotiation = useCallback(async () => {
+        if (id) {
+            const fetchedNegotiation = await getNegotiationById(id);
+            setNegotiation(fetchedNegotiation || null);
+            if (!fetchedNegotiation) {
+                notFound();
             }
         }
-        fetchNegotiation();
     }, [id]);
+
+
+    useEffect(() => {
+        setIsLoading(true);
+        fetchNegotiation().finally(() => setIsLoading(false));
+    }, [fetchNegotiation]);
 
     const handleUpdateStatus = async (status: Negotiation['status']) => {
         if (!negotiation) return;
@@ -63,29 +68,32 @@ export default function NegotiationDetailPage() {
     };
 
     const handleSendMessage = async (content: string) => {
-        if (!negotiation || !currentUserId) return;
-        const updatedNegotiation = await addMessageToNegotiation(negotiation.id, {
-            senderId: currentUserId,
-            content,
-            timestamp: new Date().toISOString(),
-        });
-        setNegotiation(updatedNegotiation);
+        if (!negotiation || !companyId) return;
+        await addMessageToNegotiation(negotiation.id, companyId, content);
+        // Re-fetch to get the latest messages
+        await fetchNegotiation();
     };
     
     const handleOfferUpdated = (updatedNegotiation: Negotiation) => {
         setNegotiation(updatedNegotiation);
     }
 
-    if (isLoading || !currentUserId) {
-        return <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">Cargando...</div>;
+    if (isLoading || !companyId) {
+        return (
+            <div className="flex-1 flex items-center justify-center p-8">
+                <Loader2 className="h-10 w-10 animate-spin text-primary" />
+            </div>
+        );
     }
 
     if (!negotiation) {
-        return notFound();
+        // notFound() is a server-side function, so we redirect on the client
+        router.push('/dashboard/negotiations');
+        return null;
     }
     
     // The user who initiated the negotiation.
-    const isInitiator = negotiation.initiatedBy === currentUserId;
+    const isInitiator = negotiation.initiatedBy === companyId;
     // The user who receives the initial request/offer.
     const isRecipient = !isInitiator;
     
@@ -97,8 +105,8 @@ export default function NegotiationDetailPage() {
 
     const isActionable = negotiation.status === 'SENT';
 
-    const otherParty = currentUserId === negotiation.requesterId ? negotiation.supplier : negotiation.requester;
-    const otherPartyRole = currentUserId === negotiation.requesterId ? 'Proveedor' : 'Solicitante';
+    const otherParty = companyId === negotiation.requesterId ? negotiation.supplier : negotiation.requester;
+    const otherPartyRole = companyId === negotiation.requesterId ? 'Proveedor' : 'Solicitante';
 
 
     return (
@@ -147,7 +155,7 @@ export default function NegotiationDetailPage() {
                         <NegotiationChat
                             messages={negotiation.messages}
                             onSendMessage={handleSendMessage}
-                            currentUserId={currentUserId}
+                            currentUserId={companyId}
                         />
                     </div>
 
@@ -240,3 +248,4 @@ export default function NegotiationDetailPage() {
         </>
     );
 }
+

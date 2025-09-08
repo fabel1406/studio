@@ -68,9 +68,11 @@ export type UserResidue = {
 }
 
 export type NegotiationMessage = {
-    senderId: string;
+    id: string;
+    negotiation_id: string;
+    sender_id: string;
     content: string;
-    timestamp: string;
+    created_at: string;
 };
 
 export type Negotiation = {
@@ -90,7 +92,7 @@ export type Negotiation = {
     offerPrice?: number;
     status: 'SENT' | 'ACCEPTED' | 'REJECTED';
     createdAt: string;
-    messages: NegotiationMessage[];
     commissionRate?: number;
     commissionValue?: number;
+    messages: NegotiationMessage[]; // This will be populated by a separate query
 }
