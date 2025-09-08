@@ -86,6 +86,7 @@ export function AuthForm({ mode, onVerificationSent }: AuthFormProps) {
             if (error) throw error;
             
             localStorage.setItem('userRole', role);
+            setIsLoading(false);
             if (onVerificationSent) {
               onVerificationSent();
             } else {
@@ -108,6 +109,7 @@ export function AuthForm({ mode, onVerificationSent }: AuthFormProps) {
                 title: "Inicio de Sesión Exitoso",
                 description: "Redirigiendo al panel de control...",
             });
+            setIsLoading(false);
             router.push("/dashboard");
         }
        
@@ -118,7 +120,6 @@ export function AuthForm({ mode, onVerificationSent }: AuthFormProps) {
             description: error.message || "Ha ocurrido un error inesperado.",
             variant: "destructive",
         });
-    } finally {
         setIsLoading(false);
     }
   }

@@ -89,7 +89,14 @@ export default function MarketplacePage() {
 
 
   const fetchSuggestions = async () => {
-    if (!currentUserId) return;
+    if (!currentUserId) {
+        toast({
+            title: "Usuario no identificado",
+            description: "Por favor, espera a que tu sesión se cargue completamente.",
+            variant: "destructive"
+        });
+        return;
+    }
     setIsLoadingSuggestions(true);
     setSuggestionsFetched(true);
 
