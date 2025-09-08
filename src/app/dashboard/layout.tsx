@@ -25,7 +25,7 @@ import { ScrollToTop } from "@/components/scroll-to-top";
 import { useRole, RoleProvider } from "./role-provider";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Footer } from "@/components/footer";
-import { createBrowserClient } from '@supabase/ssr'
+import { createClient } from "@/lib/supabase";
 
 
 type NavItem = {
@@ -54,10 +54,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   const { role, user, isLoading } = useRole();
   const { setOpenMobile } = useSidebar();
   const router = useRouter();
-   const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  const supabase = createClient();
 
   const handleLinkClick = () => {
     setOpenMobile(false);
@@ -67,6 +64,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut();
     localStorage.removeItem('userRole');
     router.push('/login');
+    router.refresh();
   }
 
   const filteredNavItems = navItems.filter(item => item.roles.includes(role));

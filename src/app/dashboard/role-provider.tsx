@@ -4,8 +4,8 @@
 import React, { createContext, useContext, useState, useMemo, useEffect } from 'react';
 import { useRouter } from "next/navigation";
 import { type User } from "@supabase/supabase-js";
-import { createBrowserClient } from '@supabase/ssr'
 import { Logo } from "@/components/logo";
+import { createClient } from '@/lib/supabase';
 
 type UserRole = "GENERATOR" | "TRANSFORMER" | "BOTH";
 
@@ -33,27 +33,38 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  const supabase = createClient();
 
   useEffect(() => {
+    const checkInitialSession = async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+            setUser(session.user);
+            const userRole = (session.user.user_metadata.role || localStorage.getItem('userRole') || 'GENERATOR') as UserRole;
+            setInternalRole(userRole);
+        }
+        setIsLoading(false);
+    };
+
+    checkInitialSession();
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       const currentUser = session?.user ?? null;
       setUser(currentUser);
       if (currentUser) {
-        // Set role from user metadata or fallback to localStorage/default
         const userRole = (currentUser.user_metadata.role || localStorage.getItem('userRole') || 'GENERATOR') as UserRole;
         setInternalRole(userRole);
       }
-      setIsLoading(false);
+      // If there is no session, and we are not loading, redirect.
+      if (!session && !isLoading) {
+          router.push('/login');
+      }
     });
 
     return () => {
       subscription.unsubscribe();
     };
-  }, [supabase.auth]);
+  }, [supabase, router, isLoading]);
   
   useEffect(() => {
     if (!isLoading && !user) {

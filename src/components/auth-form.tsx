@@ -25,7 +25,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
-import { createBrowserClient } from '@supabase/ssr'
+import { createClient } from "@/lib/supabase";
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Dirección de correo electrónico no válida." }),
@@ -54,10 +54,7 @@ export function AuthForm({ mode, onVerificationSent }: AuthFormProps) {
   const { toast } = useToast();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  const supabase = createClient();
 
   const schema = mode === "login" ? loginSchema : registerSchema;
 
@@ -103,8 +100,9 @@ export function AuthForm({ mode, onVerificationSent }: AuthFormProps) {
 
             const userRole = data.user?.user_metadata.role || 'GENERATOR';
             localStorage.setItem('userRole', userRole);
-
+            
             router.push("/dashboard");
+            router.refresh();
         }
        
     } catch (error: any) {

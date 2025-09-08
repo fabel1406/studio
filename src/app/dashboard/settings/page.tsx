@@ -28,7 +28,7 @@ import { useRole } from "../role-provider";
 import { Textarea } from "@/components/ui/textarea";
 import { getAllCountries, getCitiesByCountry, type City } from "@/lib/locations";
 import { useRouter } from "next/navigation";
-import { createBrowserClient } from "@supabase/ssr";
+import { createClient } from "@/lib/supabase";
 
 const allCountries = getAllCountries();
 
@@ -51,10 +51,7 @@ export default function SettingsPage() {
     const { toast } = useToast();
     const router = useRouter();
     const { user, role, setRole } = useRole();
-    const supabase = createBrowserClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
+    const supabase = createClient();
 
     const form = useForm<ProfileFormValues>({
         resolver: zodResolver(profileSchema),
