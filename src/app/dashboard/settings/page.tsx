@@ -27,6 +27,7 @@ import { useEffect, useState } from "react";
 import { useRole } from "../role-provider";
 import { Textarea } from "@/components/ui/textarea";
 import { getAllCountries, getCitiesByCountry, type City } from "@/lib/locations";
+import { useRouter } from "next/navigation";
 
 const allCountries = getAllCountries();
 
@@ -47,6 +48,7 @@ type ProfileFormValues = z.infer<typeof profileSchema>;
 
 export default function SettingsPage() {
     const { toast } = useToast();
+    const router = useRouter();
     const { user, role, setRole } = useRole();
 
     const form = useForm<ProfileFormValues>({
@@ -80,7 +82,9 @@ export default function SettingsPage() {
     }, [role, user, form]);
 
     useEffect(() => {
-        form.setValue('city', '');
+        if (form.formState.isDirty) {
+            form.setValue('city', '');
+        }
     }, [selectedCountry, form]);
 
 
@@ -92,6 +96,7 @@ export default function SettingsPage() {
             title: "Perfil Actualizado",
             description: "La información de tu empresa ha sido guardada.",
         });
+        router.refresh();
     }
 
     return (
@@ -147,7 +152,7 @@ export default function SettingsPage() {
                                         <FormItem>
                                         <FormLabel>Descripción Breve</FormLabel>
                                         <FormControl>
-                                            <Textarea placeholder="Describe brevemente tu empresa..." {...field} />
+                                            <Textarea placeholder="Describe brevemente tu empresa..." {...field} value={field.value ?? ''} />
                                         </FormControl>
                                         <FormMessage />
                                         </FormItem>
@@ -220,7 +225,7 @@ export default function SettingsPage() {
                                             <FormItem>
                                                 <FormLabel>Email de Contacto Público</FormLabel>
                                                 <FormControl>
-                                                    <Input type="email" placeholder="contacto@empresa.com" {...field} />
+                                                    <Input type="email" placeholder="contacto@empresa.com" {...field} value={field.value ?? ''} />
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>
@@ -233,7 +238,7 @@ export default function SettingsPage() {
                                             <FormItem>
                                                 <FormLabel>Teléfono</FormLabel>
                                                 <FormControl>
-                                                    <Input placeholder="+34 123 456 789" {...field} />
+                                                    <Input placeholder="+34 123 456 789" {...field} value={field.value ?? ''} />
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>
@@ -247,7 +252,7 @@ export default function SettingsPage() {
                                         <FormItem>
                                             <FormLabel>Sitio Web</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="https://www.tuempresa.com" {...field} />
+                                                <Input placeholder="https://www.tuempresa.com" {...field} value={field.value ?? ''} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>

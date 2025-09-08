@@ -191,6 +191,7 @@ La paleta se define en `src/app/globals.css` usando variables CSS HSL, lo que pe
     - Precio por Unidad (opcional)
     - Estado (Activo, Reservado, Cerrado)
     - Descripción
+    - País y Ciudad
 
 #### **Mis Necesidades (`/dashboard/needs`)**
 
@@ -208,12 +209,13 @@ La paleta se define en `src/app/globals.css` usando variables CSS HSL, lo que pe
     - Cantidad y Unidad
     - Frecuencia de la necesidad (única, semanal, mensual)
     - Especificaciones Adicionales
+    - País y Ciudad
 
 #### **Negociaciones (`/dashboard/negotiations`)**
 
 - **Función:** Gestiona todas las interacciones comerciales.
 - **Contenido:**
-    - **Dos pestañas:** "Negociaciones Recibidas" y "Negociaciones Enviadas".
+    - **Dos pestañas:** "Negociaciones Recibidas" y "Negociaciones Enviadas" (los títulos varían según el rol del usuario para ser más específicos).
     - **Lista de negociaciones:** Cada elemento muestra el tipo de residuo, la otra empresa involucrada, la cantidad, el precio (si lo hay), el estado y un botón para "Ver Negociación".
 
 #### **Detalle de Negociación (`/dashboard/negotiations/[id]`)**
@@ -250,6 +252,3 @@ La paleta se define en `src/app/globals.css` usando variables CSS HSL, lo que pe
     - Dirección (país, ciudad, calle)
     - Datos de contacto públicos (email, teléfono, sitio web)
     - Rol principal en la plataforma (Generador, Transformador, Ambos)
-
-Espero que este documento sea exactamente lo que necesitas. Es una base sólida para cualquier desarrollo futuro.
-
