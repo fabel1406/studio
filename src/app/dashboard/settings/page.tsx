@@ -101,34 +101,8 @@ export default function SettingsPage() {
             return;
         }
 
-        setRole(values.role); // Update local context
-        
-        // 1. Update user metadata in Supabase Auth
-        const { error: authError } = await supabase.auth.updateUser({
-            data: { 
-                company_name: values.companyName,
-                app_role: values.role,
-                description: values.description,
-                country: values.country,
-                city: values.city,
-                address: values.address,
-                contactEmail: values.contactEmail,
-                phone: values.phone,
-                website: values.website
-            }
-        });
-
-        if (authError) {
-             toast({
-                title: "Error al actualizar la autenticación",
-                description: authError.message,
-                variant: "destructive"
-            });
-             return; // Stop if auth update fails
-        }
-        
-        // 2. Update the public companies table
         try {
+             // 1. Update the public companies table
             await updateCompany(companyId, {
                 name: values.companyName,
                 type: values.role,
@@ -141,6 +115,26 @@ export default function SettingsPage() {
                 website: values.website,
             });
 
+            // 2. Update user metadata in Supabase Auth (for consistency)
+            const { error: authError } = await supabase.auth.updateUser({
+                data: { 
+                    company_name: values.companyName,
+                    app_role: values.role,
+                    description: values.description,
+                    country: values.country,
+                    city: values.city,
+                    address: values.address,
+                    contactEmail: values.contactEmail,
+                    phone: values.phone,
+                    website: values.website
+                }
+            });
+
+            if (authError) throw authError;
+
+             // 3. Update local state
+            setRole(values.role);
+
             toast({
                 title: "Perfil Actualizado",
                 description: "La información de tu empresa ha sido guardada.",
@@ -149,8 +143,8 @@ export default function SettingsPage() {
 
         } catch (error: any) {
             toast({
-                title: "Error al guardar en el perfil público",
-                description: error.message || "No se pudo guardar la información del perfil.",
+                title: "Error al guardar el perfil",
+                description: error.message || "No se pudo guardar la información.",
                 variant: "destructive"
             });
         }

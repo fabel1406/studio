@@ -32,7 +32,7 @@ export const getAllCompanies = async (): Promise<Company[]> => {
     return data as Company[];
 };
 
-export const updateCompany = async (id: string, updates: Partial<Omit<Company, 'id' | 'auth_id' | 'created_at'>>): Promise<Company> => {
+export const updateCompany = async (id: string, updates: Partial<Omit<Company, 'id' | 'auth_id' | 'created_at'>>): Promise<Company | null> => {
     const { data, error } = await supabase
         .from('companies')
         .update(updates)
@@ -42,7 +42,7 @@ export const updateCompany = async (id: string, updates: Partial<Omit<Company, '
 
     if (error) {
         console.error('Error updating company:', error);
-        throw error;
+        throw new Error(error.message);
     }
 
     return data as Company;
