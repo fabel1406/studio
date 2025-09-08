@@ -2,7 +2,6 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { updateCompany } from '@/services/company-service'
 import { type ProfileFormValues } from './page'
 
 export async function updateCompanyAction(
@@ -13,17 +12,24 @@ export async function updateCompanyAction(
 
   try {
     // 1. Update the public companies table
-    await updateCompany(supabase, companyId, {
-      name: values.companyName,
-      type: values.role,
-      description: values.description,
-      country: values.country,
-      city: values.city,
-      address: values.address,
-      contactEmail: values.contactEmail,
-      phone: values.phone,
-      website: values.website,
-    })
+    const { data: companyData, error: companyError } = await supabase
+      .from('companies')
+      .update({
+        name: values.companyName,
+        type: values.role,
+        description: values.description,
+        country: values.country,
+        city: values.city,
+        address: values.address,
+        contact_email: values.contactEmail,
+        phone: values.phone,
+        website: values.website,
+      })
+      .eq('id', companyId)
+      .select()
+      .single()
+
+    if (companyError) throw companyError
 
     // 2. Update user metadata in Supabase Auth (for consistency and quick access)
     const { error: authError } = await supabase.auth.updateUser({
@@ -42,8 +48,9 @@ export async function updateCompanyAction(
 
     if (authError) throw authError
 
-    return { success: true, error: null }
+    return { success: true, error: null, data: companyData }
   } catch (error: any) {
-    return { success: false, error: error.message }
+    console.error('Error updating company:', error)
+    return { success: false, error: error.message, data: null }
   }
 }
