@@ -18,7 +18,7 @@ export default function RegisterPage() {
   const [isVerificationEmailSent, setIsVerificationEmailSent] = useState(false);
 
   return (
-      <div className="min-h-[calc(100vh-80px)] flex items-center justify-center p-4 bg-gradient-to-br from-primary/10 via-background to-secondary/10">
+      <div className="flex-grow flex items-center justify-center p-4">
         <Card className="w-full max-w-md shadow-2xl">
           <CardHeader className="text-center">
             <Link href="/" className="flex items-center justify-center gap-2 mb-4">

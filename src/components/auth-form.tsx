@@ -25,7 +25,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
-import { useRole } from "@/app/dashboard/role-provider";
 import { createClient } from "@/lib/supabase/client";
 
 
@@ -56,7 +55,6 @@ export function AuthForm({ mode, onVerificationSent }: AuthFormProps) {
   const { toast } = useToast();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const { setRole } = useRole();
   const schema = mode === "login" ? loginSchema : registerSchema;
   const supabase = createClient();
 
@@ -94,7 +92,6 @@ export function AuthForm({ mode, onVerificationSent }: AuthFormProps) {
           variant: "destructive",
         });
       } else {
-        setRole(role);
         if (onVerificationSent) {
           onVerificationSent();
         } else {
@@ -107,7 +104,7 @@ export function AuthForm({ mode, onVerificationSent }: AuthFormProps) {
 
     } else { // Login mode
       const { email, password } = values as z.infer<typeof loginSchema>;
-      const { error, data } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
@@ -118,11 +115,7 @@ export function AuthForm({ mode, onVerificationSent }: AuthFormProps) {
           description: error.message || "Correo electrónico o contraseña incorrectos.",
           variant: "destructive",
         });
-      } else if (data.user) {
-        const userRole = data.user.user_metadata?.app_role;
-        if(userRole) {
-            setRole(userRole);
-        }
+      } else {
         router.push("/dashboard");
         router.refresh();
       }
