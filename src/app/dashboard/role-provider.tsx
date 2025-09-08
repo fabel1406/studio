@@ -1,3 +1,4 @@
+
 // src/app/dashboard/role-provider.tsx
 "use client";
 
@@ -14,7 +15,7 @@ type RoleContextType = {
   companyName: string;
   role: UserRole;
   setRole: (role: UserRole) => void;
-  currentUserId: string | null;
+  companyId: string | null;
   isLoading: boolean;
   logout: () => Promise<void>;
 };
@@ -33,30 +34,37 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [companyName, setCompanyName] = useState<string>("");
   const [role, setInternalRole] = useState<UserRole>("GENERATOR");
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [companyId, setCompanyId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
   const supabase = createClient();
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         const currentUser = session?.user || null;
         setUser(currentUser);
-        setCurrentUserId(currentUser?.id || null);
 
         if (currentUser) {
-          const userRole = currentUser.user_metadata?.app_role as UserRole;
-          const userCompanyName = currentUser.user_metadata?.company_name || currentUser.email?.split('@')[0] || "Usuario";
+          const { data, error } = await supabase.from('companies').select('id, name, type').eq('auth_id', currentUser.id).single();
           
-          if(userRole) setInternalRole(userRole);
-          setCompanyName(userCompanyName);
-          
-          // Persist role for quick access on reload
-          localStorage.setItem('userRole', userRole || "GENERATOR");
+          if (data) {
+            setCompanyId(data.id);
+            setCompanyName(data.name);
+            setInternalRole(data.type as UserRole);
+            localStorage.setItem('userRole', data.type);
+          } else {
+              // Fallback for metadata if DB call fails or is new user
+              const userRole = currentUser.user_metadata?.app_role as UserRole;
+              const userCompanyName = currentUser.user_metadata?.company_name || currentUser.email?.split('@')[0] || "Usuario";
+              if(userRole) setInternalRole(userRole);
+              setCompanyName(userCompanyName);
+              localStorage.setItem('userRole', userRole || "GENERATOR");
+          }
         } else {
             // Clear on logout
             localStorage.removeItem('userRole');
+            setCompanyId(null);
         }
         
         setIsLoading(false);
@@ -77,8 +85,10 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
 
 
   const setRole = async (newRole: UserRole) => {
+    if (!companyId) return;
     setInternalRole(newRole);
     localStorage.setItem('userRole', newRole);
+    await supabase.from('companies').update({ type: newRole }).eq('id', companyId);
     await supabase.auth.updateUser({ data: { app_role: newRole } });
   }
   
@@ -88,7 +98,7 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
       router.refresh();
   }
 
-  const value = useMemo(() => ({ user, role, setRole, currentUserId, isLoading, logout, companyName }), [user, role, currentUserId, isLoading, companyName]);
+  const value = useMemo(() => ({ user, role, setRole, companyId, isLoading, logout, companyName }), [user, role, companyId, isLoading, companyName]);
   
   if (isLoading) {
     return (
@@ -109,3 +119,5 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
     <RoleContext.Provider value={value}>{children}</RoleContext.Provider>
   );
 };
+
+    

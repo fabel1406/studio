@@ -1,83 +1,101 @@
 
 // src/services/residue-service.ts
 import type { Residue } from '@/lib/types';
-import { mockResidues, mockCompanies } from '@/lib/data';
-import { getCompanyById } from './company-service';
+import { createClient } from '@/lib/supabase/client';
 
-// --- In-memory "database" ---
-// Let's treat mockResidues as an in-memory database that can be modified
-let residuesDB = [...mockResidues];
+const supabase = createClient();
 
-// Helper to rehydrate residue with full company object
-const rehydrateResidue = (residue: Residue): Residue => {
-    const company = mockCompanies.find(c => c.id === residue.companyId);
-    return {
-        ...residue,
-        company: company,
-    };
+const rehydrateResidue = async (residue: any): Promise<Residue> => {
+    const { data: company, error } = await supabase
+        .from('companies')
+        .select('*')
+        .eq('id', residue.companyId)
+        .single();
+
+    if (error) console.error("Error fetching company for residue:", error);
+    
+    return { ...residue, company };
 };
 
-// --- Service Functions ---
 
 export const getAllResidues = async (): Promise<Residue[]> => {
-    // Rehydrate with company info on every call to ensure it's up-to-date
-    return Promise.resolve(residuesDB.map(rehydrateResidue));
+    const { data, error } = await supabase
+        .from('residues')
+        .select('*');
+
+    if (error) {
+        console.error('Error fetching residues:', error);
+        return [];
+    }
+
+    const rehydratedResidues = await Promise.all(data.map(rehydrateResidue));
+    return rehydratedResidues;
 };
 
 export const getResidueById = async (id: string): Promise<Residue | undefined> => {
-    const residue = residuesDB.find(r => r.id === id);
-    if (!residue) return Promise.resolve(undefined);
-    return Promise.resolve(rehydrateResidue(residue));
+    const { data, error } = await supabase
+        .from('residues')
+        .select('*')
+        .eq('id', id)
+        .single();
+        
+    if (error) {
+        console.error(`Error fetching residue ${id}:`, error);
+        return undefined;
+    }
+
+    return rehydrateResidue(data);
 };
 
-type NewResidueData = Omit<Residue, 'id' | 'companyId' | 'availabilityDate' | 'photos' | 'company'> & { city: string, country: string };
+type NewResidueData = Omit<Residue, 'id' | 'availabilityDate' | 'photos' | 'company'>;
 
 export const addResidue = async (residueData: NewResidueData): Promise<Residue> => {
-    const companyId = 'comp-1'; // Mock current user's company
-    const company = await getCompanyById(companyId);
-
-    const newResidue: Residue = {
+    const newResiduePayload = {
         ...residueData,
-        id: `res-${Date.now()}`,
-        companyId,
         availabilityDate: new Date().toISOString(),
         photos: [`https://picsum.photos/seed/new${Date.now()}/600/400`],
-        company: {
-            ...company!,
-            city: residueData.city,
-            country: residueData.country
-        }
     };
+
+    const { data, error } = await supabase
+        .from('residues')
+        .insert([newResiduePayload])
+        .select()
+        .single();
     
-    residuesDB.push(newResidue);
-    return Promise.resolve(rehydrateResidue(newResidue));
+    if (error) {
+        console.error('Error adding residue:', error);
+        throw error;
+    }
+
+    return rehydrateResidue(data);
 };
 
-export const updateResidue = async (updatedResidueData: Partial<Residue> & { id: string, city: string, country: string }): Promise<Residue> => {
-    const index = residuesDB.findIndex(r => r.id === updatedResidueData.id);
-    if (index === -1) {
-        throw new Error("Residue not found");
+export const updateResidue = async (updatedResidueData: Partial<Residue> & { id: string }): Promise<Residue> => {
+    const { data, error } = await supabase
+        .from('residues')
+        .update(updatedResidueData)
+        .eq('id', updatedResidueData.id)
+        .select()
+        .single();
+
+    if (error) {
+        console.error('Error updating residue:', error);
+        throw error;
     }
     
-    const existingResidue = residuesDB[index];
-    const company = await getCompanyById(existingResidue.companyId);
-    
-    const updatedResidue = { 
-        ...existingResidue, 
-        ...updatedResidueData,
-        company: {
-            ...company!,
-            city: updatedResidueData.city,
-            country: updatedResidueData.country
-        }
-    };
-
-    residuesDB[index] = updatedResidue;
-    
-    return Promise.resolve(rehydrateResidue(updatedResidue));
+    return rehydrateResidue(data);
 };
 
 export const deleteResidue = async (id: string): Promise<void> => {
-    residuesDB = residuesDB.filter(r => r.id !== id);
-    return Promise.resolve();
+    const { error } = await supabase
+        .from('residues')
+        .delete()
+        .eq('id', id);
+
+    if (error) {
+        console.error('Error deleting residue:', error);
+        throw error;
+    }
 };
+
+    

@@ -1,3 +1,4 @@
+
 // src/app/dashboard/needs/create/form.tsx
 "use client"
 
@@ -28,9 +29,11 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { mockResidues } from "@/lib/data"
 import { addNeed, getNeedById, updateNeed } from "@/services/need-service"
 import { getAllCountries, getCitiesByCountry } from "@/lib/locations"
+import { useRole } from "../../role-provider"
+import { getAllResidues } from "@/services/residue-service"
+import { Loader2 } from "lucide-react"
 
 const allCountries = getAllCountries();
 
@@ -58,13 +61,46 @@ const needFormSchema = z.object({
 
 type NeedFormValues = z.infer<typeof needFormSchema>
 
-const uniqueResidueTypes = [...new Set(mockResidues.map(r => r.type))];
-
 export default function NeedForm() {
   const router = useRouter();
   const { toast } = useToast()
   const searchParams = useSearchParams();
   const [needId, setNeedId] = useState<string | null>(null);
+  const [uniqueResidueTypes, setUniqueResidueTypes] = useState<string[]>([]);
+  const { companyId } = useRole();
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchData() {
+        setIsLoading(true);
+        const allResidues = await getAllResidues();
+        const types = [...new Set(allResidues.map(r => r.type))];
+        setUniqueResidueTypes(types);
+
+        const id = searchParams.get('id');
+        if (id) {
+          setNeedId(id);
+          const need = await getNeedById(id);
+          if (need) {
+            const isStandardType = types.includes(need.residueType);
+            form.reset({
+              residueType: isStandardType ? need.residueType : 'Otro',
+              customResidueType: isStandardType ? '' : need.residueType,
+              category: need.category,
+              quantity: need.quantity,
+              unit: need.unit,
+              frequency: need.frequency,
+              status: need.status,
+              specifications: need.specifications || "",
+              country: need.company?.country || 'España',
+              city: need.company?.city || '',
+            });
+          }
+        }
+        setIsLoading(false);
+    }
+    fetchData();
+  }, [searchParams]);
 
   const form = useForm<NeedFormValues>({
     resolver: zodResolver(needFormSchema),
@@ -88,50 +124,30 @@ export default function NeedForm() {
   const citiesForSelectedCountry = getCitiesByCountry(selectedCountry);
   
   useEffect(() => {
-    const id = searchParams.get('id');
-    if (id) {
-      setNeedId(id);
-      const fetchNeed = async () => {
-        const need = await getNeedById(id);
-        if (need) {
-          const isStandardType = uniqueResidueTypes.includes(need.residueType);
-          form.reset({
-            residueType: isStandardType ? need.residueType : 'Otro',
-            customResidueType: isStandardType ? '' : need.residueType,
-            category: need.category,
-            quantity: need.quantity,
-            unit: need.unit,
-            frequency: need.frequency,
-            status: need.status,
-            specifications: need.specifications || "",
-            country: need.company?.country || 'España',
-            city: need.company?.city || '',
-          });
-        }
-      }
-      fetchNeed();
-    }
-  }, [searchParams, form]);
-
-  useEffect(() => {
     if(!form.formState.isDirty) return;
     form.setValue('city', '');
   }, [selectedCountry, form]);
 
-  function onSubmit(data: NeedFormValues) {
+  async function onSubmit(data: NeedFormValues) {
+    if (!companyId) {
+      toast({ title: "Error", description: "No se ha podido identificar la empresa. Por favor, inicia sesión de nuevo.", variant: "destructive" });
+      return;
+    }
+
     const finalData = {
         ...data,
+        companyId,
         residueType: data.residueType === 'Otro' ? data.customResidueType! : data.residueType,
     };
 
     if (needId) {
-        updateNeed({ ...finalData, id: needId, companyId: 'comp-3' }); // companyId would be dynamic
+        await updateNeed({ ...finalData, id: needId });
          toast({
             title: "¡Necesidad Actualizada!",
             description: `Tu solicitud de "${finalData.residueType}" ha sido actualizada.`,
         })
     } else {
-        addNeed(finalData);
+        await addNeed(finalData);
         toast({
             title: "¡Necesidad Publicada!",
             description: `Tu solicitud de "${finalData.residueType}" ha sido publicada con éxito.`,
@@ -139,6 +155,10 @@ export default function NeedForm() {
     }
     router.push('/dashboard/needs');
     router.refresh();
+  }
+  
+  if (isLoading) {
+    return <div className="flex items-center justify-center p-8"><Loader2 className="h-8 w-8 animate-spin"/></div>
   }
 
   return (
@@ -380,3 +400,5 @@ export default function NeedForm() {
     </div>
   )
 }
+
+    

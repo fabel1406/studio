@@ -1,13 +1,36 @@
 
 // src/services/company-service.ts
 import type { Company } from '@/lib/types';
-import { mockCompanies } from '@/lib/data';
+import { createClient } from '@/lib/supabase/client';
+
+const supabase = createClient();
 
 export const getCompanyById = async (id: string): Promise<Company | undefined> => {
-    // Simulate an async operation, e.g., a database call
-    return Promise.resolve(mockCompanies.find(c => c.id === id));
+    const { data, error } = await supabase
+        .from('companies')
+        .select('*')
+        .eq('id', id)
+        .single();
+    
+    if (error) {
+        console.error('Error fetching company:', error);
+        return undefined;
+    }
+    
+    return data as Company;
 };
 
 export const getAllCompanies = async (): Promise<Company[]> => {
-    return Promise.resolve(mockCompanies);
+    const { data, error } = await supabase
+        .from('companies')
+        .select('*');
+
+    if (error) {
+        console.error('Error fetching all companies:', error);
+        return [];
+    }
+
+    return data as Company[];
 };
+
+    

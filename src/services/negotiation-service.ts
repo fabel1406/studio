@@ -1,18 +1,21 @@
 
 // src/services/negotiation-service.ts
-import type { Negotiation, NegotiationMessage, Residue, Need } from '@/lib/types';
-import { mockCompanies } from '@/lib/data';
+import type { Negotiation, NegotiationMessage, Residue, Need, Company } from '@/lib/types';
+import { createClient } from '@/lib/supabase/client';
 import { getResidueById } from './residue-service';
+import { getCompanyById } from './company-service';
 
-// In-memory array to act as a database
-let negotiationsDB: Negotiation[] = [];
+const supabase = createClient();
 
-// Define the platform's commission rate (e.g., 3%)
 const COMMISSION_RATE = 0.03;
 
-const rehydrateNegotiation = async (negotiation: Negotiation): Promise<Negotiation> => {
-    const residue = await getResidueById(negotiation.residueId);
-    
+const rehydrateNegotiation = async (negotiation: any): Promise<Negotiation> => {
+    const [residue, requester, supplier] = await Promise.all([
+        getResidueById(negotiation.residueId),
+        getCompanyById(negotiation.requesterId),
+        getCompanyById(negotiation.supplierId),
+    ]);
+
     const hydratedResidue = residue || {
         id: negotiation.residueId,
         type: 'Residuo eliminado',
@@ -27,179 +30,211 @@ const rehydrateNegotiation = async (negotiation: Negotiation): Promise<Negotiati
     return {
         ...negotiation,
         residue: hydratedResidue,
-        requester: mockCompanies.find(c => c.id === negotiation.requesterId),
-        supplier: mockCompanies.find(c => c.id === negotiation.supplierId),
+        requester: requester,
+        supplier: supplier,
     };
 };
 
 type NewNegotiationFromResidue = {
     type: 'request';
     residue: Residue;
-    initiatorId: string; // Transformer's ID
+    initiatorId: string;
     quantity: number;
-    offerPrice?: number; // Price from the residue itself
+    offerPrice?: number;
 }
 
 type NewNegotiationFromNeed = {
     type: 'offer';
     residue: Residue;
     need: Need;
-    initiatorId: string; // Generator's ID
+    initiatorId: string;
     quantity: number;
     offerPrice?: number;
 }
 
-const checkExistingNegotiation = (requesterId: string, supplierId: string, residueId: string): boolean => {
-    return negotiationsDB.some(n => 
-        n.requesterId === requesterId &&
-        n.supplierId === supplierId &&
-        n.residueId === residueId &&
-        n.status === 'SENT'
-    );
+const checkExistingNegotiation = async (requesterId: string, supplierId: string, residueId: string): Promise<boolean> => {
+    const { data, error } = await supabase
+        .from('negotiations')
+        .select('id')
+        .eq('requesterId', requesterId)
+        .eq('supplierId', supplierId)
+        .eq('residueId', residueId)
+        .eq('status', 'SENT')
+        .maybeSingle();
+
+    if (error) {
+        console.error("Error checking existing negotiation:", error);
+        return false;
+    }
+
+    return !!data;
 };
 
 export const addNegotiation = async (data: NewNegotiationFromResidue | NewNegotiationFromNeed): Promise<Negotiation | null> => {
-    let newNegotiation: Negotiation;
+    let negotiationData: Omit<Negotiation, 'id' | 'residue' | 'requester' | 'supplier' | 'createdAt'>;
     let requesterId: string, supplierId: string, residueId: string;
 
     if (data.type === 'request') {
         requesterId = data.initiatorId;
         supplierId = data.residue.companyId;
         residueId = data.residue.id;
-    } else { // type === 'offer'
+    } else {
         requesterId = data.need.companyId;
         supplierId = data.initiatorId;
         residueId = data.residue.id;
     }
 
-    if (checkExistingNegotiation(requesterId, supplierId, residueId)) {
+    if (await checkExistingNegotiation(requesterId, supplierId, residueId)) {
         console.warn("Attempted to create a duplicate negotiation.");
-        return null; // Or throw an error
-    }
-
-    if (data.type === 'request') {
-        const initialMessageContent = data.offerPrice
-            ? `Ha solicitado ${data.quantity} ${data.residue.unit} de ${data.residue.type} al precio de $${data.offerPrice}/${data.residue.unit}.`
-            : `Ha solicitado ${data.quantity} ${data.residue.unit} de ${data.residue.type}.`;
-
-        newNegotiation = {
-            id: `neg-${Date.now()}`,
-            residueId: data.residue.id,
-            residue: data.residue,
-            requesterId: data.initiatorId, // The Transformer is the requester
-            supplierId: data.residue.companyId, // The Generator is the supplier
-            quantity: data.quantity,
-            unit: data.residue.unit,
-            offerPrice: data.offerPrice,
-            initiatedBy: data.initiatorId,
-            status: 'SENT',
-            createdAt: new Date().toISOString(),
-            messages: [{
-                senderId: data.initiatorId,
-                content: initialMessageContent,
-                timestamp: new Date().toISOString()
-            }],
-        };
-    } else { // type === 'offer'
-        newNegotiation = {
-            id: `neg-${Date.now()}`,
-            residueId: data.residue.id,
-            residue: data.residue,
-            requesterId: data.need.companyId, // The Transformer who created the need is the requester
-            supplierId: data.initiatorId, // The Generator making the offer is the supplier
-            quantity: data.quantity,
-            unit: data.residue.unit,
-            offerPrice: data.offerPrice,
-            initiatedBy: data.initiatorId,
-            status: 'SENT',
-            createdAt: new Date().toISOString(),
-            messages: [{
-                senderId: data.initiatorId,
-                content: `Ha ofrecido ${data.quantity} ${data.residue.unit} de ${data.residue.type}${data.offerPrice ? ` a $${data.offerPrice}/${data.residue.unit}`: ''} para cubrir tu necesidad.`,
-                timestamp: new Date().toISOString()
-            }],
-        };
+        return null;
     }
     
-    negotiationsDB.unshift(newNegotiation);
+    const initialMessageContent = data.type === 'request'
+        ? `Ha solicitado ${data.quantity} ${data.residue.unit} de ${data.residue.type}${data.offerPrice ? ` al precio de $${data.offerPrice}/${data.residue.unit}` : ''}.`
+        : `Ha ofrecido ${data.quantity} ${data.residue.unit} de ${data.residue.type}${data.offerPrice ? ` a $${data.offerPrice}/${data.residue.unit}`: ''} para cubrir tu necesidad.`;
+
+    negotiationData = {
+        residueId,
+        requesterId,
+        supplierId,
+        initiatedBy: data.initiatorId,
+        quantity: data.quantity,
+        unit: data.residue.unit,
+        offerPrice: data.offerPrice,
+        status: 'SENT',
+        messages: [{
+            senderId: data.initiatorId,
+            content: initialMessageContent,
+            timestamp: new Date().toISOString()
+        }],
+    };
+
+    const { data: newNegotiation, error } = await supabase
+        .from('negotiations')
+        .insert([negotiationData])
+        .select()
+        .single();
+    
+    if (error) {
+        console.error("Error adding negotiation:", error);
+        throw error;
+    }
+
     return rehydrateNegotiation(newNegotiation);
 };
 
-
 export const getAllNegotiationsForUser = async (userId: string): Promise<{ sent: Negotiation[], received: Negotiation[] }> => {
-    const allNegotiations = await Promise.all(negotiationsDB.map(rehydrateNegotiation));
-    
-    // "Sent" are negotiations the user initiated.
-    const sent = allNegotiations
+    const { data: allUserNegotiations, error } = await supabase
+        .from('negotiations')
+        .select('*')
+        .or(`requesterId.eq.${userId},supplierId.eq.${userId}`);
+
+    if (error) {
+        console.error("Error fetching negotiations for user:", error);
+        return { sent: [], received: [] };
+    }
+
+    const rehydrated = await Promise.all(allUserNegotiations.map(rehydrateNegotiation));
+
+    const sent = rehydrated
       .filter(n => n.initiatedBy === userId)
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       
-    // "Received" are negotiations initiated by the other party.
-    const received = allNegotiations
-      .filter(n => n.initiatedBy !== userId && (n.requesterId === userId || n.supplierId === userId))
+    const received = rehydrated
+      .filter(n => n.initiatedBy !== userId)
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       
     return { sent, received };
 };
 
-
 export const getNegotiationById = async (id: string): Promise<Negotiation | undefined> => {
-    const negotiation = negotiationsDB.find(n => n.id === id);
-    return negotiation ? rehydrateNegotiation(negotiation) : undefined;
+    const { data, error } = await supabase
+        .from('negotiations')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+    if (error) {
+        console.error("Error fetching negotiation by ID:", error);
+        return undefined;
+    }
+
+    return rehydrateNegotiation(data);
 };
 
 export const updateNegotiationStatus = async (id: string, status: Negotiation['status']): Promise<Negotiation> => {
-    const index = negotiationsDB.findIndex(n => n.id === id);
-    if (index === -1) throw new Error("Negotiation not found");
+    const negotiation = await getNegotiationById(id);
+    if (!negotiation) throw new Error("Negotiation not found");
 
-    const negotiation = negotiationsDB[index];
-    negotiation.status = status;
-
-    // Calculate and store commission if the deal is accepted and there's a price
+    const updatePayload: Partial<Negotiation> = { status };
+    
     if (status === 'ACCEPTED' && typeof negotiation.offerPrice === 'number') {
-        negotiation.commissionRate = COMMISSION_RATE;
-        negotiation.commissionValue = negotiation.quantity * negotiation.offerPrice * COMMISSION_RATE;
-        console.log(`Commission calculated for negotiation ${id}: $${negotiation.commissionValue}`);
+        updatePayload.commissionRate = COMMISSION_RATE;
+        updatePayload.commissionValue = negotiation.quantity * negotiation.offerPrice * COMMISSION_RATE;
     }
 
-    return rehydrateNegotiation(negotiation);
+    const { data, error } = await supabase
+        .from('negotiations')
+        .update(updatePayload)
+        .eq('id', id)
+        .select()
+        .single();
+
+    if (error) throw error;
+    return rehydrateNegotiation(data);
 };
 
 export const updateNegotiationDetails = async (id: string, quantity: number, price?: number): Promise<Negotiation> => {
-    const negotiationToUpdate = negotiationsDB.find(n => n.id === id);
-    if (!negotiationToUpdate) throw new Error("Negotiation not found");
-
-    const originalQuantity = negotiationToUpdate.quantity;
-    const originalPrice = negotiationToUpdate.offerPrice;
-
-    negotiationToUpdate.quantity = quantity;
-    negotiationToUpdate.offerPrice = price;
+    const negotiation = await getNegotiationById(id);
+    if (!negotiation) throw new Error("Negotiation not found");
+    
+    const originalQuantity = negotiation.quantity;
+    const originalPrice = negotiation.offerPrice;
 
     let messageContent = "He modificado la oferta.";
-    if (quantity !== originalQuantity) {
-        messageContent += ` Nueva cantidad: ${quantity} ${negotiationToUpdate.unit}.`
-    }
-     if (price !== originalPrice) {
-        messageContent += ` Nuevo precio: ${price !== undefined ? `$${price}` : 'Negociable'}.`
-    }
+    if (quantity !== originalQuantity) messageContent += ` Nueva cantidad: ${quantity} ${negotiation.unit}.`;
+    if (price !== originalPrice) messageContent += ` Nuevo precio: ${price !== undefined ? `$${price}` : 'Negociable'}.`;
 
-    negotiationToUpdate.messages.push({
-        senderId: negotiationToUpdate.initiatedBy,
-        content: messageContent,
-        timestamp: new Date().toISOString(),
-    });
+    const updatedMessages = [
+        ...negotiation.messages,
+        {
+            senderId: negotiation.initiatedBy,
+            content: messageContent,
+            timestamp: new Date().toISOString(),
+        }
+    ];
 
-    return rehydrateNegotiation(negotiationToUpdate);
+    const { data, error } = await supabase
+        .from('negotiations')
+        .update({ quantity, offerPrice: price, messages: updatedMessages })
+        .eq('id', id)
+        .select()
+        .single();
+    
+    if (error) throw error;
+    return rehydrateNegotiation(data);
 };
 
 export const addMessageToNegotiation = async (id: string, message: NegotiationMessage): Promise<Negotiation> => {
-    const index = negotiationsDB.findIndex(n => n.id === id);
-    if (index === -1) throw new Error("Negotiation not found");
+    const negotiation = await getNegotiationById(id);
+    if (!negotiation) throw new Error("Negotiation not found");
     
-    negotiationsDB[index].messages.push(message);
-    return rehydrateNegotiation(negotiationsDB[index]);
+    const updatedMessages = [...negotiation.messages, message];
+
+    const { data, error } = await supabase
+        .from('negotiations')
+        .update({ messages: updatedMessages })
+        .eq('id', id)
+        .select()
+        .single();
+
+    if (error) throw error;
+    return rehydrateNegotiation(data);
 }
 
 export const deleteNegotiation = async (id: string): Promise<void> => {
-    negotiationsDB = negotiationsDB.filter(n => n.id !== id);
+    const { error } = await supabase.from('negotiations').delete().eq('id', id);
+    if (error) throw error;
 };
+
+    

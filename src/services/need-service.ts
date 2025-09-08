@@ -1,74 +1,92 @@
 
 // src/services/need-service.ts
 import type { Need } from '@/lib/types';
-import { mockNeeds, mockCompanies } from '@/lib/data';
-import { getCompanyById } from './company-service';
+import { createClient } from '@/lib/supabase/client';
 
-// Helper to rehydrate need with full company object
-const rehydrateNeed = (need: Need): Need => {
-    const company = mockCompanies.find(c => c.id === need.companyId);
-    return {
-        ...need,
-        company: company
-    };
+const supabase = createClient();
+
+const rehydrateNeed = async (need: any): Promise<Need> => {
+    const { data: company, error } = await supabase
+        .from('companies')
+        .select('*')
+        .eq('id', need.companyId)
+        .single();
+
+    if (error) console.error("Error fetching company for need:", error);
+    
+    return { ...need, company };
 };
 
-// Treat mockNeeds as an in-memory database
-let needsDB = [...mockNeeds];
-
-// --- Service Functions ---
-
 export const getAllNeeds = async (): Promise<Need[]> => {
-    return Promise.resolve(needsDB.map(rehydrateNeed));
+    const { data, error } = await supabase
+        .from('needs')
+        .select('*');
+
+    if (error) {
+        console.error('Error fetching needs:', error);
+        return [];
+    }
+
+    const rehydratedNeeds = await Promise.all(data.map(rehydrateNeed));
+    return rehydratedNeeds;
 };
 
 export const getNeedById = async (id: string): Promise<Need | undefined> => {
-    const need = needsDB.find(n => n.id === id);
-    return Promise.resolve(need ? rehydrateNeed(need) : undefined);
-};
+    const { data, error } = await supabase
+        .from('needs')
+        .select('*')
+        .eq('id', id)
+        .single();
 
-export const addNeed = async (needData: Omit<Need, 'id' | 'companyId' | 'company'> & { city: string, country: string }): Promise<Need> => {
-    const companyId = 'comp-3'; // Mock current user's company (a transformer)
-    const company = await getCompanyById(companyId);
-    
-    const newNeed: Need = {
-        ...needData,
-        id: `need-${Date.now()}`, // Simple unique ID
-        companyId,
-        company: {
-            ...company!,
-            city: needData.city,
-            country: needData.country,
-        }
-    };
-    needsDB.push(newNeed);
-    return Promise.resolve(rehydrateNeed(newNeed));
-};
-
-export const updateNeed = async (updatedNeed: Need & { city: string, country: string }): Promise<Need> => {
-    const index = needsDB.findIndex(n => n.id === updatedNeed.id);
-
-    if (index === -1) {
-        throw new Error("Need not found");
+    if (error) {
+        console.error('Error fetching need by id:', error);
+        return undefined;
     }
-    
-    const company = await getCompanyById(updatedNeed.companyId);
 
-    const newNeed = {
-        ...needsDB[index],
-        ...updatedNeed,
-        company: {
-            ...company!,
-            city: updatedNeed.city,
-            country: updatedNeed.country,
-        }
-    };
-    needsDB[index] = newNeed;
-    
-    return Promise.resolve(rehydrateNeed(newNeed));
+    return rehydrateNeed(data);
+};
+
+export const addNeed = async (needData: Omit<Need, 'id' | 'company'>): Promise<Need> => {
+    const { data, error } = await supabase
+        .from('needs')
+        .insert([needData])
+        .select()
+        .single();
+
+    if (error) {
+        console.error('Error adding need:', error);
+        throw error;
+    }
+
+    return rehydrateNeed(data);
+};
+
+export const updateNeed = async (updatedNeed: Partial<Need> & { id: string }): Promise<Need> => {
+    const { data, error } = await supabase
+        .from('needs')
+        .update(updatedNeed)
+        .eq('id', updatedNeed.id)
+        .select()
+        .single();
+
+    if (error) {
+        console.error('Error updating need:', error);
+        throw error;
+    }
+
+    return rehydrateNeed(data);
 };
 
 export const deleteNeed = async (id: string): Promise<void> => {
-    needsDB = needsDB.filter(n => n.id !== id);
-    return Promise.resolve();
+    const { error } = await supabase
+        .from('needs')
+        .delete()
+        .eq('id', id);
+
+    if (error) {
+        console.error('Error deleting need:', error);
+        throw error;
+    }
 };
+
+    

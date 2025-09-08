@@ -1,3 +1,4 @@
+
 // src/app/dashboard/residues/create/form.tsx
 "use client"
 
@@ -29,9 +30,10 @@ import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import type { Residue } from "@/lib/types"
-import { getResidueById, addResidue, updateResidue } from "@/services/residue-service"
-import { mockResidues } from "@/lib/data"
+import { getResidueById, addResidue, updateResidue, getAllResidues } from "@/services/residue-service"
 import { getAllCountries, getCitiesByCountry } from "@/lib/locations";
+import { useRole } from "../../role-provider"
+import { Loader2 } from "lucide-react"
 
 const allCountries = getAllCountries();
 
@@ -61,13 +63,46 @@ const residueFormSchema = z.object({
 
 type ResidueFormValues = z.infer<typeof residueFormSchema>
 
-const uniqueResidueTypes = [...new Set(mockResidues.map(r => r.type))];
-
 export default function ResidueForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast()
   const [residueId, setResidueId] = useState<string | null>(null);
+  const { companyId } = useRole();
+  const [uniqueResidueTypes, setUniqueResidueTypes] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+   useEffect(() => {
+    async function fetchData() {
+        setIsLoading(true);
+        const allResidues = await getAllResidues();
+        const types = [...new Set(allResidues.map(r => r.type))];
+        setUniqueResidueTypes(types);
+
+        const id = searchParams.get('id');
+        if (id) {
+          setResidueId(id);
+          const residue = await getResidueById(id);
+          if (residue) {
+            const isStandardType = types.includes(residue.type);
+            form.reset({
+              type: isStandardType ? residue.type : 'Otro',
+              customType: isStandardType ? '' : residue.type,
+              category: residue.category,
+              quantity: residue.quantity,
+              unit: residue.unit,
+              status: residue.status,
+              pricePerUnit: residue.pricePerUnit,
+              description: residue.description || "",
+              country: residue.company?.country || 'España',
+              city: residue.company?.city || '',
+            });
+          }
+        }
+        setIsLoading(false);
+    }
+    fetchData();
+  }, [searchParams]);
 
   const form = useForm<ResidueFormValues>({
     resolver: zodResolver(residueFormSchema),
@@ -91,52 +126,32 @@ export default function ResidueForm() {
   const citiesForSelectedCountry = getCitiesByCountry(selectedCountry);
   
   useEffect(() => {
-    const id = searchParams.get('id');
-    if (id) {
-      setResidueId(id);
-      const fetchResidue = async () => {
-        const residue = await getResidueById(id);
-        if (residue) {
-          const isStandardType = uniqueResidueTypes.includes(residue.type);
-          form.reset({
-            type: isStandardType ? residue.type : 'Otro',
-            customType: isStandardType ? '' : residue.type,
-            category: residue.category,
-            quantity: residue.quantity,
-            unit: residue.unit,
-            status: residue.status,
-            pricePerUnit: residue.pricePerUnit,
-            description: residue.description || "",
-            country: residue.company?.country || 'España',
-            city: residue.company?.city || '',
-          });
-        }
-      }
-      fetchResidue();
-    }
-  }, [searchParams, form]);
-
-  useEffect(() => {
     if(!form.formState.isDirty) return;
     form.setValue('city', '');
   }, [selectedCountry, form]);
 
 
-  function onSubmit(data: ResidueFormValues) {
+  async function onSubmit(data: ResidueFormValues) {
+    if (!companyId) {
+      toast({ title: "Error", description: "No se ha podido identificar la empresa. Por favor, inicia sesión de nuevo.", variant: "destructive" });
+      return;
+    }
+
     try {
         const finalData = {
           ...data,
+          companyId,
           type: data.type === 'Otro' ? data.customType! : data.type,
         }
 
         if (residueId) {
-            updateResidue({ ...finalData, id: residueId });
+            await updateResidue({ ...finalData, id: residueId });
             toast({
                 title: "¡Residuo Actualizado!",
                 description: `El residuo "${finalData.type}" ha sido actualizado con éxito.`,
             })
         } else {
-            addResidue(finalData);
+            await addResidue(finalData);
             toast({
                 title: "¡Residuo Guardado!",
                 description: `El residuo "${finalData.type}" ha sido guardado con éxito.`,
@@ -152,6 +167,10 @@ export default function ResidueForm() {
             variant: "destructive",
         });
     }
+  }
+  
+  if (isLoading) {
+    return <div className="flex items-center justify-center p-8"><Loader2 className="h-8 w-8 animate-spin"/></div>
   }
 
   return (
@@ -392,3 +411,5 @@ export default function ResidueForm() {
     </div>
   )
 }
+
+    
