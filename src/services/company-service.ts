@@ -1,4 +1,3 @@
-
 // src/services/company-service.ts
 import type { Company } from '@/lib/types';
 import { createClient } from '@/lib/supabase/client';
@@ -33,4 +32,18 @@ export const getAllCompanies = async (): Promise<Company[]> => {
     return data as Company[];
 };
 
-    
+export const updateCompany = async (id: string, updates: Partial<Omit<Company, 'id' | 'auth_id' | 'created_at'>>): Promise<Company> => {
+    const { data, error } = await supabase
+        .from('companies')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+    if (error) {
+        console.error('Error updating company:', error);
+        throw error;
+    }
+
+    return data as Company;
+};

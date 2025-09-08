@@ -29,6 +29,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { getAllCountries, getCitiesByCountry, type City } from "@/lib/locations";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { updateCompany } from "@/services/company-service";
 
 const allCountries = getAllCountries();
 
@@ -50,7 +51,7 @@ type ProfileFormValues = z.infer<typeof profileSchema>;
 export default function SettingsPage() {
     const { toast } = useToast();
     const router = useRouter();
-    const { user, role, setRole, companyName } = useRole();
+    const { user, role, setRole, companyId } = useRole();
     const supabase = createClient();
 
     const form = useForm<ProfileFormValues>({
@@ -84,16 +85,26 @@ export default function SettingsPage() {
     }, [user, role, form]);
 
     useEffect(() => {
-        if (form.formState.isDirty) {
+        if (form.formState.isDirty && form.getValues('city')) {
             form.setValue('city', '');
         }
     }, [selectedCountry, form]);
 
 
     async function onSubmit(values: ProfileFormValues) {
+        if (!companyId) {
+            toast({
+                title: "Error",
+                description: "No se pudo encontrar el ID de la empresa. Por favor, recarga la página.",
+                variant: "destructive"
+            });
+            return;
+        }
+
         setRole(values.role); // Update local context
         
-        const { error } = await supabase.auth.updateUser({
+        // 1. Update user metadata in Supabase Auth
+        const { error: authError } = await supabase.auth.updateUser({
             data: { 
                 company_name: values.companyName,
                 app_role: values.role,
@@ -105,20 +116,43 @@ export default function SettingsPage() {
                 phone: values.phone,
                 website: values.website
             }
-        })
-        
-        if (error) {
+        });
+
+        if (authError) {
              toast({
-                title: "Error al actualizar",
-                description: error.message || "No se pudo guardar la información del perfil.",
+                title: "Error al actualizar la autenticación",
+                description: authError.message,
                 variant: "destructive"
             });
-        } else {
+             return; // Stop if auth update fails
+        }
+        
+        // 2. Update the public companies table
+        try {
+            await updateCompany(companyId, {
+                name: values.companyName,
+                type: values.role,
+                description: values.description,
+                country: values.country,
+                city: values.city,
+                address: values.address,
+                contactEmail: values.contactEmail,
+                phone: values.phone,
+                website: values.website,
+            });
+
             toast({
                 title: "Perfil Actualizado",
                 description: "La información de tu empresa ha sido guardada.",
             });
             router.refresh();
+
+        } catch (error: any) {
+            toast({
+                title: "Error al guardar en el perfil público",
+                description: error.message || "No se pudo guardar la información del perfil.",
+                variant: "destructive"
+            });
         }
     }
 
