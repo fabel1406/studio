@@ -4,8 +4,8 @@
 import React, { createContext, useContext, useState, useMemo, useEffect } from 'react';
 import { useRouter } from "next/navigation";
 import { type User } from "@supabase/supabase-js";
+import { createBrowserClient } from '@supabase/ssr'
 import { Logo } from "@/components/logo";
-import { supabase } from '@/lib/supabase';
 
 type UserRole = "GENERATOR" | "TRANSFORMER" | "BOTH";
 
@@ -33,39 +33,27 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
 
   useEffect(() => {
-    // Check initial session
-    const checkInitialSession = async () => {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-            setUser(session.user);
-            const userRole = (session.user.user_metadata.role || localStorage.getItem('userRole') || 'GENERATOR') as UserRole;
-            setInternalRole(userRole);
-        }
-        setIsLoading(false);
-    };
-
-    checkInitialSession();
-
-    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       const currentUser = session?.user ?? null;
       setUser(currentUser);
       if (currentUser) {
+        // Set role from user metadata or fallback to localStorage/default
         const userRole = (currentUser.user_metadata.role || localStorage.getItem('userRole') || 'GENERATOR') as UserRole;
         setInternalRole(userRole);
       }
-      
-      if (isLoading) {
-        setIsLoading(false);
-      }
+      setIsLoading(false);
     });
 
     return () => {
       subscription.unsubscribe();
     };
-  }, [isLoading]);
+  }, [supabase.auth]);
   
   useEffect(() => {
     if (!isLoading && !user) {
@@ -81,20 +69,14 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     if (user) {
-      // The role from user_metadata is the source of truth, but we allow local override for demo purposes.
       const authoritativeRole = (user.user_metadata.role || role) as UserRole;
        setInternalRole(authoritativeRole);
       if (authoritativeRole === 'GENERATOR') {
-          // For this demo, Generators will be associated with comp-1
           setCurrentUserId('comp-1');
       } else if (authoritativeRole === 'TRANSFORMER') {
-           // For this demo, Transformers will be associated with comp-3
           setCurrentUserId('comp-3');
       } else if (authoritativeRole === 'BOTH') {
-          // A user with BOTH roles might have multiple identities or a single one
-          // For this demo, we'll assign them a generator identity by default.
-          // This could be enhanced with a context switcher UI.
-          setCurrentUserId('comp-1'); 
+          setCurrentUserId('comp-1'); // Default to generator for now
       }
     } else {
         setCurrentUserId(null);

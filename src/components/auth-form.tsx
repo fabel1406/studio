@@ -25,7 +25,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { createBrowserClient } from '@supabase/ssr'
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Dirección de correo electrónico no válida." }),
@@ -33,6 +33,7 @@ const loginSchema = z.object({
 });
 
 const registerSchema = z.object({
+  companyName: z.string().min(2, { message: "El nombre de la empresa debe tener al menos 2 caracteres." }),
   email: z.string().email({ message: "Dirección de correo electrónico no válida." }),
   password: z.string().min(8, { message: "La contraseña debe tener al menos 8 caracteres." }),
   role: z.enum(["GENERATOR", "TRANSFORMER", "BOTH"], {
@@ -40,7 +41,6 @@ const registerSchema = z.object({
   }),
 });
 
-// Create a combined schema that makes `role` optional for use in the form hook
 const formSchema = z.union([loginSchema, registerSchema]);
 type FormValues = z.infer<typeof formSchema>;
 
@@ -54,6 +54,10 @@ export function AuthForm({ mode, onVerificationSent }: AuthFormProps) {
   const { toast } = useToast();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
 
   const schema = mode === "login" ? loginSchema : registerSchema;
 
@@ -62,7 +66,7 @@ export function AuthForm({ mode, onVerificationSent }: AuthFormProps) {
     defaultValues: {
       email: "",
       password: "",
-      ...(mode === "register" && { role: undefined }),
+      ...(mode === "register" && { companyName: "", role: undefined }),
     },
   });
 
@@ -70,13 +74,14 @@ export function AuthForm({ mode, onVerificationSent }: AuthFormProps) {
     setIsLoading(true);
     try {
         if (mode === 'register') {
-            const { email, password, role } = values as z.infer<typeof registerSchema>;
+            const { email, password, role, companyName } = values as z.infer<typeof registerSchema>;
             const { error } = await supabase.auth.signUp({
                 email,
                 password,
                 options: {
                     data: {
-                        role: role
+                        role: role,
+                        companyName: companyName
                     },
                     emailRedirectTo: `${window.location.origin}/auth/callback`,
                 }
@@ -88,13 +93,8 @@ export function AuthForm({ mode, onVerificationSent }: AuthFormProps) {
             
             if (onVerificationSent) {
               onVerificationSent();
-            } else {
-              toast({
-                  title: "¡Registro Exitoso!",
-                  description: "Revisa tu correo para verificar tu cuenta.",
-              });
             }
-            form.reset();
+            
         } else {
             const { email, password } = values as z.infer<typeof loginSchema>;
             const { data, error } = await supabase.auth.signInWithPassword({ email, password });
@@ -104,10 +104,6 @@ export function AuthForm({ mode, onVerificationSent }: AuthFormProps) {
             const userRole = data.user?.user_metadata.role || 'GENERATOR';
             localStorage.setItem('userRole', userRole);
 
-             toast({
-                title: "Inicio de Sesión Exitoso",
-                description: "Redirigiendo al panel de control...",
-            });
             router.push("/dashboard");
         }
        
@@ -126,6 +122,21 @@ export function AuthForm({ mode, onVerificationSent }: AuthFormProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        {mode === "register" && (
+            <FormField
+              control={form.control}
+              name="companyName"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Nombre de la Empresa</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Tu Empresa S.L." {...field} disabled={isLoading} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+        )}
         <FormField
           control={form.control}
           name="email"

@@ -25,7 +25,7 @@ import { ScrollToTop } from "@/components/scroll-to-top";
 import { useRole, RoleProvider } from "./role-provider";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Footer } from "@/components/footer";
-import { supabase } from "@/lib/supabase";
+import { createBrowserClient } from '@supabase/ssr'
 
 
 type NavItem = {
@@ -54,6 +54,10 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   const { role, user, isLoading } = useRole();
   const { setOpenMobile } = useSidebar();
   const router = useRouter();
+   const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
 
   const handleLinkClick = () => {
     setOpenMobile(false);
@@ -70,11 +74,11 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   const UserInfo = () => (
      <div className="flex items-center gap-3 p-2 group-data-[collapsible=icon]:justify-center">
         <Avatar className="size-9">
-          {user?.user_metadata.avatar_url && <AvatarImage src={user.user_metadata.avatar_url} alt={user.user_metadata.full_name || user.email || 'User'} />}
-          <AvatarFallback>{user?.email?.charAt(0).toUpperCase() || 'U'}</AvatarFallback>
+          {user?.user_metadata.avatar_url && <AvatarImage src={user.user_metadata.avatar_url} alt={user.user_metadata.companyName || user.email || 'User'} />}
+          <AvatarFallback>{user?.user_metadata.companyName?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'U'}</AvatarFallback>
         </Avatar>
         <div className="flex flex-col group-data-[collapsible=icon]:hidden">
-          <span className="text-sm font-medium text-foreground truncate">{user?.user_metadata.full_name || 'Usuario'}</span>
+          <span className="text-sm font-medium text-foreground truncate">{user?.user_metadata.companyName || 'Usuario'}</span>
           <span className="text-xs text-muted-foreground truncate">{user?.email}</span>
         </div>
       </div>
@@ -90,9 +94,8 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       </div>
   );
 
-  // The loading state is now primarily handled by the RoleProvider
   if (isLoading) {
-    return null; // Or a minimal loader if you prefer, but RoleProvider shows a full-page one
+    return null;
   }
   
   return (
