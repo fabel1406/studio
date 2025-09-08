@@ -30,6 +30,7 @@ export async function generateNeedDetails(input: GenerateNeedDetailsInput): Prom
 
 const needDetailsPrompt = ai.definePrompt({
   name: 'needDetailsPrompt',
+  model: 'googleai/gemini-1.5-flash',
   input: { schema: GenerateNeedDetailsInputSchema },
   output: { schema: GenerateNeedDetailsOutputSchema },
   prompt: `

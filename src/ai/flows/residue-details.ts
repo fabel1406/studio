@@ -30,6 +30,7 @@ export async function generateResidueDetails(input: GenerateResidueDetailsInput)
 
 const residueDetailsPrompt = ai.definePrompt({
   name: 'residueDetailsPrompt',
+  model: 'googleai/gemini-1.5-flash',
   input: { schema: GenerateResidueDetailsInputSchema },
   output: { schema: GenerateResidueDetailsOutputSchema },
   prompt: `

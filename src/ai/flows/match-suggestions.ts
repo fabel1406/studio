@@ -12,6 +12,7 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'zod';
 import type { Residue, Need, Company } from '@/lib/types';
+import { googleAI } from '@genkit-ai/googleai';
 
 // Define Zod schemas for our main data types to use in the flow
 const CompanySchema = z.object({
@@ -97,6 +98,7 @@ export async function getMatchSuggestions(input: MatchSuggestionsInput): Promise
 
 const findTransformersPrompt = ai.definePrompt({
   name: 'findTransformersPrompt',
+  model: 'googleai/gemini-1.5-flash',
   input: {
     schema: z.object({
       sourceResidue: ResidueSchema,
@@ -132,6 +134,7 @@ const findTransformersPrompt = ai.definePrompt({
 
 const findGeneratorsPrompt = ai.definePrompt({
   name: 'findGeneratorsPrompt',
+  model: 'googleai/gemini-1.5-flash',
   input: {
     schema: z.object({
       sourceNeed: NeedSchema,
