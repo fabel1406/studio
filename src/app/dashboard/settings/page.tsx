@@ -1,3 +1,4 @@
+
 // src/app/dashboard/settings/page.tsx
 "use client"
 
@@ -28,8 +29,8 @@ import { useRole } from "../role-provider";
 import { Textarea } from "@/components/ui/textarea";
 import { getAllCountries, getCitiesByCountry, type City } from "@/lib/locations";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
-import { updateCompany } from "@/services/company-service";
+import { updateCompanyAction } from "./actions";
+import { Loader2 } from "lucide-react";
 
 const allCountries = getAllCountries();
 
@@ -46,13 +47,13 @@ const profileSchema = z.object({
   website: z.string().url("La URL del sitio web no es válida.").optional().or(z.literal('')),
 });
 
-type ProfileFormValues = z.infer<typeof profileSchema>;
+export type ProfileFormValues = z.infer<typeof profileSchema>;
 
 export default function SettingsPage() {
     const { toast } = useToast();
     const router = useRouter();
-    const { user, role, setRole, companyId } = useRole();
-    const supabase = createClient();
+    const { user, role, setRole, companyId, companyName } = useRole();
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const form = useForm<ProfileFormValues>({
         resolver: zodResolver(profileSchema),
@@ -67,12 +68,12 @@ export default function SettingsPage() {
     const citiesForSelectedCountry = getCitiesByCountry(selectedCountry);
 
     useEffect(() => {
-        if (user) {
+        if (user && companyName) {
             const metadata = user.user_metadata;
             form.reset({
-                companyName: metadata.company_name || '',
+                companyName: companyName || '',
                 email: user.email || '',
-                role: metadata.app_role || role,
+                role: role || 'GENERATOR',
                 description: metadata.description || '',
                 country: metadata.country || 'España',
                 city: metadata.city || '',
@@ -82,72 +83,48 @@ export default function SettingsPage() {
                 website: metadata.website || '',
             });
         }
-    }, [user, role, form]);
-
+    }, [user, role, companyName, form]);
+    
     useEffect(() => {
-        if (form.formState.isDirty && form.getValues('city')) {
-            form.setValue('city', '');
-        }
+      // This effect should only run when the selectedCountry changes interactively.
+      // The `formState.isDirty` check prevents it from running on initial load.
+      if (form.formState.isDirty && selectedCountry) {
+        form.setValue('city', '');
+      }
     }, [selectedCountry, form]);
 
 
     async function onSubmit(values: ProfileFormValues) {
+        setIsSubmitting(true);
         if (!companyId) {
             toast({
                 title: "Error",
                 description: "No se pudo encontrar el ID de la empresa. Por favor, recarga la página.",
                 variant: "destructive"
             });
+            setIsSubmitting(false);
             return;
         }
 
-        try {
-             // 1. Update the public companies table
-            await updateCompany(companyId, {
-                name: values.companyName,
-                type: values.role,
-                description: values.description,
-                country: values.country,
-                city: values.city,
-                address: values.address,
-                contactEmail: values.contactEmail,
-                phone: values.phone,
-                website: values.website,
+        const result = await updateCompanyAction(companyId, values);
+
+        if (result.error) {
+             toast({
+                title: "Error al guardar el perfil",
+                description: result.error,
+                variant: "destructive"
             });
-
-            // 2. Update user metadata in Supabase Auth (for consistency)
-            const { error: authError } = await supabase.auth.updateUser({
-                data: { 
-                    company_name: values.companyName,
-                    app_role: values.role,
-                    description: values.description,
-                    country: values.country,
-                    city: values.city,
-                    address: values.address,
-                    contactEmail: values.contactEmail,
-                    phone: values.phone,
-                    website: values.website
-                }
-            });
-
-            if (authError) throw authError;
-
-             // 3. Update local state
-            setRole(values.role);
-
+        } else {
             toast({
                 title: "Perfil Actualizado",
                 description: "La información de tu empresa ha sido guardada.",
             });
+            // Update local context
+            setRole(values.role);
+            // Refresh server components to get new data
             router.refresh();
-
-        } catch (error: any) {
-            toast({
-                title: "Error al guardar el perfil",
-                description: error.message || "No se pudo guardar la información.",
-                variant: "destructive"
-            });
         }
+        setIsSubmitting(false);
     }
 
     return (
@@ -331,7 +308,10 @@ export default function SettingsPage() {
                                         </FormItem>
                                     )}
                                 />
-                                <Button type="submit">Guardar Cambios</Button>
+                                <Button type="submit" disabled={isSubmitting}>
+                                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                    Guardar Cambios
+                                </Button>
                             </form>
                         </Form>
                     </CardContent>
@@ -340,3 +320,4 @@ export default function SettingsPage() {
         </div>
     );
 }
+

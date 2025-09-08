@@ -2,7 +2,7 @@
 // src/app/dashboard/role-provider.tsx
 "use client";
 
-import React, { createContext, useContext, useState, useMemo, useEffect } from 'react';
+import React, { createContext, useContext, useState, useMemo, useEffect, useCallback } from 'react';
 import { useRouter } from "next/navigation";
 import { type User } from "@supabase/supabase-js";
 import { Logo } from "@/components/logo";
@@ -30,48 +30,36 @@ export const useRole = () => {
   return context;
 };
 
-const getInitialCompanyId = (): string | null => {
-    if (typeof window === 'undefined') return null;
-    return localStorage.getItem('companyId');
-}
-
 export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [companyName, setCompanyName] = useState<string>("");
   const [role, setInternalRole] = useState<UserRole>("GENERATOR");
-  const [companyId, setCompanyId] = useState<string | null>(getInitialCompanyId());
+  const [companyId, setCompanyId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
   const supabase = createClient();
 
+  const fetchCompanyData = useCallback(async (userId: string) => {
+    const { data, error } = await supabase.from('companies').select('id, name, type').eq('auth_id', userId).single();
+    if (data) {
+      setCompanyId(data.id);
+      setCompanyName(data.name);
+      setInternalRole(data.type as UserRole);
+      return true;
+    }
+    return false;
+  }, [supabase]);
+
+
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        setIsLoading(true);
         const currentUser = session?.user || null;
         setUser(currentUser);
 
         if (currentUser) {
-          const { data, error } = await supabase.from('companies').select('id, name, type').eq('auth_id', currentUser.id).single();
-          
-          if (data) {
-            setCompanyId(data.id);
-            setCompanyName(data.name);
-            setInternalRole(data.type as UserRole);
-            localStorage.setItem('userRole', data.type);
-            localStorage.setItem('companyId', data.id);
-          } else {
-              // Fallback for metadata if DB call fails or is new user
-              const userRole = currentUser.user_metadata?.app_role as UserRole;
-              const userCompanyName = currentUser.user_metadata?.company_name || currentUser.email?.split('@')[0] || "Usuario";
-              if(userRole) setInternalRole(userRole);
-              setCompanyName(userCompanyName);
-              localStorage.setItem('userRole', userRole || "GENERATOR");
-          }
-        } else {
-            // Clear on logout
-            localStorage.removeItem('userRole');
-            localStorage.removeItem('companyId');
-            setCompanyId(null);
+            await fetchCompanyData(currentUser.id);
         }
         
         setIsLoading(false);
@@ -81,7 +69,7 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
     return () => {
       subscription.unsubscribe();
     };
-  }, [supabase, router]);
+  }, [supabase, fetchCompanyData]);
 
   
   useEffect(() => {
@@ -92,17 +80,14 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
 
 
   const setRole = async (newRole: UserRole) => {
-    if (!companyId) return;
     setInternalRole(newRole);
-    localStorage.setItem('userRole', newRole);
-    await supabase.from('companies').update({ type: newRole }).eq('id', companyId);
-    await supabase.auth.updateUser({ data: { app_role: newRole } });
+    // The role is now primarily updated via the settings page server action
   }
   
   const logout = async () => {
       await supabase.auth.signOut();
       router.push('/login');
-      router.refresh();
+      // No need to manually clear state, onAuthStateChange will handle it
   }
 
   const value = useMemo(() => ({ user, role, setRole, companyId, isLoading, logout, companyName }), [user, role, companyId, isLoading, companyName]);
@@ -118,7 +103,8 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  if (!user) {
+  if (!user && !isLoading) {
+      // This prevents a flash of dashboard content before redirect
       return null;
   }
 

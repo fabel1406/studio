@@ -1,6 +1,8 @@
+
 // src/services/company-service.ts
 import type { Company } from '@/lib/types';
 import { createClient } from '@/lib/supabase/client';
+import { type SupabaseClient } from '@supabase/supabase-js';
 
 const supabase = createClient();
 
@@ -32,7 +34,15 @@ export const getAllCompanies = async (): Promise<Company[]> => {
     return data as Company[];
 };
 
-export const updateCompany = async (id: string, updates: Partial<Omit<Company, 'id' | 'auth_id' | 'created_at'>>): Promise<Company | null> => {
+
+// Note: This function is now designed to be called from a server-side context
+// that provides an authenticated Supabase client.
+export const updateCompany = async (
+    supabase: SupabaseClient,
+    id: string, 
+    updates: Partial<Omit<Company, 'id' | 'auth_id' | 'created_at'>>
+): Promise<Company | null> => {
+    
     const { data, error } = await supabase
         .from('companies')
         .update(updates)
@@ -42,7 +52,8 @@ export const updateCompany = async (id: string, updates: Partial<Omit<Company, '
 
     if (error) {
         console.error('Error updating company:', error);
-        throw new Error(error.message);
+        // Throw the actual error object to be caught by the server action
+        throw error;
     }
 
     return data as Company;
