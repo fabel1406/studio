@@ -25,7 +25,15 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
-import { createClient } from "@/lib/supabase";
+import { auth } from "@/lib/firebase";
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  updateProfile,
+  sendEmailVerification,
+} from "firebase/auth";
+import { useRole } from "@/app/dashboard/role-provider";
+
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Dirección de correo electrónico no válida." }),
@@ -54,8 +62,7 @@ export function AuthForm({ mode, onVerificationSent }: AuthFormProps) {
   const { toast } = useToast();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const supabase = createClient();
-
+  const { setRole } = useRole();
   const schema = mode === "login" ? loginSchema : registerSchema;
 
   const form = useForm<FormValues>({
@@ -70,48 +77,73 @@ export function AuthForm({ mode, onVerificationSent }: AuthFormProps) {
   async function onSubmit(values: FormValues) {
     setIsLoading(true);
     try {
-        if (mode === 'register') {
-            const { email, password, role, companyName } = values as z.infer<typeof registerSchema>;
-            const { error } = await supabase.auth.signUp({
-                email,
-                password,
-                options: {
-                    data: {
-                        role: role,
-                        companyName: companyName
-                    },
-                    emailRedirectTo: `${window.location.origin}/auth/callback`,
-                }
-            });
+      if (mode === 'register') {
+        const { email, password, role, companyName } = values as z.infer<typeof registerSchema>;
+        
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
 
-            if (error) throw error;
-            
-            localStorage.setItem('userRole', role);
-            
-            if (onVerificationSent) {
-              onVerificationSent();
-            }
-            
+        // Update user profile with company name and role
+        // Note: Firebase Auth doesn't have a native 'role' field. 
+        // We store it in localStorage and could also use Firestore or a custom claims system.
+        await updateProfile(user, { displayName: companyName });
+
+        // For this app, we'll manage role on the client side.
+        setRole(role);
+        
+        // This is a placeholder for sending a verification email
+        // In a real Supabase/Firebase project, this would be configured in the backend
+        // await sendEmailVerification(user);
+
+        if (onVerificationSent) {
+          onVerificationSent();
         } else {
-            const { email, password } = values as z.infer<typeof loginSchema>;
-            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-            
-            if (error) throw error;
-
-            const userRole = data.user?.user_metadata.role || 'GENERATOR';
-            localStorage.setItem('userRole', userRole);
-            
-            router.push("/dashboard");
-            router.refresh();
+            toast({
+                title: "¡Registro Exitoso!",
+                description: "Revisa tu correo para verificar tu cuenta.",
+            });
         }
-       
+        
+      } else { // Login mode
+        const { email, password } = values as z.infer<typeof loginSchema>;
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+
+        // Fetch user role from localStorage, as Firebase Auth doesn't store it by default
+        const storedRole = localStorage.getItem('userRole') as "GENERATOR" | "TRANSFORMER" | "BOTH" | null;
+        if(storedRole) setRole(storedRole);
+        
+        router.push("/dashboard");
+        router.refresh();
+      }
     } catch (error: any) {
-        console.error("Authentication error:", error);
-        toast({
-            title: "Error de autenticación",
-            description: error.message || "Ha ocurrido un error inesperado.",
-            variant: "destructive",
-        });
+      console.error("Authentication error:", error);
+      const errorCode = error.code || 'auth/unknown-error';
+      let friendlyMessage = "Ha ocurrido un error inesperado.";
+      
+      switch(errorCode) {
+        case 'auth/user-not-found':
+        case 'auth/wrong-password':
+          friendlyMessage = "Correo electrónico o contraseña incorrectos.";
+          break;
+        case 'auth/email-already-in-use':
+          friendlyMessage = "Este correo electrónico ya está registrado.";
+          break;
+        case 'auth/weak-password':
+          friendlyMessage = "La contraseña es demasiado débil. Debe tener al menos 6 caracteres.";
+          break;
+        case 'auth/invalid-email':
+           friendlyMessage = "El formato del correo electrónico no es válido.";
+           break;
+        default:
+          console.log(errorCode); // Log other errors for debugging
+          break;
+      }
+      
+      toast({
+        title: "Error de autenticación",
+        description: friendlyMessage,
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -121,19 +153,19 @@ export function AuthForm({ mode, onVerificationSent }: AuthFormProps) {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         {mode === "register" && (
-            <FormField
-              control={form.control}
-              name="companyName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nombre de la Empresa</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Tu Empresa S.L." {...field} disabled={isLoading} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          <FormField
+            control={form.control}
+            name="companyName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Nombre de la Empresa</FormLabel>
+                <FormControl>
+                  <Input placeholder="Tu Empresa S.L." {...field} disabled={isLoading} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         )}
         <FormField
           control={form.control}
@@ -168,7 +200,7 @@ export function AuthForm({ mode, onVerificationSent }: AuthFormProps) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Soy un...</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value as string} disabled={isLoading}>
+                <Select onValueChange={(value) => field.onChange(value as "GENERATOR" | "TRANSFORMER" | "BOTH")} defaultValue={field.value as string} disabled={isLoading}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecciona tu rol" />

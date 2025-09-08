@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import {
   Sidebar,
   SidebarContent,
@@ -19,14 +19,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Logo } from "@/components/logo";
 import { BarChart2, Leaf, Recycle, Settings, LogOut, LayoutDashboard, Search, List, PackagePlus, Handshake } from "lucide-react";
 import type { LucideIcon } from 'lucide-react';
-import React, { useEffect } from 'react';
+import React from 'react';
 import { DashboardHeader } from "@/components/dashboard-header";
 import { ScrollToTop } from "@/components/scroll-to-top";
 import { useRole, RoleProvider } from "./role-provider";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Footer } from "@/components/footer";
-import { createClient } from "@/lib/supabase";
-
 
 type NavItem = {
   href: string;
@@ -51,20 +49,15 @@ const settingsNav: NavItem[] = [
 
 function DashboardContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { role, user, isLoading } = useRole();
+  const { role, user, isLoading, logout } = useRole();
   const { setOpenMobile } = useSidebar();
-  const router = useRouter();
-  const supabase = createClient();
 
   const handleLinkClick = () => {
     setOpenMobile(false);
   };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    localStorage.removeItem('userRole');
-    router.push('/login');
-    router.refresh();
+    await logout();
   }
 
   const filteredNavItems = navItems.filter(item => item.roles.includes(role));
@@ -72,11 +65,11 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   const UserInfo = () => (
      <div className="flex items-center gap-3 p-2 group-data-[collapsible=icon]:justify-center">
         <Avatar className="size-9">
-          {user?.user_metadata.avatar_url && <AvatarImage src={user.user_metadata.avatar_url} alt={user.user_metadata.companyName || user.email || 'User'} />}
-          <AvatarFallback>{user?.user_metadata.companyName?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'U'}</AvatarFallback>
+          {user?.photoURL && <AvatarImage src={user.photoURL} alt={user.displayName || user.email || 'User'} />}
+          <AvatarFallback>{user?.displayName?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || 'U'}</AvatarFallback>
         </Avatar>
         <div className="flex flex-col group-data-[collapsible=icon]:hidden">
-          <span className="text-sm font-medium text-foreground truncate">{user?.user_metadata.companyName || 'Usuario'}</span>
+          <span className="text-sm font-medium text-foreground truncate">{user?.displayName || 'Usuario'}</span>
           <span className="text-xs text-muted-foreground truncate">{user?.email}</span>
         </div>
       </div>

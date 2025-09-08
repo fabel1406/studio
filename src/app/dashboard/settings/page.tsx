@@ -28,7 +28,8 @@ import { useRole } from "../role-provider";
 import { Textarea } from "@/components/ui/textarea";
 import { getAllCountries, getCitiesByCountry, type City } from "@/lib/locations";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase";
+import { auth } from "@/lib/firebase";
+import { updateProfile } from "firebase/auth";
 
 const allCountries = getAllCountries();
 
@@ -51,7 +52,6 @@ export default function SettingsPage() {
     const { toast } = useToast();
     const router = useRouter();
     const { user, role, setRole } = useRole();
-    const supabase = createClient();
 
     const form = useForm<ProfileFormValues>({
         resolver: zodResolver(profileSchema),
@@ -77,7 +77,7 @@ export default function SettingsPage() {
             form.reset({
                 ...form.getValues(),
                 email: user.email || '',
-                companyName: user.user_metadata.companyName || user.email?.split('@')[0] ||'Usuario EcoConnect',
+                companyName: user.displayName || user.email?.split('@')[0] ||'Usuario EcoConnect',
                 role,
             });
         }
@@ -91,30 +91,34 @@ export default function SettingsPage() {
 
 
     async function onSubmit(values: ProfileFormValues) {
-        setRole(values.role); // Update context and localStorage
-        
-        const { data, error } = await supabase.auth.updateUser({
-            data: { 
-                role: values.role,
-                companyName: values.companyName,
-             }
-        })
-
-        if (error) {
-             toast({
-                title: "Error al actualizar",
-                description: "No se pudo guardar la información del perfil. " + error.message,
-                variant: "destructive"
-            });
+        if (!auth.currentUser) {
+            toast({ title: "Error", description: "No estás autenticado.", variant: "destructive" });
             return;
         }
+
+        setRole(values.role); // Update context and localStorage
         
-        console.log("Saving profile data:", values);
-        toast({
-            title: "Perfil Actualizado",
-            description: "La información de tu empresa ha sido guardada.",
-        });
-        router.refresh();
+        try {
+            await updateProfile(auth.currentUser, {
+                displayName: values.companyName
+            });
+
+             // In a real app, you would also save other profile details to Firestore or Realtime Database here.
+            console.log("Saving profile data:", values);
+            
+            toast({
+                title: "Perfil Actualizado",
+                description: "La información de tu empresa ha sido guardada.",
+            });
+            router.refresh();
+
+        } catch (error) {
+             toast({
+                title: "Error al actualizar",
+                description: "No se pudo guardar la información del perfil.",
+                variant: "destructive"
+            });
+        }
     }
 
     return (

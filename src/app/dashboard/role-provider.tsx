@@ -3,9 +3,9 @@
 
 import React, { createContext, useContext, useState, useMemo, useEffect } from 'react';
 import { useRouter } from "next/navigation";
-import { type User } from "@supabase/supabase-js";
+import { type User, onAuthStateChanged, signOut } from "firebase/auth";
 import { Logo } from "@/components/logo";
-import { createClient } from '@/lib/supabase';
+import { auth } from "@/lib/firebase";
 
 type UserRole = "GENERATOR" | "TRANSFORMER" | "BOTH";
 
@@ -15,6 +15,7 @@ type RoleContextType = {
   setRole: (role: UserRole) => void;
   currentUserId: string | null;
   isLoading: boolean;
+  logout: () => void;
 };
 
 const RoleContext = createContext<RoleContextType | null>(null);
@@ -33,38 +34,21 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
-  const supabase = createClient();
 
   useEffect(() => {
-    const checkInitialSession = async () => {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-            setUser(session.user);
-            const userRole = (session.user.user_metadata.role || localStorage.getItem('userRole') || 'GENERATOR') as UserRole;
-            setInternalRole(userRole);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setUser(user);
+      if (user) {
+        const savedRole = localStorage.getItem('userRole') as UserRole;
+        if (savedRole) {
+          setInternalRole(savedRole);
         }
-        setIsLoading(false);
-    };
-
-    checkInitialSession();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      const currentUser = session?.user ?? null;
-      setUser(currentUser);
-      if (currentUser) {
-        const userRole = (currentUser.user_metadata.role || localStorage.getItem('userRole') || 'GENERATOR') as UserRole;
-        setInternalRole(userRole);
       }
-      // If there is no session, and we are not loading, redirect.
-      if (!session && !isLoading) {
-          router.push('/login');
-      }
+      setIsLoading(false);
     });
 
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [supabase, router, isLoading]);
+    return () => unsubscribe();
+  }, []);
   
   useEffect(() => {
     if (!isLoading && !user) {
@@ -77,16 +61,20 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
     setInternalRole(newRole);
     localStorage.setItem('userRole', newRole);
   }
+  
+  const logout = async () => {
+      await signOut(auth);
+      localStorage.removeItem('userRole');
+      router.push('/login');
+  }
 
   useEffect(() => {
     if (user) {
-      const authoritativeRole = (user.user_metadata.role || role) as UserRole;
-       setInternalRole(authoritativeRole);
-      if (authoritativeRole === 'GENERATOR') {
+       if (role === 'GENERATOR') {
           setCurrentUserId('comp-1');
-      } else if (authoritativeRole === 'TRANSFORMER') {
+      } else if (role === 'TRANSFORMER') {
           setCurrentUserId('comp-3');
-      } else if (authoritativeRole === 'BOTH') {
+      } else if (role === 'BOTH') {
           setCurrentUserId('comp-1'); // Default to generator for now
       }
     } else {
@@ -94,7 +82,7 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [role, user]);
 
-  const value = useMemo(() => ({ user, role, setRole, currentUserId, isLoading }), [user, role, currentUserId, isLoading]);
+  const value = useMemo(() => ({ user, role, setRole, currentUserId, isLoading, logout }), [user, role, currentUserId, isLoading]);
   
   if (isLoading) {
     return (
@@ -105,6 +93,10 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
         </div>
       </div>
     );
+  }
+
+  if (!user) {
+      return null;
   }
 
   return (
