@@ -5,7 +5,7 @@ import React, { createContext, useContext, useState, useMemo, useEffect } from '
 import { useRouter } from "next/navigation";
 import { type User } from "@supabase/supabase-js";
 import { Logo } from "@/components/logo";
-import { createClient } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 
 type UserRole = "GENERATOR" | "TRANSFORMER" | "BOTH";
 
@@ -35,8 +35,6 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
 
   useEffect(() => {
-    const supabase = createClient();
-    
     // Check initial session
     const checkInitialSession = async () => {
         const { data: { session } } = await supabase.auth.getSession();
@@ -58,8 +56,7 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
         const userRole = (currentUser.user_metadata.role || localStorage.getItem('userRole') || 'GENERATOR') as UserRole;
         setInternalRole(userRole);
       }
-      // If the auth state changes to logged out, we don't need to do anything here,
-      // the effect below will handle the redirect.
+      
       if (isLoading) {
         setIsLoading(false);
       }
@@ -86,6 +83,7 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
     if (user) {
       // The role from user_metadata is the source of truth, but we allow local override for demo purposes.
       const authoritativeRole = (user.user_metadata.role || role) as UserRole;
+       setInternalRole(authoritativeRole);
       if (authoritativeRole === 'GENERATOR') {
           // For this demo, Generators will be associated with comp-1
           setCurrentUserId('comp-1');

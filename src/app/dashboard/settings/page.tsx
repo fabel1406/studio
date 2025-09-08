@@ -28,7 +28,7 @@ import { useRole } from "../role-provider";
 import { Textarea } from "@/components/ui/textarea";
 import { getAllCountries, getCitiesByCountry, type City } from "@/lib/locations";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
 
 const allCountries = getAllCountries();
 
@@ -91,7 +91,6 @@ export default function SettingsPage() {
 
     async function onSubmit(values: ProfileFormValues) {
         setRole(values.role); // Update context and localStorage
-        const supabase = createClient();
         
         const { data, error } = await supabase.auth.updateUser({
             data: { 

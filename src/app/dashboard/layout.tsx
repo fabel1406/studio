@@ -25,7 +25,7 @@ import { ScrollToTop } from "@/components/scroll-to-top";
 import { useRole, RoleProvider } from "./role-provider";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Footer } from "@/components/footer";
-import { createClient } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
 
 
 type NavItem = {
@@ -60,7 +60,6 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   };
 
   const handleLogout = async () => {
-    const supabase = createClient();
     await supabase.auth.signOut();
     localStorage.removeItem('userRole');
     router.push('/login');

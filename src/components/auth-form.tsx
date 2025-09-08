@@ -25,7 +25,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
-import { createClient } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Dirección de correo electrónico no válida." }),
@@ -68,7 +68,6 @@ export function AuthForm({ mode, onVerificationSent }: AuthFormProps) {
 
   async function onSubmit(values: FormValues) {
     setIsLoading(true);
-    const supabase = createClient();
     try {
         if (mode === 'register') {
             const { email, password, role } = values as z.infer<typeof registerSchema>;
@@ -86,7 +85,7 @@ export function AuthForm({ mode, onVerificationSent }: AuthFormProps) {
             if (error) throw error;
             
             localStorage.setItem('userRole', role);
-            setIsLoading(false);
+            
             if (onVerificationSent) {
               onVerificationSent();
             } else {
@@ -109,7 +108,6 @@ export function AuthForm({ mode, onVerificationSent }: AuthFormProps) {
                 title: "Inicio de Sesión Exitoso",
                 description: "Redirigiendo al panel de control...",
             });
-            setIsLoading(false);
             router.push("/dashboard");
         }
        
@@ -120,7 +118,8 @@ export function AuthForm({ mode, onVerificationSent }: AuthFormProps) {
             description: error.message || "Ha ocurrido un error inesperado.",
             variant: "destructive",
         });
-        setIsLoading(false);
+    } finally {
+      setIsLoading(false);
     }
   }
 
