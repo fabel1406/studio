@@ -90,7 +90,6 @@ export function AuthForm({ mode }: AuthFormProps) {
                 description: "Revisa tu correo para verificar tu cuenta. Luego podrás iniciar sesión.",
             });
             form.reset();
-            // router.push("/dashboard"); // We wait for email confirmation
         } else {
             const { email, password } = values as z.infer<typeof loginSchema>;
             const { data, error } = await supabase.auth.signInWithPassword({ email, password });
@@ -105,7 +104,6 @@ export function AuthForm({ mode }: AuthFormProps) {
                 description: "Redirigiendo al panel de control...",
             });
             router.push("/dashboard");
-            router.refresh();
         }
        
     } catch (error: any) {

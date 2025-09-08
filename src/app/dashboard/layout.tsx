@@ -55,13 +55,6 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   const { setOpenMobile } = useSidebar();
   const router = useRouter();
 
-  useEffect(() => {
-    // Handle redirection only when loading is complete and user is null.
-    if (!isLoading && !user) {
-        router.push('/login');
-    }
-  }, [isLoading, user, router]);
-
   const handleLinkClick = () => {
     setOpenMobile(false);
   };
@@ -71,7 +64,6 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut();
     localStorage.removeItem('userRole');
     router.push('/login');
-    router.refresh();
   }
 
   const filteredNavItems = navItems.filter(item => item.roles.includes(role));
@@ -99,17 +91,11 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
       </div>
   );
 
-  if (isLoading || !user) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <Logo className="h-16 w-16 animate-pulse" />
-          <p className="text-muted-foreground">Cargando tu sesión...</p>
-        </div>
-      </div>
-    );
+  // The loading state is now primarily handled by the RoleProvider
+  if (isLoading) {
+    return null; // Or a minimal loader if you prefer, but RoleProvider shows a full-page one
   }
-
+  
   return (
     <div className="flex min-h-screen">
       <Sidebar>

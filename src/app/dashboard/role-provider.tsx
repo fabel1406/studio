@@ -36,38 +36,36 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     const supabase = createClient();
-    const checkUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        setUser(user);
-        const storedRole = localStorage.getItem('userRole') as UserRole;
-        const finalRole = storedRole || (user.user_metadata.role as UserRole) || 'GENERATOR';
-        setRole(finalRole);
-      } else {
-        router.push('/login');
-      }
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null);
       setIsLoading(false);
+    });
+
+    // Check initial session
+    const checkInitialSession = async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        setUser(session?.user ?? null);
+        setIsLoading(false);
     };
 
-    checkUser();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN') {
-        setUser(session!.user);
-        const storedRole = localStorage.getItem('userRole') as UserRole;
-        const finalRole = storedRole || (session!.user.user_metadata.role as UserRole) || 'GENERATOR';
-        setRole(finalRole);
-        router.refresh();
-      } else if (event === 'SIGNED_OUT') {
-        setUser(null);
-        router.push('/login');
-      }
-    });
+    checkInitialSession();
 
     return () => {
       subscription.unsubscribe();
     };
   }, [router]);
+  
+  useEffect(() => {
+    if (!isLoading && !user) {
+        router.push('/login');
+    }
+    
+    if (user) {
+        const storedRole = localStorage.getItem('userRole') as UserRole;
+        const finalRole = storedRole || (user.user_metadata.role as UserRole) || 'GENERATOR';
+        setRole(finalRole);
+    }
+  }, [user, isLoading, router]);
 
   useEffect(() => {
     if (user) {
@@ -76,7 +74,9 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
       } else if (role === 'TRANSFORMER') {
           setCurrentUserId('comp-3');
       } else if (role === 'BOTH') {
-          setCurrentUserId('comp-3');
+          // For the demo, if role is 'BOTH', we can assign one of the IDs.
+          // In a real app, this logic might be more complex, perhaps allowing user to switch company contexts.
+          setCurrentUserId('comp-1'); 
       }
     } else {
         setCurrentUserId(null);
@@ -94,10 +94,6 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
         </div>
       </div>
     );
-  }
-
-  if (!user) {
-    return null; // The redirect is handled in the effect, this prevents rendering children without a user.
   }
 
   return (
