@@ -22,11 +22,10 @@ import type { LucideIcon } from 'lucide-react';
 import React, { useEffect } from 'react';
 import { DashboardHeader } from "@/components/dashboard-header";
 import { ScrollToTop } from "@/components/scroll-to-top";
-import { signOut } from "firebase/auth";
-import { auth } from "@/lib/firebase";
 import { useRole, RoleProvider } from "./role-provider";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Footer } from "@/components/footer";
+import { createClient } from "@/lib/supabase";
 
 
 type NavItem = {
@@ -68,13 +67,11 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   };
 
   const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      localStorage.removeItem('userRole');
-      router.push('/login');
-    } catch (error) {
-      console.error("Error signing out: ", error);
-    }
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    localStorage.removeItem('userRole');
+    router.push('/login');
+    router.refresh();
   }
 
   const filteredNavItems = navItems.filter(item => item.roles.includes(role));
@@ -82,11 +79,11 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   const UserInfo = () => (
      <div className="flex items-center gap-3 p-2 group-data-[collapsible=icon]:justify-center">
         <Avatar className="size-9">
-          {user?.photoURL && <AvatarImage src={user.photoURL} alt={user.displayName || user.email || 'User'} />}
+          {user?.user_metadata.avatar_url && <AvatarImage src={user.user_metadata.avatar_url} alt={user.user_metadata.full_name || user.email || 'User'} />}
           <AvatarFallback>{user?.email?.charAt(0).toUpperCase() || 'U'}</AvatarFallback>
         </Avatar>
         <div className="flex flex-col group-data-[collapsible=icon]:hidden">
-          <span className="text-sm font-medium text-foreground truncate">{user?.displayName || 'Usuario'}</span>
+          <span className="text-sm font-medium text-foreground truncate">{user?.user_metadata.full_name || 'Usuario'}</span>
           <span className="text-xs text-muted-foreground truncate">{user?.email}</span>
         </div>
       </div>

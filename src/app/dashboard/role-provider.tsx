@@ -3,9 +3,9 @@
 
 import React, { createContext, useContext, useState, useMemo, useEffect } from 'react';
 import { useRouter } from "next/navigation";
-import { onAuthStateChanged, type User } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { type User } from "@supabase/supabase-js";
 import { Logo } from "@/components/logo";
+import { createClient } from '@/lib/supabase';
 
 type UserRole = "GENERATOR" | "TRANSFORMER" | "BOTH";
 
@@ -35,19 +35,38 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const supabase = createClient();
+    const checkUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         setUser(user);
         const storedRole = localStorage.getItem('userRole') as UserRole;
-        const finalRole = storedRole || 'GENERATOR';
+        const finalRole = storedRole || (user.user_metadata.role as UserRole) || 'GENERATOR';
         setRole(finalRole);
       } else {
-        setUser(null);
         router.push('/login');
       }
       setIsLoading(false);
+    };
+
+    checkUser();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN') {
+        setUser(session!.user);
+        const storedRole = localStorage.getItem('userRole') as UserRole;
+        const finalRole = storedRole || (session!.user.user_metadata.role as UserRole) || 'GENERATOR';
+        setRole(finalRole);
+        router.refresh();
+      } else if (event === 'SIGNED_OUT') {
+        setUser(null);
+        router.push('/login');
+      }
     });
-    return () => unsubscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, [router]);
 
   useEffect(() => {

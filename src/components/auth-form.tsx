@@ -23,10 +23,9 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { auth } from "@/lib/firebase";
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
 import { useState } from "react";
 import { Loader2 } from "lucide-react";
+import { createClient } from "@/lib/supabase";
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Dirección de correo electrónico no válida." }),
@@ -68,55 +67,52 @@ export function AuthForm({ mode }: AuthFormProps) {
 
   async function onSubmit(values: FormValues) {
     setIsLoading(true);
+    const supabase = createClient();
     try {
         if (mode === 'register') {
             const { email, password, role } = values as z.infer<typeof registerSchema>;
-            await createUserWithEmailAndPassword(auth, email, password);
-            // In a real app, you would save the role to Firestore or Realtime Database here.
-            localStorage.setItem('userRole', role); // Using localStorage for mock purposes
+            const { error } = await supabase.auth.signUp({
+                email,
+                password,
+                options: {
+                    data: {
+                        role: role
+                    },
+                    emailRedirectTo: `${location.origin}/auth/callback`,
+                }
+            });
+
+            if (error) throw error;
+            
+            localStorage.setItem('userRole', role);
              toast({
                 title: "¡Registro Exitoso!",
-                description: "¡Bienvenido a EcoConnect! Te estamos redirigiendo al panel. No olvides completar tu perfil en Ajustes para empezar a negociar.",
+                description: "Revisa tu correo para verificar tu cuenta. Luego podrás iniciar sesión.",
             });
-            router.push("/dashboard");
+            form.reset();
+            // router.push("/dashboard"); // We wait for email confirmation
         } else {
             const { email, password } = values as z.infer<typeof loginSchema>;
-            await signInWithEmailAndPassword(auth, email, password);
-            // In a real app, you'd fetch the role from your database after login.
-            // For this mock, we'll assign a role based on the email.
-            if (email.toLowerCase() === 'admin@ecoconnect.com') {
-              localStorage.setItem('userRole', 'BOTH');
-            } else if (email.includes('generator')) {
-               localStorage.setItem('userRole', 'GENERATOR');
-            } else {
-               localStorage.setItem('userRole', 'TRANSFORMER');
-            }
+            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+            
+            if (error) throw error;
+
+            const userRole = data.user?.user_metadata.role || 'GENERATOR';
+            localStorage.setItem('userRole', userRole);
+
              toast({
                 title: "Inicio de Sesión Exitoso",
-                description: "Redirigiendo al marketplace...",
+                description: "Redirigiendo al panel de control...",
             });
-            router.push("/dashboard/marketplace");
+            router.push("/dashboard");
+            router.refresh();
         }
        
     } catch (error: any) {
         console.error("Authentication error:", error);
-        let description = "Ha ocurrido un error inesperado.";
-        switch (error.code) {
-            case 'auth/email-already-in-use':
-                description = "Este correo electrónico ya está en uso. Por favor, inicia sesión.";
-                break;
-            case 'auth/user-not-found':
-            case 'auth/wrong-password':
-            case 'auth/invalid-credential':
-                description = "Correo electrónico o contraseña incorrectos.";
-                break;
-            case 'auth/weak-password':
-                description = "La contraseña es demasiado débil. Debe tener al menos 6 caracteres.";
-                break;
-        }
         toast({
             title: "Error de autenticación",
-            description: description,
+            description: error.error_description || error.message || "Ha ocurrido un error inesperado.",
             variant: "destructive",
         });
     } finally {
