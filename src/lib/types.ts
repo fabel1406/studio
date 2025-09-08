@@ -9,7 +9,7 @@ export type Company = {
   website?: string;
   address?: string;
   city?: string;
-  country: string;
+  country?: string;
   lat?: number;
   lng?: number;
   verificationStatus: 'PENDING' | 'VERIFIED' | 'REJECTED';
@@ -94,5 +94,4 @@ export type Negotiation = {
     createdAt: string;
     commissionRate?: number;
     commissionValue?: number;
-    messages: NegotiationMessage[]; // This will be populated by a separate query
 }

@@ -9,12 +9,28 @@ const rehydrateResidue = async (residue: any): Promise<Residue> => {
     const { data: company, error } = await supabase
         .from('companies')
         .select('*')
-        .eq('id', residue.companyId)
+        .eq('id', residue.company_id)
         .single();
 
     if (error) console.error("Error fetching company for residue:", error);
     
-    return { ...residue, company };
+    // Map from snake_case (db) to camelCase (ts)
+    const mappedResidue: Residue = {
+        id: residue.id,
+        companyId: residue.company_id,
+        type: residue.type,
+        category: residue.category,
+        quantity: residue.quantity,
+        unit: residue.unit,
+        description: residue.description,
+        photos: residue.photos,
+        availabilityDate: residue.availability_date,
+        pricePerUnit: residue.price_per_unit,
+        status: residue.status,
+        company: company || undefined,
+    }
+    
+    return mappedResidue;
 };
 
 
@@ -50,9 +66,17 @@ export const getResidueById = async (id: string): Promise<Residue | undefined> =
 type NewResidueData = Omit<Residue, 'id' | 'availabilityDate' | 'photos' | 'company'>;
 
 export const addResidue = async (residueData: NewResidueData): Promise<Residue> => {
+    // Map from camelCase (ts) to snake_case (db)
     const newResiduePayload = {
-        ...residueData,
-        availabilityDate: new Date().toISOString(),
+        company_id: residueData.companyId,
+        type: residueData.type,
+        category: residueData.category,
+        quantity: residueData.quantity,
+        unit: residueData.unit,
+        price_per_unit: residueData.pricePerUnit,
+        status: residueData.status,
+        description: residueData.description,
+        availability_date: new Date().toISOString(),
         photos: [`https://picsum.photos/seed/new${Date.now()}/600/400`],
     };
 
@@ -71,9 +95,21 @@ export const addResidue = async (residueData: NewResidueData): Promise<Residue> 
 };
 
 export const updateResidue = async (updatedResidueData: Partial<Residue> & { id: string }): Promise<Residue> => {
+     const updatePayload = {
+        id: updatedResidueData.id,
+        company_id: updatedResidueData.companyId,
+        type: updatedResidueData.type,
+        category: updatedResidueData.category,
+        quantity: updatedResidueData.quantity,
+        unit: updatedResidueData.unit,
+        price_per_unit: updatedResidueData.pricePerUnit,
+        status: updatedResidueData.status,
+        description: updatedResidueData.description,
+     };
+
     const { data, error } = await supabase
         .from('residues')
-        .update(updatedResidueData)
+        .update(updatePayload)
         .eq('id', updatedResidueData.id)
         .select()
         .single();

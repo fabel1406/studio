@@ -9,12 +9,26 @@ const rehydrateNeed = async (need: any): Promise<Need> => {
     const { data: company, error } = await supabase
         .from('companies')
         .select('*')
-        .eq('id', need.companyId)
+        .eq('id', need.company_id)
         .single();
 
     if (error) console.error("Error fetching company for need:", error);
     
-    return { ...need, company };
+    // Map from snake_case (db) to camelCase (ts)
+    const mappedNeed: Need = {
+        id: need.id,
+        companyId: need.company_id,
+        residueType: need.residue_type,
+        category: need.category,
+        quantity: need.quantity,
+        unit: need.unit,
+        frequency: need.frequency,
+        specifications: need.specifications,
+        status: need.status,
+        company: company || undefined,
+    };
+
+    return mappedNeed;
 };
 
 export const getAllNeeds = async (): Promise<Need[]> => {
@@ -47,9 +61,21 @@ export const getNeedById = async (id: string): Promise<Need | undefined> => {
 };
 
 export const addNeed = async (needData: Omit<Need, 'id' | 'company'>): Promise<Need> => {
+    // Map from camelCase (ts) to snake_case (db)
+    const newNeedPayload = {
+      company_id: needData.companyId,
+      residue_type: needData.residueType,
+      category: needData.category,
+      quantity: needData.quantity,
+      unit: needData.unit,
+      frequency: needData.frequency,
+      specifications: needData.specifications,
+      status: needData.status,
+    };
+
     const { data, error } = await supabase
         .from('needs')
-        .insert([needData])
+        .insert([newNeedPayload])
         .select()
         .single();
 
@@ -62,9 +88,21 @@ export const addNeed = async (needData: Omit<Need, 'id' | 'company'>): Promise<N
 };
 
 export const updateNeed = async (updatedNeed: Partial<Need> & { id: string }): Promise<Need> => {
+    const updatePayload = {
+      id: updatedNeed.id,
+      company_id: updatedNeed.companyId,
+      residue_type: updatedNeed.residueType,
+      category: updatedNeed.category,
+      quantity: updatedNeed.quantity,
+      unit: updatedNeed.unit,
+      frequency: updatedNeed.frequency,
+      specifications: updatedNeed.specifications,
+      status: updatedNeed.status,
+    };
+
     const { data, error } = await supabase
         .from('needs')
-        .update(updatedNeed)
+        .update(updatePayload)
         .eq('id', updatedNeed.id)
         .select()
         .single();
