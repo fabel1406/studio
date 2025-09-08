@@ -11,7 +11,6 @@ import {
 
 export default function LoginPage() {
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-primary/10 via-background to-secondary/10">
       <main className="flex-grow flex items-center justify-center p-4">
         <Card className="w-full max-w-md shadow-2xl">
           <CardHeader className="text-center">
@@ -35,7 +34,5 @@ export default function LoginPage() {
           </CardContent>
         </Card>
       </main>
-    </div>
   );
 }
-

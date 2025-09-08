@@ -47,9 +47,10 @@ type FormValues = z.infer<typeof formSchema>;
 
 type AuthFormProps = {
   mode: "login" | "register";
+  onVerificationSent?: () => void;
 };
 
-export function AuthForm({ mode }: AuthFormProps) {
+export function AuthForm({ mode, onVerificationSent }: AuthFormProps) {
   const { toast } = useToast();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
@@ -78,17 +79,21 @@ export function AuthForm({ mode }: AuthFormProps) {
                     data: {
                         role: role
                     },
-                    emailRedirectTo: `${location.origin}/auth/callback`,
+                    emailRedirectTo: `${window.location.origin}/auth/callback`,
                 }
             });
 
             if (error) throw error;
             
             localStorage.setItem('userRole', role);
-             toast({
-                title: "¡Registro Exitoso!",
-                description: "Revisa tu correo para verificar tu cuenta. Luego podrás iniciar sesión.",
-            });
+            if (onVerificationSent) {
+              onVerificationSent();
+            } else {
+              toast({
+                  title: "¡Registro Exitoso!",
+                  description: "Revisa tu correo para verificar tu cuenta.",
+              });
+            }
             form.reset();
         } else {
             const { email, password } = values as z.infer<typeof loginSchema>;
@@ -110,7 +115,7 @@ export function AuthForm({ mode }: AuthFormProps) {
         console.error("Authentication error:", error);
         toast({
             title: "Error de autenticación",
-            description: error.error_description || error.message || "Ha ocurrido un error inesperado.",
+            description: error.message || "Ha ocurrido un error inesperado.",
             variant: "destructive",
         });
     } finally {
