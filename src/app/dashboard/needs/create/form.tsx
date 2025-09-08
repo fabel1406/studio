@@ -135,9 +135,14 @@ export default function NeedForm() {
     }
 
     const finalData = {
-        ...data,
         companyId,
         residueType: data.residueType === 'Otro' ? data.customResidueType! : data.residueType,
+        category: data.category,
+        quantity: data.quantity,
+        unit: data.unit,
+        frequency: data.frequency,
+        specifications: data.specifications,
+        status: data.status,
     };
 
     if (needId) {
@@ -147,7 +152,7 @@ export default function NeedForm() {
             description: `Tu solicitud de "${finalData.residueType}" ha sido actualizada.`,
         })
     } else {
-        await addNeed(finalData);
+        await addNeed(finalData as any);
         toast({
             title: "¡Necesidad Publicada!",
             description: `Tu solicitud de "${finalData.residueType}" ha sido publicada con éxito.`,
@@ -400,5 +405,3 @@ export default function NeedForm() {
     </div>
   )
 }
-
-    

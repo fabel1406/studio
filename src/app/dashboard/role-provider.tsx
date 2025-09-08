@@ -30,11 +30,16 @@ export const useRole = () => {
   return context;
 };
 
+const getInitialCompanyId = (): string | null => {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem('companyId');
+}
+
 export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [companyName, setCompanyName] = useState<string>("");
   const [role, setInternalRole] = useState<UserRole>("GENERATOR");
-  const [companyId, setCompanyId] = useState<string | null>(null);
+  const [companyId, setCompanyId] = useState<string | null>(getInitialCompanyId());
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
   const supabase = createClient();
@@ -53,6 +58,7 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
             setCompanyName(data.name);
             setInternalRole(data.type as UserRole);
             localStorage.setItem('userRole', data.type);
+            localStorage.setItem('companyId', data.id);
           } else {
               // Fallback for metadata if DB call fails or is new user
               const userRole = currentUser.user_metadata?.app_role as UserRole;
@@ -64,6 +70,7 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
         } else {
             // Clear on logout
             localStorage.removeItem('userRole');
+            localStorage.removeItem('companyId');
             setCompanyId(null);
         }
         
@@ -119,5 +126,3 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
     <RoleContext.Provider value={value}>{children}</RoleContext.Provider>
   );
 };
-
-    

@@ -139,10 +139,15 @@ export default function ResidueForm() {
 
     try {
         const finalData = {
-          ...data,
           companyId,
           type: data.type === 'Otro' ? data.customType! : data.type,
-        }
+          category: data.category,
+          quantity: data.quantity,
+          unit: data.unit,
+          pricePerUnit: data.pricePerUnit,
+          status: data.status,
+          description: data.description,
+        };
 
         if (residueId) {
             await updateResidue({ ...finalData, id: residueId });
@@ -151,7 +156,7 @@ export default function ResidueForm() {
                 description: `El residuo "${finalData.type}" ha sido actualizado con éxito.`,
             })
         } else {
-            await addResidue(finalData);
+            await addResidue(finalData as any);
             toast({
                 title: "¡Residuo Guardado!",
                 description: `El residuo "${finalData.type}" ha sido guardado con éxito.`,
@@ -411,5 +416,3 @@ export default function ResidueForm() {
     </div>
   )
 }
-
-    
