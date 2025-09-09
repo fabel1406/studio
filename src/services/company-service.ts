@@ -1,4 +1,3 @@
-
 // src/services/company-service.ts
 import type { Company } from '@/lib/types';
 import { createClient } from '@/lib/supabase/client';
@@ -18,7 +17,21 @@ export const getCompanyById = async (id: string): Promise<Company | undefined> =
         return undefined;
     }
     
-    return data as Company;
+    // Map from snake_case (db) to camelCase (ts)
+    const company: Company = {
+      id: data.id,
+      name: data.name,
+      type: data.type,
+      description: data.description,
+      contactEmail: data.contact_email,
+      phone: data.phone,
+      website: data.website,
+      address: data.address,
+      city: data.city,
+      country: data.country,
+      verificationStatus: data.verification_status,
+    }
+    return company;
 };
 
 export const getAllCompanies = async (): Promise<Company[]> => {
@@ -31,30 +44,17 @@ export const getAllCompanies = async (): Promise<Company[]> => {
         return [];
     }
 
-    return data as Company[];
-};
-
-
-// Note: This function is now designed to be called from a server-side context
-// that provides an authenticated Supabase client.
-export const updateCompany = async (
-    supabase: SupabaseClient,
-    id: string, 
-    updates: Partial<Omit<Company, 'id' | 'auth_id' | 'created_at'>>
-): Promise<Company | null> => {
-    
-    const { data, error } = await supabase
-        .from('companies')
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
-
-    if (error) {
-        console.error('Error updating company:', error);
-        // Throw the actual error object to be caught by the server action
-        throw error;
-    }
-
-    return data as Company;
+    return data.map(d => ({
+      id: d.id,
+      name: d.name,
+      type: d.type,
+      description: d.description,
+      contactEmail: d.contact_email,
+      phone: d.phone,
+      website: d.website,
+      address: d.address,
+      city: d.city,
+      country: d.country,
+      verificationStatus: d.verification_status,
+    })) as Company[];
 };

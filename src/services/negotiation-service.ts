@@ -1,4 +1,3 @@
-
 // src/services/negotiation-service.ts
 import type { Negotiation, NegotiationMessage, Residue, Need, Company } from '@/lib/types';
 import { createClient } from '@/lib/supabase/client';
@@ -11,25 +10,36 @@ const COMMISSION_RATE = 0.03;
 
 const rehydrateNegotiation = async (negotiation: any): Promise<Negotiation> => {
     const [residue, requester, supplier, messages] = await Promise.all([
-        getResidueById(negotiation.residueId),
-        getCompanyById(negotiation.requesterId),
-        getCompanyById(negotiation.supplierId),
+        getResidueById(negotiation.residue_id),
+        getCompanyById(negotiation.requester_id),
+        getCompanyById(negotiation.supplier_id),
         supabase.from('negotiation_messages').select('*').eq('negotiation_id', negotiation.id).order('created_at', { ascending: true })
     ]);
 
     const hydratedResidue = residue || {
-        id: negotiation.residueId,
+        id: negotiation.residue_id,
         type: 'Residuo eliminado',
         category: 'OTHERS',
         quantity: 0,
         unit: 'KG',
         status: 'CLOSED',
-        companyId: negotiation.supplierId,
+        companyId: negotiation.supplier_id,
         availabilityDate: new Date().toISOString(),
     };
     
     return {
-        ...negotiation,
+        id: negotiation.id,
+        residueId: negotiation.residue_id,
+        requesterId: negotiation.requester_id,
+        supplierId: negotiation.supplier_id,
+        initiatedBy: negotiation.initiated_by,
+        quantity: negotiation.quantity,
+        unit: negotiation.unit,
+        offerPrice: negotiation.offer_price,
+        status: negotiation.status,
+        createdAt: negotiation.created_at,
+        commissionRate: negotiation.commission_rate,
+        commissionValue: negotiation.commission_value,
         residue: hydratedResidue,
         requester: requester,
         supplier: supplier,
@@ -58,9 +68,9 @@ const checkExistingNegotiation = async (requesterId: string, supplierId: string,
     const { data, error } = await supabase
         .from('negotiations')
         .select('id')
-        .eq('requesterId', requesterId)
-        .eq('supplierId', supplierId)
-        .eq('residueId', residueId)
+        .eq('requester_id', requesterId)
+        .eq('supplier_id', supplierId)
+        .eq('residue_id', residueId)
         .eq('status', 'SENT')
         .maybeSingle();
 
@@ -73,7 +83,7 @@ const checkExistingNegotiation = async (requesterId: string, supplierId: string,
 };
 
 export const addNegotiation = async (data: NewNegotiationFromResidue | NewNegotiationFromNeed): Promise<Negotiation | null> => {
-    let negotiationData: Omit<Negotiation, 'id' | 'residue' | 'requester' | 'supplier' | 'createdAt' | 'messages'>;
+    let negotiationData;
     let requesterId: string, supplierId: string, residueId: string;
 
     if (data.type === 'request') {
@@ -96,13 +106,13 @@ export const addNegotiation = async (data: NewNegotiationFromResidue | NewNegoti
         : `Ha ofrecido ${data.quantity} ${data.residue.unit} de ${data.residue.type}${data.offerPrice ? ` a $${data.offerPrice}/${data.residue.unit}`: ''} para cubrir tu necesidad.`;
 
     negotiationData = {
-        residueId,
-        requesterId,
-        supplierId,
-        initiatedBy: data.initiatorId,
+        residue_id: residueId,
+        requester_id: requesterId,
+        supplier_id: supplierId,
+        initiated_by: data.initiatorId,
         quantity: data.quantity,
         unit: data.residue.unit,
-        offerPrice: data.offerPrice,
+        offer_price: data.offerPrice,
         status: 'SENT',
     };
 
@@ -127,7 +137,7 @@ export const getAllNegotiationsForUser = async (userId: string): Promise<{ sent:
     const { data: allUserNegotiations, error } = await supabase
         .from('negotiations')
         .select('*')
-        .or(`requesterId.eq.${userId},supplierId.eq.${userId}`);
+        .or(`requester_id.eq.${userId},supplier_id.eq.${userId}`);
 
     if (error) {
         console.error("Error fetching negotiations for user:", error);
@@ -166,11 +176,11 @@ export const updateNegotiationStatus = async (id: string, status: Negotiation['s
     const negotiation = await getNegotiationById(id);
     if (!negotiation) throw new Error("Negotiation not found");
 
-    const updatePayload: Partial<Negotiation> = { status };
+    const updatePayload: any = { status };
     
     if (status === 'ACCEPTED' && typeof negotiation.offerPrice === 'number') {
-        updatePayload.commissionRate = COMMISSION_RATE;
-        updatePayload.commissionValue = negotiation.quantity * negotiation.offerPrice * COMMISSION_RATE;
+        updatePayload.commission_rate = COMMISSION_RATE;
+        updatePayload.commission_value = negotiation.quantity * negotiation.offerPrice * COMMISSION_RATE;
     }
 
     const { data, error } = await supabase
@@ -199,7 +209,7 @@ export const updateNegotiationDetails = async (id: string, quantity: number, pri
 
     const { data, error } = await supabase
         .from('negotiations')
-        .update({ quantity, offerPrice: price })
+        .update({ quantity, offer_price: price })
         .eq('id', id)
         .select()
         .single();
@@ -230,5 +240,3 @@ export const deleteNegotiation = async (id: string): Promise<void> => {
     const { error } = await supabase.from('negotiations').delete().eq('id', id);
     if (error) throw error;
 };
-
-    

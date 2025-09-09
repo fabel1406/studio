@@ -1,4 +1,3 @@
-
 // src/app/dashboard/role-provider.tsx
 "use client";
 
@@ -39,37 +38,55 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
   const supabase = createClient();
 
-  const fetchCompanyData = useCallback(async (userId: string) => {
-    const { data, error } = await supabase.from('companies').select('id, name, type').eq('auth_id', userId).single();
-    if (data) {
-      setCompanyId(data.id);
-      setCompanyName(data.name);
-      setInternalRole(data.type as UserRole);
-      return true;
-    }
-    return false;
-  }, [supabase]);
-
-
   useEffect(() => {
+    const fetchSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const currentUser = session?.user || null;
+      setUser(currentUser);
+
+      if (currentUser) {
+        const { data: companyData } = await supabase
+          .from('companies')
+          .select('id, name, type')
+          .eq('auth_id', currentUser.id)
+          .single();
+        
+        if (companyData) {
+          setCompanyId(companyData.id);
+          setCompanyName(companyData.name);
+          setInternalRole(companyData.type as UserRole);
+        }
+      }
+      setIsLoading(false);
+    };
+
+    fetchSession();
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        setIsLoading(true);
+      (event, session) => {
         const currentUser = session?.user || null;
         setUser(currentUser);
-
-        if (currentUser) {
-            await fetchCompanyData(currentUser.id);
+        if (event === 'SIGNED_IN' && currentUser) {
+            // Fetch company data only when user signs in, not on every event
+            supabase.from('companies').select('id, name, type').eq('auth_id', currentUser.id).single().then(({data}) => {
+                if (data) {
+                    setCompanyId(data.id);
+                    setCompanyName(data.name);
+                    setInternalRole(data.type as UserRole);
+                }
+            })
+        } else if (event === 'SIGNED_OUT') {
+            setCompanyId(null);
+            setCompanyName("");
+            setInternalRole("GENERATOR");
         }
-        
-        setIsLoading(false);
       }
     );
 
     return () => {
       subscription.unsubscribe();
     };
-  }, [supabase, fetchCompanyData]);
+  }, [supabase]);
 
   
   useEffect(() => {
@@ -81,13 +98,11 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
 
   const setRole = async (newRole: UserRole) => {
     setInternalRole(newRole);
-    // The role is now primarily updated via the settings page server action
   }
   
   const logout = async () => {
       await supabase.auth.signOut();
       router.push('/login');
-      // No need to manually clear state, onAuthStateChange will handle it
   }
 
   const value = useMemo(() => ({ user, role, setRole, companyId, isLoading, logout, companyName }), [user, role, companyId, isLoading, companyName]);
@@ -104,7 +119,6 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
   }
 
   if (!user && !isLoading) {
-      // This prevents a flash of dashboard content before redirect
       return null;
   }
 
