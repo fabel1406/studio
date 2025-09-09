@@ -55,8 +55,7 @@ export const getImpactMetrics = async (companyId: string): Promise<CalculatedImp
     
     // Agrupar por mes
     const monthKey = format(startOfMonth(new Date(neg.created_at)), 'yyyy-MM');
-    const monthLabel = format(new Date(neg.created_at), 'MMM', { locale: es });
-
+    
     if (!monthlyData[monthKey]) {
       monthlyData[monthKey] = { wasteDiverted: 0, co2Avoided: 0, economicValue: 0 };
     }
@@ -74,6 +73,8 @@ export const getImpactMetrics = async (companyId: string): Promise<CalculatedImp
 
   // Calcular CO2 para cada mes y dar formato final al array
   const monthlyImpact: MonthlyImpact[] = Object.entries(monthlyData)
+    // Ordenar por la clave de fecha (ej. "2023-01") para asegurar el orden cronológico
+    .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
     .map(([key, value]) => {
       const wasteInTons = value.wasteDiverted / KG_PER_TON;
       const co2Avoided = wasteInTons * KG_CO2_PER_TON_ORGANIC_WASTE;
@@ -83,8 +84,7 @@ export const getImpactMetrics = async (companyId: string): Promise<CalculatedImp
         co2Avoided: Math.round(co2Avoided),
         economicValue: Math.round(value.economicValue),
       };
-    })
-    .sort((a, b) => a.label.localeCompare(b.label, 'es', { month: 'short' }));
+    });
 
 
   // 4. Devolver el objeto completo
