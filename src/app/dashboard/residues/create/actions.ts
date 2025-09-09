@@ -69,8 +69,26 @@ export async function createOrUpdateResidueAction(formData: FormData) {
     const { data } = validatedFields;
     
     try {
+        const {
+            data: { user },
+        } = await supabase.auth.getUser();
+
+        if (!user) {
+            return { error: 'No estás autenticado.' };
+        }
+        
+        const { data: companyData, error: companyError } = await supabase
+          .from('companies')
+          .select('id')
+          .eq('auth_id', user.id)
+          .single();
+
+        if (companyError || !companyData) {
+          return { error: 'No se pudo verificar la empresa del usuario.' };
+        }
+
         const residueData: any = {
-            company_id: data.companyId,
+            company_id: companyData.id,
             type: data.type === 'Otro' ? data.customType! : data.type,
             category: data.category,
             quantity: data.quantity,
@@ -101,7 +119,16 @@ export async function createOrUpdateResidueAction(formData: FormData) {
                 .insert(residueData)
                 .select()
                 .single();
-            if (error) throw error;
+
+            if (error) {
+                console.error("Database Insert Error:", error);
+                // Provide a more specific error message if possible
+                if (error.code === '42501') { // permission denied
+                    return { error: "Error al guardar el residuo: Permiso denegado. Revisa las políticas de seguridad (RLS) de la tabla 'residues' en Supabase."};
+                }
+                throw error;
+            }
+
             dbResidue = createdData;
             residueId = dbResidue.id;
         }
@@ -110,7 +137,7 @@ export async function createOrUpdateResidueAction(formData: FormData) {
         if (data.photoFile && data.photoFile.size > 0) {
             const fileExtension = data.photoFile.name.split('.').pop();
             const fileName = `${residueId}.${fileExtension}`;
-            const filePath = `${data.companyId}/${fileName}`;
+            const filePath = `${companyData.id}/${fileName}`;
 
             const { error: uploadError } = await supabase.storage
                 .from(BUCKET_NAME)
