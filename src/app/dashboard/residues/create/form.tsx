@@ -1,3 +1,4 @@
+
 // src/app/dashboard/residues/create/form.tsx
 "use client"
 
@@ -30,11 +31,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { getResidueById, getAllResidues } from "@/services/residue-service"
-import { getAllCountries, getCitiesByCountry } from "@/lib/locations";
 import { useRole } from "../../role-provider"
 import { Loader2 } from "lucide-react"
-
-const allCountries = getAllCountries();
 
 // Validar que el archivo no sea mayor a 5MB
 const MAX_FILE_SIZE = 5 * 1024 * 1024; 
@@ -47,13 +45,11 @@ const residueFormSchema = z.object({
   quantity: z.coerce.number().min(0, { message: "La cantidad no puede ser negativa." }),
   unit: z.enum(['KG', 'TON'], { required_error: "Debes seleccionar una unidad." }),
   pricePerUnit: z.preprocess(
-    (val) => (val === "" || val === null || val === undefined) ? undefined : Number(val),
-    z.coerce.number({ invalid_type_error: "El precio debe ser un número." }).optional()
+    (val) => (val === "" || val === null || val === undefined) ? null : Number(val),
+    z.coerce.number({ invalid_type_error: "El precio debe ser un número." }).optional().nullable()
   ),
   status: z.enum(['ACTIVE', 'RESERVED', 'CLOSED'], { required_error: "Debes seleccionar un estado." }),
   description: z.string().max(300, { message: "La descripción no puede exceder los 300 caracteres." }).optional(),
-  country: z.string().min(1, "El país es obligatorio."),
-  city: z.string().min(1, "La ciudad es obligatoria."),
   photoFile: z
     .instanceof(File)
     .optional()
@@ -80,8 +76,6 @@ const defaultFormValues: Omit<ResidueFormValues, 'photoFile'> = {
     status: 'ACTIVE',
     unit: 'TON',
     category: undefined,
-    country: "España",
-    city: "",
 };
 
 export default function ResidueForm() {
@@ -119,8 +113,6 @@ export default function ResidueForm() {
                         status: residue.status,
                         pricePerUnit: residue.pricePerUnit,
                         description: residue.description || "",
-                        country: residue.company?.country || 'España',
-                        city: residue.company?.city || '',
                     });
                 }
             } else {
@@ -144,13 +136,6 @@ export default function ResidueForm() {
   })
 
   const selectedResidueType = form.watch("type");
-  const selectedCountry = form.watch("country");
-  const citiesForSelectedCountry = getCitiesByCountry(selectedCountry);
-  
-  useEffect(() => {
-    if(!form.formState.isDirty) return;
-    form.setValue('city', '');
-  }, [selectedCountry, form]);
 
   async function onSubmit(data: ResidueFormValues) {
     if (!companyId) {
@@ -167,7 +152,6 @@ export default function ResidueForm() {
     if (residueId) {
         formData.append('residueId', residueId);
     }
-    formData.append('companyId', companyId);
     formData.append('type', data.type);
     if(data.type === 'Otro' && data.customType) {
         formData.append('customType', data.customType);
@@ -175,15 +159,13 @@ export default function ResidueForm() {
     formData.append('category', data.category);
     formData.append('quantity', String(data.quantity));
     formData.append('unit', data.unit);
-    if (data.pricePerUnit !== undefined) {
+    if (data.pricePerUnit !== undefined && data.pricePerUnit !== null) {
       formData.append('pricePerUnit', String(data.pricePerUnit));
     }
     formData.append('status', data.status);
     if (data.description) {
         formData.append('description', data.description);
     }
-    formData.append('country', data.country);
-    formData.append('city', data.city);
     if (data.photoFile && data.photoFile.size > 0) {
         formData.append('photoFile', data.photoFile);
     }
@@ -353,50 +335,6 @@ export default function ResidueForm() {
                         <FormMessage />
                         </FormItem>
                     )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="country"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>País de Origen del Residuo</FormLabel>
-                                <Select onValueChange={field.onChange} value={field.value}>
-                                    <FormControl>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Selecciona un país" />
-                                        </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        {allCountries.map((country) => (
-                                            <SelectItem key={country.code} value={country.name}>{country.name}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="city"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Ciudad</FormLabel>
-                                <Select onValueChange={field.onChange} value={field.value} disabled={!selectedCountry}>
-                                    <FormControl>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Selecciona una ciudad" />
-                                        </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        {citiesForSelectedCountry.map((city) => (
-                                            <SelectItem key={city.name} value={city.name}>{city.name}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                <FormMessage />
-                            </FormItem>
-                        )}
                     />
                      <div className="md:col-span-2">
                       <FormField

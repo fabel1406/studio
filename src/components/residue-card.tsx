@@ -1,3 +1,4 @@
+
 // src/components/residue-card.tsx
 "use client";
 
@@ -26,7 +27,7 @@ export function ResidueCard({ residue, isRecommendation = false, priority = fals
   const aiHint = residue.type.toLowerCase().split(' ').slice(0, 2).join(' ');
 
   // Use the photo from Supabase if available, otherwise use the local placeholder.
-  const imagePath = residue.photos && residue.photos.length > 0 ? residue.photos[0] : "/images/residues/placeholder.jpg";
+  const imagePath = residue.photos && residue.photos.length > 0 && residue.photos[0] ? residue.photos[0] : "/images/residues/placeholder.jpg";
 
 
   return (
@@ -41,6 +42,7 @@ export function ResidueCard({ residue, isRecommendation = false, priority = fals
             data-ai-hint={aiHint}
             priority={priority}
             unoptimized={imagePath.startsWith('http')} // Usar unoptimized para URLs externas como Supabase
+            onError={(e) => { e.currentTarget.src = "/images/residues/placeholder.jpg"; }} // Fallback a placeholder si la imagen de Supabase falla
           />
            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
            <div className="absolute bottom-4 left-4">
