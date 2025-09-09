@@ -20,7 +20,7 @@ const CompanySchema = z.object({
   name: z.string(),
   address: z.string().optional(),
   city: z.string().optional(),
-  country: z.string(),
+  country: z.string().optional(),
   lat: z.number().optional(),
   lng: z.number().optional(),
   type: z.enum(['GENERATOR', 'TRANSFORMER', 'BOTH']),
