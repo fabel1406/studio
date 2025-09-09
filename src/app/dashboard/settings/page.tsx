@@ -1,4 +1,3 @@
-
 // src/app/dashboard/settings/page.tsx
 "use client"
 
@@ -60,7 +59,14 @@ export default function SettingsPage() {
         defaultValues: {
             companyName: "",
             email: "",
-            role: role,
+            role: "GENERATOR",
+            description: undefined,
+            country: undefined,
+            city: undefined,
+            address: undefined,
+            contactEmail: undefined,
+            phone: undefined,
+            website: undefined,
         },
     });
 
@@ -86,8 +92,6 @@ export default function SettingsPage() {
     }, [user, role, companyName, form]);
     
     useEffect(() => {
-      // This effect should only run when the selectedCountry changes interactively.
-      // The `formState.isDirty` check prevents it from running on initial load.
       if (form.formState.isDirty && selectedCountry) {
         form.setValue('city', '');
       }
@@ -119,9 +123,7 @@ export default function SettingsPage() {
                 title: "Perfil Actualizado",
                 description: "La información de tu empresa ha sido guardada.",
             });
-            // Update local context
             setRole(values.role);
-            // Refresh server components to get new data
             router.refresh();
         }
         setIsSubmitting(false);
@@ -320,4 +322,3 @@ export default function SettingsPage() {
         </div>
     );
 }
-

@@ -65,7 +65,7 @@ const residueFormSchema = z.object({
 
 type ResidueFormValues = z.infer<typeof residueFormSchema>
 
-const defaultFormValues: Omit<ResidueFormValues, 'photoFile' | 'category'> & { category: '' | ResidueFormValues['category'] } = {
+const defaultFormValues: Omit<ResidueFormValues, 'photoFile' | 'category'> & { category: ResidueFormValues['category'] | undefined } = {
     type: "",
     customType: "",
     quantity: 0,
@@ -73,7 +73,7 @@ const defaultFormValues: Omit<ResidueFormValues, 'photoFile' | 'category'> & { c
     description: "",
     status: 'ACTIVE',
     unit: 'TON',
-    category: '',
+    category: undefined,
 };
 
 export default function ResidueForm() {

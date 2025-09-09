@@ -95,6 +95,19 @@ export default function NeedForm() {
               city: need.company?.city || '',
             });
           }
+        } else {
+            form.reset({
+                residueType: "",
+                customResidueType: "",
+                quantity: 1,
+                unit: 'TON',
+                category: undefined,
+                frequency: 'MONTHLY',
+                specifications: "",
+                status: 'ACTIVE',
+                country: "España",
+                city: "",
+            })
         }
         setIsLoading(false);
     }
