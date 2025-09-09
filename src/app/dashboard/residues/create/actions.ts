@@ -1,3 +1,4 @@
+
 // src/app/dashboard/residues/create/actions.ts
 'use server'
 
@@ -119,15 +120,16 @@ export async function createOrUpdateResidueAction(formData: FormData) {
 
         residueId = dbResidueData.id;
         
+        // Correctly handle file upload as per instructions
         if (data.photoFile && residueId) {
             const fileExtension = data.photoFile.name.split('.').pop();
-            const fileName = `${residueId}.${fileExtension}`;
-            const filePath = `public/${fileName}`;
+            const fileName = `${Date.now()}.${fileExtension}`;
+            const filePath = `${user.id}/${fileName}`; // Use user.id for the folder path
 
             const { error: uploadError } = await supabase.storage
                 .from(BUCKET_NAME)
                 .upload(filePath, data.photoFile, {
-                    upsert: true,
+                    upsert: false, // Don't upsert, create new file each time
                     contentType: data.photoFile.type,
                 });
 
@@ -142,17 +144,20 @@ export async function createOrUpdateResidueAction(formData: FormData) {
 
             const { error: updatePhotoError } = await supabase
                 .from('residues')
-                .update({ photos: [`${publicUrl}?t=${new Date().getTime()}`] })
+                .update({ photos: [publicUrl] }) // Save the URL in the photos array
                 .eq('id', residueId);
             
             if (updatePhotoError) {
                 console.error('Update Photo URL Error:', updatePhotoError);
+                // Even if updating the photo URL fails, the residue was created.
+                // It's better to return a warning than to throw an error for the whole operation.
                  return { success: true, residueId: residueId, warning: 'El residuo se guardó, pero hubo un problema al asociar la imagen.' };
             }
         }
         
         revalidatePath('/dashboard/residues');
         revalidatePath('/dashboard/marketplace');
+        revalidatePath(`/dashboard/residues/${residueId}`);
         return { success: true, residueId: residueId };
 
     } catch (e: any) {
