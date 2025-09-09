@@ -1,4 +1,3 @@
-
 // src/app/dashboard/residues/create/form.tsx
 "use client"
 
@@ -6,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useEffect, useState } from "react"
+import { useEffect, useState, useTransition } from "react"
 import { createOrUpdateResidueAction } from "./actions";
 
 import { Button } from "@/components/ui/button"
@@ -51,10 +50,9 @@ const residueFormSchema = z.object({
   status: z.enum(['ACTIVE', 'RESERVED', 'CLOSED'], { required_error: "Debes seleccionar un estado." }),
   description: z.string().max(300, { message: "La descripción no puede exceder los 300 caracteres." }).optional(),
   photoFile: z
-    .instanceof(File)
-    .optional()
+    .any()
     .refine(file => !file || file.size <= MAX_FILE_SIZE, `El tamaño máximo es de 5MB.`)
-    .refine(file => !file || file.type.startsWith("image/"), "Solo se aceptan archivos .jpg, .jpeg, .png y .webp."),
+    .refine(file => !file || file.type?.startsWith("image/"), "Solo se aceptan archivos .jpg, .jpeg, .png y .webp."),
 }).refine(data => {
     if (data.type === 'Otro' && (!data.customType || data.customType.length < 2)) {
         return false;
@@ -67,7 +65,7 @@ const residueFormSchema = z.object({
 
 type ResidueFormValues = z.infer<typeof residueFormSchema>
 
-const defaultFormValues: Omit<ResidueFormValues, 'photoFile'> = {
+const defaultFormValues: Omit<ResidueFormValues, 'photoFile' | 'category'> & { category: '' | ResidueFormValues['category'] } = {
     type: "",
     customType: "",
     quantity: 0,
@@ -75,13 +73,14 @@ const defaultFormValues: Omit<ResidueFormValues, 'photoFile'> = {
     description: "",
     status: 'ACTIVE',
     unit: 'TON',
-    category: undefined,
+    category: '',
 };
 
 export default function ResidueForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast()
+  const [isPending, startTransition] = useTransition();
   const [residueId, setResidueId] = useState<string | null>(null);
   const { companyId } = useRole();
   const [uniqueResidueTypes, setUniqueResidueTypes] = useState<string[]>([]);
@@ -127,7 +126,7 @@ export default function ResidueForm() {
         }
     }
     fetchData();
-  }, [searchParams, toast]);
+  }, [searchParams]);
 
   const form = useForm<ResidueFormValues>({
     resolver: zodResolver(residueFormSchema),
@@ -166,7 +165,7 @@ export default function ResidueForm() {
     if (data.description) {
         formData.append('description', data.description);
     }
-    if (data.photoFile && data.photoFile.size > 0) {
+    if (data.photoFile) {
         formData.append('photoFile', data.photoFile);
     }
 
@@ -184,7 +183,9 @@ export default function ResidueForm() {
                 title: residueId ? "¡Residuo Actualizado!" : "¡Residuo Creado!",
                 description: `El residuo ha sido guardado con éxito.`,
             });
-            router.push('/dashboard/residues');
+             startTransition(() => {
+                router.push('/dashboard/residues');
+             });
         }
     } catch (e) {
         toast({
@@ -340,17 +341,14 @@ export default function ResidueForm() {
                       <FormField
                           control={form.control}
                           name="photoFile"
-                          render={({ field: { onChange, value, ...rest } }) => (
+                          render={({ field }) => (
                               <FormItem>
                               <FormLabel>Foto del Residuo</FormLabel>
                                <FormControl>
                                   <Input 
                                     type="file" 
                                     accept="image/png, image/jpeg, image/jpg, image/webp" 
-                                    onChange={(e) => {
-                                        const file = e.target.files?.[0];
-                                        onChange(file);
-                                    }}
+                                    onChange={(e) => field.onChange(e.target.files?.[0] ?? null)}
                                     disabled={isSubmitting} 
                                   />
                               </FormControl>
@@ -412,7 +410,10 @@ export default function ResidueForm() {
                     <Button type="button" variant="outline" onClick={() => router.push('/dashboard/residues')}>
                         Cancelar
                     </Button>
-                    <Button type="submit" disabled={isSubmitting}>{isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}{residueId ? "Guardar Cambios" : "Guardar Residuo"}</Button>
+                    <Button type="submit" disabled={isSubmitting || isPending}>
+                        {(isSubmitting || isPending) && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                        {residueId ? "Guardar Cambios" : "Guardar Residuo"}
+                    </Button>
                 </div>
                 </form>
             </Form>
