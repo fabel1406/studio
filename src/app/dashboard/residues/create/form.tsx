@@ -28,7 +28,6 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import type { Residue } from "@/lib/types"
 import { getResidueById, addResidue, updateResidue, getAllResidues } from "@/services/residue-service"
 import { getAllCountries, getCitiesByCountry } from "@/lib/locations";
 import { useRole } from "../../role-provider"

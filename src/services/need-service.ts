@@ -1,21 +1,17 @@
 // src/services/need-service.ts
 import type { Need } from '@/lib/types';
 import { createClient } from '@/lib/supabase/client';
+import { getCompanyById } from './company-service';
 
 const supabase = createClient();
 
 const rehydrateNeed = async (need: any): Promise<Need> => {
-    const { data: company, error } = await supabase
-        .from('companies')
-        .select('*')
-        .eq('id', need.company_id)
-        .single();
+    const company = await getCompanyById(need.company_id);
 
-    if (error) console.error("Error fetching company for need:", error);
-    
-    const companyData: any = company;
+    if (!company) {
+      console.warn(`Company not found for need with company_id: ${need.company_id}`);
+    }
 
-    // Map from snake_case (db) to camelCase (ts)
     const mappedNeed: Need = {
         id: need.id,
         companyId: need.company_id,
@@ -26,19 +22,7 @@ const rehydrateNeed = async (need: any): Promise<Need> => {
         frequency: need.frequency,
         specifications: need.specifications,
         status: need.status,
-        company: company ? {
-            id: companyData.id,
-            name: companyData.name,
-            type: companyData.type,
-            description: companyData.description,
-            contactEmail: companyData.contact_email,
-            phone: companyData.phone,
-            website: companyData.website,
-            address: companyData.address,
-            city: companyData.city,
-            country: companyData.country,
-            verificationStatus: companyData.verification_status,
-        } : undefined,
+        company: company,
     };
 
     return mappedNeed;
@@ -74,7 +58,6 @@ export const getNeedById = async (id: string): Promise<Need | undefined> => {
 };
 
 export const addNeed = async (needData: Omit<Need, 'id' | 'company'>): Promise<Need> => {
-    // Map from camelCase (ts) to snake_case (db)
     const newNeedPayload = {
       company_id: needData.companyId,
       residue_type: needData.residueType,
@@ -97,7 +80,11 @@ export const addNeed = async (needData: Omit<Need, 'id' | 'company'>): Promise<N
         throw error;
     }
 
-    return rehydrateNeed(data);
+    const finalNeed = await getNeedById(data.id);
+    if (!finalNeed) {
+      throw new Error("Failed to rehydrate need after creation.");
+    }
+    return finalNeed;
 };
 
 export const updateNeed = async (updatedNeed: Partial<Need> & { id: string }): Promise<Need> => {
@@ -124,8 +111,12 @@ export const updateNeed = async (updatedNeed: Partial<Need> & { id: string }): P
         console.error('Error updating need:', error);
         throw error;
     }
-
-    return rehydrateNeed(data);
+    
+    const finalNeed = await getNeedById(data.id);
+    if (!finalNeed) {
+      throw new Error("Failed to rehydrate need after update.");
+    }
+    return finalNeed;
 };
 
 export const deleteNeed = async (id: string): Promise<void> => {
