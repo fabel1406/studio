@@ -1,4 +1,3 @@
-
 // src/app/dashboard/residues/create/actions.ts
 'use server'
 
@@ -130,7 +129,7 @@ export async function createOrUpdateResidueAction(formData: FormData) {
         if (data.photoFile && data.photoFile.size > 0 && residueId) {
             const fileExtension = data.photoFile.name.split('.').pop();
             const fileName = `${residueId}.${fileExtension}`;
-            const filePath = `${companyId}/${fileName}`;
+            const filePath = `public/${fileName}`;
 
             const { error: uploadError } = await supabase.storage
                 .from(BUCKET_NAME)
@@ -155,9 +154,6 @@ export async function createOrUpdateResidueAction(formData: FormData) {
             
             if (updatePhotoError) {
                 console.error('Update Photo URL Error:', updatePhotoError);
-                // Si la actualización de la foto falla, no queremos que el usuario piense que todo falló.
-                // Es mejor registrar el error y dejar que el residuo exista sin la foto.
-                // Podríamos incluso intentar eliminar la foto subida para consistencia.
                  return { success: true, residueId: residueId, warning: 'El residuo se guardó, pero hubo un problema al asociar la imagen.' };
             }
         }
