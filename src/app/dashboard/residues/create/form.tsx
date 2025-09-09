@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useState } from "react"
+import { createOrUpdateResidueAction } from "./actions";
 
 import { Button } from "@/components/ui/button"
 import {
@@ -28,18 +29,16 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { getResidueById, addResidue, updateResidue, getAllResidues } from "@/services/residue-service"
+import { getResidueById, getAllResidues } from "@/services/residue-service"
 import { getAllCountries, getCitiesByCountry } from "@/lib/locations";
 import { useRole } from "../../role-provider"
 import { Loader2 } from "lucide-react"
-import { uploadResidueImage } from "@/services/storage-service"
 
 const allCountries = getAllCountries();
 
 // Validar que el archivo no sea mayor a 5MB
 const MAX_FILE_SIZE = 5 * 1024 * 1024; 
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
-
 
 const residueFormSchema = z.object({
   type: z.string().min(1, { message: "Debes seleccionar o especificar un tipo." }),
@@ -56,10 +55,10 @@ const residueFormSchema = z.object({
   country: z.string().min(1, "El país es obligatorio."),
   city: z.string().min(1, "La ciudad es obligatoria."),
   photoFile: z
-    .instanceof(File, { message: "Se requiere un archivo." })
+    .instanceof(File)
     .optional()
     .refine(file => !file || file.size <= MAX_FILE_SIZE, `El tamaño máximo es de 5MB.`)
-    .refine(file => !file || ACCEPTED_IMAGE_TYPES.includes(file.type), "Solo se aceptan archivos .jpg, .jpeg, .png y .webp."),
+    .refine(file => !file || file.type.startsWith("image/"), "Solo se aceptan archivos .jpg, .jpeg, .png y .webp."),
 }).refine(data => {
     if (data.type === 'Otro' && (!data.customType || data.customType.length < 2)) {
         return false;
@@ -84,7 +83,6 @@ const defaultFormValues: Omit<ResidueFormValues, 'photoFile'> = {
     country: "España",
     city: "",
 };
-
 
 export default function ResidueForm() {
   const router = useRouter();
@@ -154,73 +152,63 @@ export default function ResidueForm() {
     form.setValue('city', '');
   }, [selectedCountry, form]);
 
-
   async function onSubmit(data: ResidueFormValues) {
     if (!companyId) {
       toast({ 
         title: "Error de autenticación", 
-        description: "No se ha podido identificar tu empresa. Por favor, recarga la página o inicia sesión de nuevo.", 
+        description: "No se ha podido identificar tu empresa.", 
         variant: "destructive" 
       });
       return;
     }
-
     setIsSubmitting(true);
 
+    const formData = new FormData();
+    if (residueId) {
+        formData.append('residueId', residueId);
+    }
+    formData.append('companyId', companyId);
+    formData.append('type', data.type);
+    if(data.type === 'Otro' && data.customType) {
+        formData.append('customType', data.customType);
+    }
+    formData.append('category', data.category);
+    formData.append('quantity', String(data.quantity));
+    formData.append('unit', data.unit);
+    if (data.pricePerUnit !== undefined) {
+      formData.append('pricePerUnit', String(data.pricePerUnit));
+    }
+    formData.append('status', data.status);
+    if (data.description) {
+        formData.append('description', data.description);
+    }
+    formData.append('country', data.country);
+    formData.append('city', data.city);
+    if (data.photoFile && data.photoFile.size > 0) {
+        formData.append('photoFile', data.photoFile);
+    }
+
     try {
-        const residueData = {
-          companyId,
-          type: data.type === 'Otro' ? data.customType! : data.type,
-          category: data.category,
-          quantity: data.quantity,
-          unit: data.unit,
-          pricePerUnit: data.pricePerUnit,
-          status: data.status,
-          description: data.description,
-          photos: existingPhotoUrl ? [existingPhotoUrl] : [],
-        };
+        const result = await createOrUpdateResidueAction(formData);
 
-        if (residueId) {
-            // --- UPDATE LOGIC ---
-            const updatedResidue = await updateResidue({ ...residueData, id: residueId });
-            let finalPhotoUrl = updatedResidue.photos?.[0];
-
-            if (data.photoFile) {
-                finalPhotoUrl = await uploadResidueImage(updatedResidue.id, companyId, data.photoFile);
-                await updateResidue({ id: updatedResidue.id, photos: [finalPhotoUrl] });
-            }
-
+        if (result.error) {
             toast({
-                title: "¡Residuo Actualizado!",
-                description: `El residuo "${updatedResidue.type}" ha sido actualizado.`,
+                title: 'Error al guardar',
+                description: result.error,
+                variant: 'destructive',
             });
         } else {
-            // --- CREATE LOGIC ---
-            const newResidue = await addResidue(residueData);
-            let finalPhotoUrl: string | undefined;
-
-            if (data.photoFile) {
-                finalPhotoUrl = await uploadResidueImage(newResidue.id, companyId, data.photoFile);
-                await updateResidue({ id: newResidue.id, photos: [finalPhotoUrl] });
-            }
-
             toast({
-                title: "¡Residuo Creado!",
-                description: `El residuo "${newResidue.type}" ha sido creado con éxito.`,
+                title: residueId ? "¡Residuo Actualizado!" : "¡Residuo Creado!",
+                description: `El residuo ha sido guardado con éxito.`,
             });
+            router.push('/dashboard/residues');
         }
-        
-        // Use a router push and refresh to ensure everything is re-fetched.
-        router.push('/dashboard/residues', { scroll: false });
-        router.refresh();
-
-    } catch(e) {
-        console.error("Error submitting form", e);
-        const errorMessage = e instanceof Error ? e.message : "Hubo un problema al guardar el residuo.";
+    } catch (e) {
         toast({
-            title: "Error al guardar",
-            description: errorMessage,
-            variant: "destructive",
+            title: 'Error Inesperado',
+            description: 'Ocurrió un problema al procesar tu solicitud.',
+            variant: 'destructive',
         });
     } finally {
         setIsSubmitting(false);
@@ -426,7 +414,6 @@ export default function ResidueForm() {
                                         onChange(file);
                                     }}
                                     disabled={isSubmitting} 
-                                    {...rest}
                                   />
                               </FormControl>
                                <FormDescription>

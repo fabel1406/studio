@@ -1,4 +1,3 @@
-
 // src/app/dashboard/residues/page.tsx
 "use client";
 
@@ -10,8 +9,9 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { getAllResidues, deleteResidue as deleteResidueService } from '@/services/residue-service';
+import { getAllResidues } from '@/services/residue-service';
 import { useRole } from '../role-provider';
+import { deleteResidueAction } from './create/actions';
 
 export default function ResiduesPage() {
   const [residues, setResidues] = useState<Residue[]>([]);
@@ -31,12 +31,21 @@ export default function ResiduesPage() {
   }, [loadResidues]);
 
   const deleteResidue = async (residueId: string, residueType: string) => {
-    await deleteResidueService(residueId);
-    await loadResidues();
-    toast({
-      title: "Residuo Eliminado",
-      description: `La publicación para "${residueType}" ha sido eliminada.`,
-    });
+    const result = await deleteResidueAction(residueId);
+    
+    if (result.error) {
+        toast({
+            title: "Error al eliminar",
+            description: result.error,
+            variant: "destructive"
+        });
+    } else {
+        toast({
+          title: "Residuo Eliminado",
+          description: `La publicación para "${residueType}" ha sido eliminada.`,
+        });
+        await loadResidues();
+    }
   };
 
   const columns = useMemo(() => createColumns({ deleteResidue }), [residues]);
