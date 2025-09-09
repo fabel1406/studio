@@ -25,7 +25,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
+} from "@/components/ui/alert-dialog";
 import { notFound } from "next/navigation";
 
 
@@ -47,8 +47,9 @@ export default function NegotiationDetailPage() {
     const fetchNegotiation = useCallback(async () => {
         if (id) {
             const fetchedNegotiation = await getNegotiationById(id);
-            setNegotiation(fetchedNegotiation || null);
-            if (!fetchedNegotiation) {
+            if (fetchedNegotiation) {
+                setNegotiation(fetchedNegotiation);
+            } else {
                 notFound();
             }
         }
@@ -62,21 +63,20 @@ export default function NegotiationDetailPage() {
 
     const handleUpdateStatus = async (status: Negotiation['status']) => {
         if (!negotiation) return;
-        const updatedNegotiation = await updateNegotiationStatus(negotiation.id, status);
-        setNegotiation(updatedNegotiation);
+        await updateNegotiationStatus(negotiation.id, status);
+        await fetchNegotiation();
     };
 
     const handleSendMessage = async (content: string) => {
         if (!negotiation || !companyId) return;
         await addMessageToNegotiation(negotiation.id, companyId, content);
-        // Re-fetch to get the latest messages
         await fetchNegotiation();
     };
     
     const handleOfferUpdated = async (quantity: number, price?: number) => {
         if (!negotiation) return;
-        const updatedNegotiation = await updateNegotiationDetails(negotiation.id, quantity, price);
-        setNegotiation(updatedNegotiation);
+        await updateNegotiationDetails(negotiation.id, quantity, price);
+        await fetchNegotiation();
     }
 
     if (isLoading || !companyId) {

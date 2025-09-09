@@ -132,10 +132,8 @@ export const addNegotiation = async (data: NewNegotiationFromResidue | NewNegoti
         throw error;
     }
 
-    // Now, add the initial message to the new messages table
     await addMessageToNegotiation(newNegotiation.id, data.initiatorId, initialMessageContent);
     
-    // IMPORTANT: Re-fetch the negotiation to get all hydrated data including the new message.
     return getNegotiationById(newNegotiation.id) as Promise<Negotiation>;
 };
 
@@ -178,7 +176,7 @@ export const getNegotiationById = async (id: string): Promise<Negotiation | unde
     return rehydrateNegotiation(data);
 };
 
-export const updateNegotiationStatus = async (id: string, status: Negotiation['status']): Promise<Negotiation> => {
+export const updateNegotiationStatus = async (id: string, status: Negotiation['status']): Promise<void> => {
     const negotiation = await getNegotiationById(id);
     if (!negotiation) throw new Error("Negotiation not found");
 
@@ -189,18 +187,15 @@ export const updateNegotiationStatus = async (id: string, status: Negotiation['s
         updatePayload.commission_value = negotiation.quantity * negotiation.offerPrice * COMMISSION_RATE;
     }
 
-    const { data, error } = await supabase
+    const { error } = await supabase
         .from('negotiations')
         .update(updatePayload)
-        .eq('id', id)
-        .select()
-        .single();
+        .eq('id', id);
 
     if (error) throw error;
-    return rehydrateNegotiation(data);
 };
 
-export const updateNegotiationDetails = async (id: string, quantity: number, price?: number): Promise<Negotiation> => {
+export const updateNegotiationDetails = async (id: string, quantity: number, price?: number): Promise<void> => {
     const negotiation = await getNegotiationById(id);
     if (!negotiation) throw new Error("Negotiation not found");
     
@@ -211,44 +206,30 @@ export const updateNegotiationDetails = async (id: string, quantity: number, pri
     if (quantity !== originalQuantity) messageContent += ` Nueva cantidad: ${quantity} ${negotiation.unit}.`;
     if (price !== originalPrice) messageContent += ` Nuevo precio: ${price !== undefined ? `$${price}` : 'Negociable'}.`;
 
-    const { data, error } = await supabase
+    const { error } = await supabase
         .from('negotiations')
         .update({ quantity, offer_price: price })
-        .eq('id', id)
-        .select()
-        .single();
+        .eq('id', id);
 
     if (error) throw error;
     
     await addMessageToNegotiation(id, negotiation.initiatedBy, messageContent);
-
-    return getNegotiationById(id) as Promise<Negotiation>;
 };
 
-export const addMessageToNegotiation = async (negotiationId: string, senderId: string, content: string): Promise<NegotiationMessage> => {
-    const { data, error } = await supabase
+export const addMessageToNegotiation = async (negotiationId: string, senderId: string, content: string): Promise<void> => {
+    const { error } = await supabase
         .from('negotiation_messages')
         .insert({
             negotiation_id: negotiationId,
             sender_id: senderId,
             content: content
-        })
-        .select()
-        .single();
+        });
 
     if (error) {
         console.error("Error sending message:", error);
         throw error;
     }
-    
-    return {
-        id: data.id,
-        negotiationId: data.negotiation_id,
-        senderId: data.sender_id,
-        content: data.content,
-        createdAt: data.created_at,
-    };
-}
+};
 
 export const deleteNegotiation = async (id: string): Promise<void> => {
     const { error } = await supabase.from('negotiations').delete().eq('id', id);
