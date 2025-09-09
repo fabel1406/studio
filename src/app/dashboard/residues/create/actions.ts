@@ -84,6 +84,7 @@ export async function createOrUpdateResidueAction(formData: FormData) {
           .single();
 
         if (companyError || !companyData) {
+          console.error("Company fetch error:", companyError)
           return { error: 'No se pudo verificar la empresa del usuario.' };
         }
 
@@ -123,8 +124,11 @@ export async function createOrUpdateResidueAction(formData: FormData) {
             if (error) {
                 console.error("Database Insert Error:", error);
                 // Provide a more specific error message if possible
-                if (error.code === '42501') { // permission denied
-                    return { error: "Error al guardar el residuo: Permiso denegado. Revisa las políticas de seguridad (RLS) de la tabla 'residues' en Supabase."};
+                if (error.code === '23503') { // foreign key violation
+                    return { error: `Error al guardar: La compañía con ID ${companyData.id} no existe.` };
+                }
+                if (error.code === '42501') { // permission denied (RLS)
+                    return { error: `Error de Permiso: No tienes permiso para crear un residuo para la compañía ${companyData.id}. Revisa las políticas de seguridad (RLS) de la tabla 'residues'.`};
                 }
                 throw error;
             }
@@ -146,18 +150,25 @@ export async function createOrUpdateResidueAction(formData: FormData) {
                     contentType: data.photoFile.type,
                 });
 
-            if (uploadError) throw uploadError;
+            if (uploadError) {
+                console.error('Upload Error:', uploadError);
+                // Don't fail the whole operation if upload fails, just log it.
+                // The residue is already created/updated.
+            } else {
+                const { data: { publicUrl } } = supabase.storage
+                    .from(BUCKET_NAME)
+                    .getPublicUrl(filePath);
 
-            const { data: { publicUrl } } = supabase.storage
-                .from(BUCKET_NAME)
-                .getPublicUrl(filePath);
-
-            const { error: updatePhotoError } = await supabase
-                .from('residues')
-                .update({ photos: [publicUrl] })
-                .eq('id', residueId);
-            
-            if (updatePhotoError) throw updatePhotoError;
+                const { error: updatePhotoError } = await supabase
+                    .from('residues')
+                    .update({ photos: [publicUrl] })
+                    .eq('id', residueId);
+                
+                if (updatePhotoError) {
+                    console.error('Update Photo URL Error:', updatePhotoError);
+                    // Also don't fail the whole operation.
+                }
+            }
         }
         
         revalidatePath('/dashboard/residues');

@@ -38,47 +38,51 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
   const supabase = createClient();
 
+  const fetchCompanyData = useCallback(async (currentUser: User) => {
+    const { data: companyData, error } = await supabase
+      .from('companies')
+      .select('id, name, type')
+      .eq('auth_id', currentUser.id)
+      .single();
+    
+    if (companyData) {
+      setCompanyId(companyData.id);
+      setCompanyName(companyData.name);
+      setInternalRole(companyData.type as UserRole);
+    } else {
+        console.warn("No company found for user:", currentUser.id, "Error:", error?.message);
+        // Handle case where company might not be created yet, maybe redirect to settings
+    }
+  }, [supabase]);
+
+
   useEffect(() => {
-    const fetchSession = async () => {
+    const fetchSessionAndCompany = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       const currentUser = session?.user || null;
       setUser(currentUser);
 
       if (currentUser) {
-        const { data: companyData } = await supabase
-          .from('companies')
-          .select('id, name, type')
-          .eq('auth_id', currentUser.id)
-          .single();
-        
-        if (companyData) {
-          setCompanyId(companyData.id);
-          setCompanyName(companyData.name);
-          setInternalRole(companyData.type as UserRole);
-        }
+        await fetchCompanyData(currentUser);
       }
       setIsLoading(false);
     };
 
-    fetchSession();
+    fetchSessionAndCompany();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         const currentUser = session?.user || null;
         setUser(currentUser);
         if (event === 'SIGNED_IN' && currentUser) {
-            // Fetch company data only when user signs in, not on every event
-            supabase.from('companies').select('id, name, type').eq('auth_id', currentUser.id).single().then(({data}) => {
-                if (data) {
-                    setCompanyId(data.id);
-                    setCompanyName(data.name);
-                    setInternalRole(data.type as UserRole);
-                }
-            })
+            await fetchCompanyData(currentUser);
         } else if (event === 'SIGNED_OUT') {
             setCompanyId(null);
             setCompanyName("");
             setInternalRole("GENERATOR");
+            router.push('/login');
+        } else if (event === 'USER_UPDATED' && currentUser) {
+            await fetchCompanyData(currentUser);
         }
       }
     );
@@ -86,7 +90,7 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
     return () => {
       subscription.unsubscribe();
     };
-  }, [supabase]);
+  }, [supabase, fetchCompanyData, router]);
 
   
   useEffect(() => {
@@ -97,15 +101,15 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
 
 
   const setRole = async (newRole: UserRole) => {
+    // This function might be more complex if role changes need DB updates
     setInternalRole(newRole);
   }
   
   const logout = async () => {
       await supabase.auth.signOut();
-      router.push('/login');
   }
 
-  const value = useMemo(() => ({ user, role, setRole, companyId, isLoading, logout, companyName }), [user, role, companyId, isLoading, companyName]);
+  const value = useMemo(() => ({ user, role, setRole, companyId, isLoading, logout, companyName }), [user, role, companyId, isLoading, logout, companyName]);
   
   if (isLoading) {
     return (
@@ -119,6 +123,7 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
   }
 
   if (!user && !isLoading) {
+      // This should be handled by the useEffect redirect, but as a fallback
       return null;
   }
 
