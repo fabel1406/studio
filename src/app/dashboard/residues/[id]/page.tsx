@@ -1,4 +1,3 @@
-
 import { getResidueById } from "@/services/residue-service";
 import Image from "next/image";
 import Link from "next/link";
@@ -46,7 +45,6 @@ export default async function ResiduePage({ params }: { params: Promise<{ id: st
                         fill
                         style={{objectFit: 'cover'}}
                         data-ai-hint={aiHint}
-                        unoptimized={imagePath.startsWith('data:')}
                         priority
                     />
                     </div>

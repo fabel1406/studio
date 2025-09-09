@@ -33,6 +33,7 @@ import { getResidueById, addResidue, updateResidue, getAllResidues } from "@/ser
 import { getAllCountries, getCitiesByCountry } from "@/lib/locations";
 import { useRole } from "../../role-provider"
 import { Loader2 } from "lucide-react"
+import { uploadResidueImage } from "@/services/storage-service"
 
 const allCountries = getAllCountries();
 
@@ -71,6 +72,7 @@ export default function ResidueForm() {
   const { companyId } = useRole();
   const [uniqueResidueTypes, setUniqueResidueTypes] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
    useEffect(() => {
     async function fetchData() {
@@ -154,7 +156,16 @@ export default function ResidueForm() {
       return;
     }
 
+    setIsSubmitting(true);
+
     try {
+        let photoUrl: string | undefined = data.photoDataUrl;
+
+        // Si se subió una nueva foto (es un data URL), súbela a Supabase Storage.
+        if (data.photoDataUrl && data.photoDataUrl.startsWith('data:image')) {
+            photoUrl = await uploadResidueImage(companyId, data.photoDataUrl);
+        }
+
         const finalData = {
           companyId,
           type: data.type === 'Otro' ? data.customType! : data.type,
@@ -164,7 +175,7 @@ export default function ResidueForm() {
           pricePerUnit: data.pricePerUnit,
           status: data.status,
           description: data.description,
-          photos: data.photoDataUrl ? [data.photoDataUrl] : undefined,
+          photos: photoUrl ? [photoUrl] : [],
         };
 
         if (residueId) {
@@ -184,11 +195,14 @@ export default function ResidueForm() {
         router.refresh();
     } catch(e) {
         console.error("Error submitting form", e);
+        const errorMessage = e instanceof Error ? e.message : "Hubo un problema al guardar el residuo.";
         toast({
             title: "Error al guardar",
-            description: "Hubo un problema al guardar el residuo. Por favor, inténtalo de nuevo.",
+            description: errorMessage,
             variant: "destructive",
         });
+    } finally {
+        setIsSubmitting(false);
     }
   }
   
@@ -379,11 +393,11 @@ export default function ResidueForm() {
                       <FormField
                           control={form.control}
                           name="photoDataUrl"
-                          render={({ field }) => (
+                          render={() => (
                               <FormItem>
                               <FormLabel>Foto del Residuo</FormLabel>
                               <FormControl>
-                                  <Input type="file" accept="image/*" onChange={handleFileChange} />
+                                  <Input type="file" accept="image/*" onChange={handleFileChange} disabled={isSubmitting} />
                               </FormControl>
                                <FormDescription>
                                   Sube una imagen clara de tu residuo.
@@ -443,7 +457,7 @@ export default function ResidueForm() {
                     <Button type="button" variant="outline" onClick={() => router.push('/dashboard/residues')}>
                         Cancelar
                     </Button>
-                    <Button type="submit">{residueId ? "Guardar Cambios" : "Guardar Residuo"}</Button>
+                    <Button type="submit" disabled={isSubmitting}>{isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}{residueId ? "Guardar Cambios" : "Guardar Residuo"}</Button>
                 </div>
                 </form>
             </Form>
