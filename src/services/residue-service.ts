@@ -76,7 +76,7 @@ export const getResidueById = async (id: string): Promise<Residue | undefined> =
     return rehydrateResidue(data);
 };
 
-type NewResidueData = Omit<Residue, 'id' | 'availabilityDate' | 'photos' | 'company'>;
+type NewResidueData = Omit<Residue, 'id' | 'availabilityDate' | 'company'>;
 
 export const addResidue = async (residueData: NewResidueData): Promise<Residue> => {
     // Map from camelCase (ts) to snake_case (db)
@@ -90,7 +90,7 @@ export const addResidue = async (residueData: NewResidueData): Promise<Residue> 
         status: residueData.status,
         description: residueData.description,
         availability_date: new Date().toISOString(),
-        photos: [`https://picsum.photos/seed/new${Date.now()}/600/400`],
+        photos: residueData.photos || [`https://picsum.photos/seed/default${Date.now()}/600/400`],
     };
 
     const { data, error } = await supabase
@@ -108,7 +108,7 @@ export const addResidue = async (residueData: NewResidueData): Promise<Residue> 
 };
 
 export const updateResidue = async (updatedResidueData: Partial<Residue> & { id: string }): Promise<Residue> => {
-     const updatePayload = {
+     const updatePayload: any = {
         id: updatedResidueData.id,
         company_id: updatedResidueData.companyId,
         type: updatedResidueData.type,
@@ -119,6 +119,11 @@ export const updateResidue = async (updatedResidueData: Partial<Residue> & { id:
         status: updatedResidueData.status,
         description: updatedResidueData.description,
      };
+    
+     // Only include photos if they are provided in the update
+     if (updatedResidueData.photos) {
+        updatePayload.photos = updatedResidueData.photos;
+     }
 
     const { data, error } = await supabase
         .from('residues')

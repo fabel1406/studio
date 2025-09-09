@@ -50,6 +50,7 @@ const residueFormSchema = z.object({
   description: z.string().max(300, { message: "La descripción no puede exceder los 300 caracteres." }).optional(),
   country: z.string().min(1, "El país es obligatorio."),
   city: z.string().min(1, "La ciudad es obligatoria."),
+  photos: z.any().optional(), // We'll handle file logic outside the schema for now
 }).refine(data => {
     if (data.type === 'Otro' && (!data.customType || data.customType.length < 2)) {
         return false;
@@ -150,6 +151,8 @@ export default function ResidueForm() {
           pricePerUnit: data.pricePerUnit,
           status: data.status,
           description: data.description,
+          // Placeholder for photo URL. In a real app, this would be the result of an upload.
+          photos: data.photos && data.photos.length > 0 ? [`https://picsum.photos/seed/${data.type}${Date.now()}/600/400`] : undefined,
         };
 
         if (residueId) {
@@ -360,7 +363,45 @@ export default function ResidueForm() {
                             </FormItem>
                         )}
                     />
+                     <div className="md:col-span-2">
+                      <FormField
+                          control={form.control}
+                          name="photos"
+                          render={({ field }) => (
+                              <FormItem>
+                              <FormLabel>Foto del Residuo</FormLabel>
+                              <FormControl>
+                                  <Input type="file" accept="image/*" onChange={(e) => field.onChange(e.target.files)} />
+                              </FormControl>
+                               <FormDescription>
+                                  Sube una imagen clara de tu residuo.
+                              </FormDescription>
+                              <FormMessage />
+                              </FormItem>
+                          )}
+                          />
+                    </div>
+                    <div className="md:col-span-2">
                     <FormField
+                        control={form.control}
+                        name="description"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Descripción</FormLabel>
+                            <FormControl>
+                                <Textarea
+                                placeholder="Añade detalles adicionales sobre el residuo, como su composición, humedad, posibles contaminantes, etc."
+                                className="resize-none"
+                                {...field}
+                                value={field.value ?? ''}
+                                />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                        />
+                    </div>
+                     <FormField
                         control={form.control}
                         name="status"
                         render={({ field }) => (
@@ -385,26 +426,6 @@ export default function ResidueForm() {
                             </FormItem>
                         )}
                     />
-                    <div className="md:col-span-2">
-                    <FormField
-                        control={form.control}
-                        name="description"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Descripción</FormLabel>
-                            <FormControl>
-                                <Textarea
-                                placeholder="Añade detalles adicionales sobre el residuo, como su composición, humedad, posibles contaminantes, etc."
-                                className="resize-none"
-                                {...field}
-                                value={field.value ?? ''}
-                                />
-                            </FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                        />
-                    </div>
                 </div>
                 <div className="flex justify-end gap-2">
                     <Button type="button" variant="outline" onClick={() => router.push('/dashboard/residues')}>
