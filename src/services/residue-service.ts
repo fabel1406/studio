@@ -29,35 +29,45 @@ const rehydrateResidue = async (residue: any): Promise<Residue> => {
 
 
 export const getAllResidues = async (): Promise<Residue[]> => {
-    const { data, error } = await supabase
-        .from('residues')
-        .select('*');
+    try {
+        const { data, error } = await supabase
+            .from('residues')
+            .select('*');
 
-    if (error) {
-        console.error('Error fetching residues:', error);
+        if (error) {
+            console.error('Error fetching residues:', error);
+            return [];
+        }
+
+        const rehydratedResidues = await Promise.all(data.map(rehydrateResidue));
+        return rehydratedResidues;
+    } catch(e) {
+        console.error('Error in getAllResidues:', e);
         return [];
     }
-
-    const rehydratedResidues = await Promise.all(data.map(rehydrateResidue));
-    return rehydratedResidues;
 };
 
 export const getResidueById = async (id: string): Promise<Residue | undefined> => {
-    const { data, error } = await supabase
-        .from('residues')
-        .select('*')
-        .eq('id', id)
-        .single();
-        
-    if (error) {
-        console.error(`Error fetching residue ${id}:`, error);
+    try {
+        const { data, error } = await supabase
+            .from('residues')
+            .select('*')
+            .eq('id', id)
+            .single();
+            
+        if (error) {
+            console.error(`Error fetching residue ${id}:`, error);
+            return undefined;
+        }
+
+        return rehydrateResidue(data);
+    } catch(e) {
+        console.error('Error in getResidueById:', e);
         return undefined;
     }
-
-    return rehydrateResidue(data);
 };
 
-type NewResidueData = Omit<Residue, 'id' | 'availabilityDate' | 'company'>;
+type NewResidueData = Omit<Residue, 'id' | 'availabilityDate' | 'company' | 'photos'>;
 
 export const addResidue = async (residueData: NewResidueData): Promise<Residue> => {
     // Map from camelCase (ts) to snake_case (db)
@@ -71,7 +81,7 @@ export const addResidue = async (residueData: NewResidueData): Promise<Residue> 
         status: residueData.status,
         description: residueData.description,
         availability_date: new Date().toISOString(),
-        photos: residueData.photos,
+        photos: [], // Se inicia sin fotos, la foto se sube y se añade después.
     };
 
     const { data, error } = await supabase
@@ -85,7 +95,7 @@ export const addResidue = async (residueData: NewResidueData): Promise<Residue> 
         throw error;
     }
 
-    const finalResidue = await getResidueById(data.id);
+    const finalResidue = await rehydrateResidue(data);
     if (!finalResidue) {
         throw new Error("Failed to rehydrate residue after creation.");
     }
@@ -96,19 +106,19 @@ export const addResidue = async (residueData: NewResidueData): Promise<Residue> 
 export const updateResidue = async (updatedResidueData: Partial<Residue> & { id: string }): Promise<Residue> => {
      const updatePayload: any = {
         id: updatedResidueData.id,
-        company_id: updatedResidueData.companyId,
-        type: updatedResidueData.type,
-        category: updatedResidueData.category,
-        quantity: updatedResidueData.quantity,
-        unit: updatedResidueData.unit,
-        price_per_unit: updatedResidueData.pricePerUnit,
-        status: updatedResidueData.status,
-        description: updatedResidueData.description,
      };
-    
-     if (updatedResidueData.photos) {
-        updatePayload.photos = updatedResidueData.photos;
-     }
+     
+     // Only include fields that are actually being updated
+     if (updatedResidueData.companyId) updatePayload.company_id = updatedResidueData.companyId;
+     if (updatedResidueData.type) updatePayload.type = updatedResidueData.type;
+     if (updatedResidueData.category) updatePayload.category = updatedResidueData.category;
+     if (updatedResidueData.quantity) updatePayload.quantity = updatedResidueData.quantity;
+     if (updatedResidueData.unit) updatePayload.unit = updatedResidueData.unit;
+     if (updatedResidueData.pricePerUnit !== undefined) updatePayload.price_per_unit = updatedResidueData.pricePerUnit;
+     if (updatedResidueData.status) updatePayload.status = updatedResidueData.status;
+     if (updatedResidueData.description) updatePayload.description = updatedResidueData.description;
+     if (updatedResidueData.photos) updatePayload.photos = updatedResidueData.photos;
+     
 
     const { data, error } = await supabase
         .from('residues')
@@ -122,7 +132,7 @@ export const updateResidue = async (updatedResidueData: Partial<Residue> & { id:
         throw error;
     }
     
-    const finalResidue = await getResidueById(data.id);
+    const finalResidue = await rehydrateResidue(data);
     if (!finalResidue) {
         throw new Error("Failed to rehydrate residue after update.");
     }

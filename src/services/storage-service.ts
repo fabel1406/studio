@@ -1,5 +1,6 @@
 // src/services/storage-service.ts
 import { createClient } from '@/lib/supabase/client';
+import type { Residue } from '@/lib/types';
 
 const supabase = createClient();
 const BUCKET_NAME = 'residue-photos';
@@ -31,32 +32,36 @@ function dataURLtoFile(dataUrl: string, filename: string): File | null {
 
 
 /**
- * Sube una imagen de residuo a Supabase Storage.
- * @param companyId El ID de la empresa para organizar los archivos.
+ * Sube una imagen para un residuo específico a Supabase Storage.
+ * La ruta del archivo será: public/{companyId}/{residueId}.{extension}
+ * @param residue El objeto Residue al que pertenece la imagen.
  * @param photoDataUrl La imagen en formato Data URL.
  * @returns La URL pública de la imagen subida.
  */
-export const uploadResidueImage = async (companyId: string, photoDataUrl: string): Promise<string> => {
+export const uploadResidueImage = async (residue: Residue, photoDataUrl: string): Promise<string> => {
     const fileExtension = photoDataUrl.substring(photoDataUrl.indexOf('/') + 1, photoDataUrl.indexOf(';base64'));
-    const filePath = `${companyId}/${Date.now()}.${fileExtension}`;
+    const filePath = `public/${residue.companyId}/${residue.id}.${fileExtension}`;
     
     const file = dataURLtoFile(photoDataUrl, filePath);
     if (!file) {
         throw new Error("No se pudo convertir el Data URL a un archivo.");
     }
 
+    // Usamos .upload con `upsert: true` para permitir sobreescribir si ya existe una imagen para ese residuo.
     const { data: uploadData, error: uploadError } = await supabase.storage
         .from(BUCKET_NAME)
-        .upload(filePath, file);
+        .upload(filePath, file, {
+            upsert: true,
+        });
 
     if (uploadError) {
-        console.error("Error subiendo la imagen:", uploadError);
+        console.error("Error subiendo la imagen a Supabase:", uploadError);
         throw uploadError;
     }
 
     const { data: { publicUrl } } = supabase.storage
         .from(BUCKET_NAME)
-        .getPublicUrl(uploadData.path);
+        .getPublicUrl(filePath);
 
     return publicUrl;
 };

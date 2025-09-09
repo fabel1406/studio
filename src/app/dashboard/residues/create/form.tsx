@@ -76,35 +76,41 @@ export default function ResidueForm() {
    useEffect(() => {
     async function fetchData() {
         setIsLoading(true);
-        const allResidues = await getAllResidues();
-        const types = [...new Set(allResidues.map(r => r.type))];
-        setUniqueResidueTypes(types);
+        try {
+            const allResidues = await getAllResidues();
+            const types = [...new Set(allResidues.map(r => r.type))];
+            setUniqueResidueTypes(types);
 
-        const id = searchParams.get('id');
-        if (id) {
-          setResidueId(id);
-          const residue = await getResidueById(id);
-          if (residue) {
-            const isStandardType = types.includes(residue.type);
-            form.reset({
-              type: isStandardType ? residue.type : 'Otro',
-              customType: isStandardType ? '' : residue.type,
-              category: residue.category,
-              quantity: residue.quantity,
-              unit: residue.unit,
-              status: residue.status,
-              pricePerUnit: residue.pricePerUnit,
-              description: residue.description || "",
-              country: residue.company?.country || 'España',
-              city: residue.company?.city || '',
-              photoDataUrl: residue.photos?.[0]
-            });
-          }
+            const id = searchParams.get('id');
+            if (id) {
+                setResidueId(id);
+                const residue = await getResidueById(id);
+                if (residue) {
+                    const isStandardType = types.includes(residue.type);
+                    form.reset({
+                    type: isStandardType ? residue.type : 'Otro',
+                    customType: isStandardType ? '' : residue.type,
+                    category: residue.category,
+                    quantity: residue.quantity,
+                    unit: residue.unit,
+                    status: residue.status,
+                    pricePerUnit: residue.pricePerUnit,
+                    description: residue.description || "",
+                    country: residue.company?.country || 'España',
+                    city: residue.company?.city || '',
+                    photoDataUrl: residue.photos?.[0]
+                    });
+                }
+            }
+        } catch (error) {
+            console.error("Error fetching initial data", error);
+            toast({ title: "Error", description: "No se pudieron cargar los datos iniciales.", variant: "destructive" });
+        } finally {
+            setIsLoading(false);
         }
-        setIsLoading(false);
     }
     fetchData();
-  }, [searchParams]);
+  }, [searchParams, toast]);
 
   const form = useForm<ResidueFormValues>({
     resolver: zodResolver(residueFormSchema),
@@ -158,13 +164,7 @@ export default function ResidueForm() {
     setIsSubmitting(true);
 
     try {
-        let photoUrl: string | undefined = data.photoDataUrl;
-
-        if (data.photoDataUrl && data.photoDataUrl.startsWith('data:image')) {
-            photoUrl = await uploadResidueImage(companyId, data.photoDataUrl);
-        }
-
-        const finalData = {
+        const residueData = {
           companyId,
           type: data.type === 'Otro' ? data.customType! : data.type,
           category: data.category,
@@ -173,24 +173,44 @@ export default function ResidueForm() {
           pricePerUnit: data.pricePerUnit,
           status: data.status,
           description: data.description,
-          photos: photoUrl ? [photoUrl] : [],
         };
 
         if (residueId) {
-            await updateResidue({ ...finalData, id: residueId });
+            // --- UPDATE LOGIC ---
+            const updatedResidue = await updateResidue({ ...residueData, id: residueId });
             toast({
                 title: "¡Residuo Actualizado!",
-                description: `El residuo "${finalData.type}" ha sido actualizado con éxito.`,
-            })
+                description: `El residuo "${updatedResidue.type}" ha sido actualizado.`,
+            });
+            
+            // If photo changed, upload new one and update photos array
+            if (data.photoDataUrl && data.photoDataUrl.startsWith('data:image')) {
+                const photoUrl = await uploadResidueImage(updatedResidue, data.photoDataUrl);
+                await updateResidue({ id: updatedResidue.id, photos: [photoUrl] });
+            }
+
         } else {
-            await addResidue(finalData as any);
+            // --- CREATE LOGIC ---
+            const newResidue = await addResidue(residueData);
             toast({
                 title: "¡Residuo Guardado!",
-                description: `El residuo "${finalData.type}" ha sido guardado con éxito.`,
-            })
+                description: `El residuo "${newResidue.type}" ha sido guardado. Ahora subiendo imagen...`,
+            });
+
+            // If there's a photo, upload it and update the residue record
+            if (data.photoDataUrl) {
+                const photoUrl = await uploadResidueImage(newResidue, data.photoDataUrl);
+                await updateResidue({ id: newResidue.id, photos: [photoUrl] });
+                 toast({
+                    title: "¡Imagen Subida!",
+                    description: `La imagen para "${newResidue.type}" se ha subido correctamente.`,
+                });
+            }
         }
+        
         router.push('/dashboard/residues');
         router.refresh();
+
     } catch(e) {
         console.error("Error submitting form", e);
         const errorMessage = e instanceof Error ? e.message : "Hubo un problema al guardar el residuo.";
