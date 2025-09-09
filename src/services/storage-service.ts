@@ -1,6 +1,5 @@
 // src/services/storage-service.ts
 import { createClient } from '@/lib/supabase/client';
-import type { Residue } from '@/lib/types';
 
 const supabase = createClient();
 const BUCKET_NAME = 'residue-photos';
@@ -34,24 +33,25 @@ function dataURLtoFile(dataUrl: string, filename: string): File | null {
 /**
  * Sube una imagen para un residuo específico a Supabase Storage.
  * La ruta del archivo será: public/{companyId}/{residueId}.{extension}
- * @param residue El objeto Residue al que pertenece la imagen.
+ * @param residueId El ID del residuo al que pertenece la imagen.
+ * @param companyId El ID de la empresa propietaria.
  * @param photoDataUrl La imagen en formato Data URL.
  * @returns La URL pública de la imagen subida.
  */
-export const uploadResidueImage = async (residue: Residue, photoDataUrl: string): Promise<string> => {
+export const uploadResidueImage = async (residueId: string, companyId: string, photoDataUrl: string): Promise<string> => {
     const fileExtension = photoDataUrl.substring(photoDataUrl.indexOf('/') + 1, photoDataUrl.indexOf(';base64'));
-    const filePath = `public/${residue.companyId}/${residue.id}.${fileExtension}`;
+    const fileName = `${residueId}.${fileExtension}`;
+    const filePath = `${companyId}/${fileName}`;
     
-    const file = dataURLtoFile(photoDataUrl, filePath);
+    const file = dataURLtoFile(photoDataUrl, fileName);
     if (!file) {
         throw new Error("No se pudo convertir el Data URL a un archivo.");
     }
 
-    // Usamos .upload con `upsert: true` para permitir sobreescribir si ya existe una imagen para ese residuo.
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    const { error: uploadError } = await supabase.storage
         .from(BUCKET_NAME)
         .upload(filePath, file, {
-            upsert: true,
+            upsert: true, // Permite sobreescribir si ya existe
         });
 
     if (uploadError) {

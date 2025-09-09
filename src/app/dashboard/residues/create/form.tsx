@@ -63,6 +63,21 @@ const residueFormSchema = z.object({
 
 type ResidueFormValues = z.infer<typeof residueFormSchema>
 
+const defaultFormValues: ResidueFormValues = {
+    type: "",
+    customType: "",
+    quantity: 0,
+    pricePerUnit: undefined,
+    description: "",
+    status: 'ACTIVE',
+    unit: 'TON',
+    category: undefined,
+    country: "España",
+    city: "",
+    photoDataUrl: undefined,
+};
+
+
 export default function ResidueForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -101,6 +116,8 @@ export default function ResidueForm() {
                     photoDataUrl: residue.photos?.[0]
                     });
                 }
+            } else {
+              form.reset(defaultFormValues);
             }
         } catch (error) {
             console.error("Error fetching initial data", error);
@@ -114,19 +131,7 @@ export default function ResidueForm() {
 
   const form = useForm<ResidueFormValues>({
     resolver: zodResolver(residueFormSchema),
-    defaultValues: {
-        type: "",
-        customType: "",
-        quantity: 0,
-        pricePerUnit: undefined,
-        description: "",
-        status: 'ACTIVE',
-        unit: 'TON',
-        category: undefined,
-        country: "España",
-        city: "",
-        photoDataUrl: undefined,
-    },
+    defaultValues: defaultFormValues,
     mode: "onChange",
   })
 
@@ -145,7 +150,7 @@ export default function ResidueForm() {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        form.setValue('photoDataUrl', reader.result as string);
+        form.setValue('photoDataUrl', reader.result as string, { shouldValidate: true });
       };
       reader.readAsDataURL(file);
     }
@@ -173,6 +178,7 @@ export default function ResidueForm() {
           pricePerUnit: data.pricePerUnit,
           status: data.status,
           description: data.description,
+          photos: residueId ? (await getResidueById(residueId))?.photos || [] : [],
         };
 
         if (residueId) {
@@ -183,9 +189,8 @@ export default function ResidueForm() {
                 description: `El residuo "${updatedResidue.type}" ha sido actualizado.`,
             });
             
-            // If photo changed, upload new one and update photos array
             if (data.photoDataUrl && data.photoDataUrl.startsWith('data:image')) {
-                const photoUrl = await uploadResidueImage(updatedResidue, data.photoDataUrl);
+                const photoUrl = await uploadResidueImage(updatedResidue.id, companyId, data.photoDataUrl);
                 await updateResidue({ id: updatedResidue.id, photos: [photoUrl] });
             }
 
@@ -194,12 +199,11 @@ export default function ResidueForm() {
             const newResidue = await addResidue(residueData);
             toast({
                 title: "¡Residuo Guardado!",
-                description: `El residuo "${newResidue.type}" ha sido guardado. Ahora subiendo imagen...`,
+                description: `El residuo "${newResidue.type}" ha sido guardado.`,
             });
-
-            // If there's a photo, upload it and update the residue record
+            
             if (data.photoDataUrl) {
-                const photoUrl = await uploadResidueImage(newResidue, data.photoDataUrl);
+                const photoUrl = await uploadResidueImage(newResidue.id, companyId, data.photoDataUrl);
                 await updateResidue({ id: newResidue.id, photos: [photoUrl] });
                  toast({
                     title: "¡Imagen Subida!",
