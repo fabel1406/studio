@@ -1,4 +1,3 @@
-
 // src/components/negotiation-chat.tsx
 "use client";
 
@@ -9,7 +8,7 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Send } from "lucide-react";
 import { ScrollArea } from "./ui/scroll-area";
-import { format } from "date-fns";
+import { format, isValid } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 
@@ -50,21 +49,26 @@ export function NegotiationChat({ messages, onSendMessage, companyId }: Negotiat
                 <ScrollArea className="h-full pr-4" ref={scrollAreaRef as any}>
                     <div className="space-y-4">
                         {messages.length > 0 ? (
-                             messages.map((msg) => (
-                                <div key={msg.id} className={cn("flex items-end gap-2", msg.sender_id === companyId ? "justify-end" : "justify-start")}>
-                                     <div className={cn(
-                                         "max-w-xs rounded-lg px-4 py-2 text-sm",
-                                         msg.sender_id === companyId 
-                                         ? "bg-primary text-primary-foreground" 
-                                         : "bg-muted"
-                                     )}>
-                                        <p>{msg.content}</p>
-                                        <p className={cn("text-xs mt-1", msg.sender_id === companyId ? "text-primary-foreground/70" : "text-muted-foreground")}>
-                                            {format(new Date(msg.created_at), 'p', { locale: es })}
-                                        </p>
-                                     </div>
-                                </div>
-                            ))
+                             messages.map((msg) => {
+                                 const date = new Date(msg.createdAt);
+                                 const isDateValid = isValid(date);
+
+                                 return (
+                                    <div key={msg.id} className={cn("flex items-end gap-2", msg.senderId === companyId ? "justify-end" : "justify-start")}>
+                                         <div className={cn(
+                                             "max-w-xs rounded-lg px-4 py-2 text-sm",
+                                             msg.senderId === companyId 
+                                             ? "bg-primary text-primary-foreground" 
+                                             : "bg-muted"
+                                         )}>
+                                            <p>{msg.content}</p>
+                                            <p className={cn("text-xs mt-1", msg.senderId === companyId ? "text-primary-foreground/70" : "text-muted-foreground")}>
+                                                {isDateValid ? format(date, 'p', { locale: es }) : 'Enviando...'}
+                                            </p>
+                                         </div>
+                                    </div>
+                                 )
+                             })
                         ) : (
                             <div className="text-center text-muted-foreground h-full flex items-center justify-center">
                                 <p>No hay mensajes todavía. ¡Inicia la conversación!</p>

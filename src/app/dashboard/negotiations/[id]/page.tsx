@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, notFound } from "next/navigation";
 import { getNegotiationById, updateNegotiationStatus, addMessageToNegotiation, updateNegotiationDetails } from "@/services/negotiation-service";
 import { useRole } from "../../role-provider";
 import type { Negotiation, NegotiationMessage } from "@/lib/types";
@@ -26,7 +26,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { notFound } from "next/navigation";
 
 
 const statusMap: {[key: string]: {text: string, variant: 'default' | 'secondary' | 'outline' | 'destructive'}} = {
@@ -78,15 +77,17 @@ export default function NegotiationDetailPage() {
             content,
             createdAt: new Date().toISOString(), // Use client time for immediate display
         };
-        setNegotiation(prev => prev ? { ...prev, messages: [...prev.messages, optimisticMessage] } : null);
+        
+        setNegotiation(prev => {
+            if (!prev) return null;
+            return { ...prev, messages: [...prev.messages, optimisticMessage] }
+        });
 
         try {
             await addMessageToNegotiation(negotiation.id, companyId, content);
-            // Re-fetch to sync with server, replacing the optimistic message
-            await fetchNegotiation();
+            await fetchNegotiation(); // Re-fetch to sync with server, replacing the optimistic message
         } catch (error) {
             console.error("Failed to send message, reverting optimistic update");
-            // Revert optimistic update on failure
             await fetchNegotiation(); 
         }
     };
@@ -108,23 +109,14 @@ export default function NegotiationDetailPage() {
     }
 
     if (!negotiation) {
-        // notFound() is a server-side function, so we redirect on the client
         return notFound();
     }
     
-    // The user who initiated the negotiation.
     const isInitiator = negotiation.initiatedBy === companyId;
-    // The user who receives the initial request/offer.
     const isRecipient = !isInitiator;
-    
-    // The user who can accept/reject is the one who RECEIVED the negotiation.
     const canAcceptOrReject = isRecipient;
-
-    // The user who can modify or cancel is the one who INITIATED the negotiation.
     const canModifyOrCancel = isInitiator;
-
     const isActionable = negotiation.status === 'SENT';
-
     const otherParty = companyId === negotiation.requesterId ? negotiation.supplier : negotiation.requester;
     const otherPartyRole = companyId === negotiation.requesterId ? 'Proveedor' : 'Solicitante';
 
