@@ -1,3 +1,4 @@
+
 // src/app/dashboard/residues/create/actions.ts
 'use server'
 
@@ -15,7 +16,7 @@ const residueFormSchema = z.object({
   quantity: z.coerce.number().min(0),
   unit: z.enum(['KG', 'TON']),
   pricePerUnit: z.preprocess(
-    (val) => (val === "" || val === null || val === undefined || val === 'undefined') ? undefined : Number(val),
+    (val) => (val === "" || val === null || val === undefined) ? undefined : Number(val),
     z.coerce.number().optional()
   ),
   status: z.enum(['ACTIVE', 'RESERVED', 'CLOSED']),
