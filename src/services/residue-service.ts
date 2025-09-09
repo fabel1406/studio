@@ -1,19 +1,13 @@
 // src/services/residue-service.ts
 import type { Residue } from '@/lib/types';
 import { createClient } from '@/lib/supabase/client';
+import { getCompanyById } from './company-service';
 
 const supabase = createClient();
 
 const rehydrateResidue = async (residue: any): Promise<Residue> => {
-    const { data: company, error } = await supabase
-        .from('companies')
-        .select('*')
-        .eq('id', residue.company_id)
-        .single();
-
-    if (error) console.error("Error fetching company for residue:", error);
-    
-    const companyData: any = company;
+    // Now using the robust getCompanyById service
+    const company = await getCompanyById(residue.company_id);
 
     // Map from snake_case (db) to camelCase (ts)
     const mappedResidue: Residue = {
@@ -28,19 +22,7 @@ const rehydrateResidue = async (residue: any): Promise<Residue> => {
         availabilityDate: residue.availability_date,
         pricePerUnit: residue.price_per_unit,
         status: residue.status,
-        company: company ? {
-            id: companyData.id,
-            name: companyData.name,
-            type: companyData.type,
-            description: companyData.description,
-            contactEmail: companyData.contact_email,
-            phone: companyData.phone,
-            website: companyData.website,
-            address: companyData.address,
-            city: companyData.city,
-            country: companyData.country,
-            verificationStatus: companyData.verification_status,
-        } : undefined,
+        company: company, // Attach the fully rehydrated company object
     }
     
     return mappedResidue;
@@ -90,7 +72,7 @@ export const addResidue = async (residueData: NewResidueData): Promise<Residue> 
         status: residueData.status,
         description: residueData.description,
         availability_date: new Date().toISOString(),
-        photos: residueData.photos || [`https://picsum.photos/seed/default${Date.now()}/600/400`],
+        photos: residueData.photos,
     };
 
     const { data, error } = await supabase
@@ -104,7 +86,14 @@ export const addResidue = async (residueData: NewResidueData): Promise<Residue> 
         throw error;
     }
 
-    return rehydrateResidue(data);
+    // IMPORTANT: Rehydrate the new residue to include company details
+    // before returning. This fixes the missing location issue.
+    const finalResidue = await getResidueById(data.id);
+    if (!finalResidue) {
+        throw new Error("Failed to rehydrate residue after creation.");
+    }
+
+    return finalResidue;
 };
 
 export const updateResidue = async (updatedResidueData: Partial<Residue> & { id: string }): Promise<Residue> => {
@@ -137,7 +126,13 @@ export const updateResidue = async (updatedResidueData: Partial<Residue> & { id:
         throw error;
     }
     
-    return rehydrateResidue(data);
+    // IMPORTANT: Rehydrate the updated residue
+    const finalResidue = await getResidueById(data.id);
+    if (!finalResidue) {
+        throw new Error("Failed to rehydrate residue after update.");
+    }
+    
+    return finalResidue;
 };
 
 export const deleteResidue = async (id: string): Promise<void> => {

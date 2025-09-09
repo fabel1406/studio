@@ -38,7 +38,7 @@ export function ResidueCard({ residue, isRecommendation = false, priority = fals
             fill
             style={{objectFit: 'cover'}}
             data-ai-hint={aiHint}
-            unoptimized // Useful for local images during development
+            unoptimized={imagePath.startsWith('data:')} // Do not optimize data URIs
             priority={priority}
           />
            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
@@ -70,7 +70,7 @@ export function ResidueCard({ residue, isRecommendation = false, priority = fals
             </div>
             <div className="flex items-center justify-between pt-2">
                 <span className="font-bold text-lg text-foreground">{residue.quantity} {residue.unit}</span>
-                {residue.pricePerUnit && (
+                {residue.pricePerUnit != null && (
                     <span className="font-semibold text-primary text-lg">${residue.pricePerUnit} / {residue.unit}</span>
                 )}
             </div>

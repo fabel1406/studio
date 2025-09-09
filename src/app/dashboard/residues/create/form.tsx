@@ -50,7 +50,7 @@ const residueFormSchema = z.object({
   description: z.string().max(300, { message: "La descripción no puede exceder los 300 caracteres." }).optional(),
   country: z.string().min(1, "El país es obligatorio."),
   city: z.string().min(1, "La ciudad es obligatoria."),
-  photos: z.any().optional(), // We'll handle file logic outside the schema for now
+  photoDataUrl: z.string().optional(),
 }).refine(data => {
     if (data.type === 'Otro' && (!data.customType || data.customType.length < 2)) {
         return false;
@@ -96,6 +96,7 @@ export default function ResidueForm() {
               description: residue.description || "",
               country: residue.company?.country || 'España',
               city: residue.company?.city || '',
+              photoDataUrl: residue.photos?.[0]
             });
           }
         }
@@ -117,6 +118,7 @@ export default function ResidueForm() {
         category: undefined,
         country: "España",
         city: "",
+        photoDataUrl: undefined,
     },
     mode: "onChange",
   })
@@ -130,6 +132,17 @@ export default function ResidueForm() {
     form.setValue('city', '');
   }, [selectedCountry, form]);
 
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        form.setValue('photoDataUrl', reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   async function onSubmit(data: ResidueFormValues) {
     if (!companyId) {
@@ -151,8 +164,7 @@ export default function ResidueForm() {
           pricePerUnit: data.pricePerUnit,
           status: data.status,
           description: data.description,
-          // Placeholder for photo URL. In a real app, this would be the result of an upload.
-          photos: data.photos && data.photos.length > 0 ? [`https://picsum.photos/seed/${data.type}${Date.now()}/600/400`] : undefined,
+          photos: data.photoDataUrl ? [data.photoDataUrl] : undefined,
         };
 
         if (residueId) {
@@ -366,12 +378,12 @@ export default function ResidueForm() {
                      <div className="md:col-span-2">
                       <FormField
                           control={form.control}
-                          name="photos"
+                          name="photoDataUrl"
                           render={({ field }) => (
                               <FormItem>
                               <FormLabel>Foto del Residuo</FormLabel>
                               <FormControl>
-                                  <Input type="file" accept="image/*" onChange={(e) => field.onChange(e.target.files)} />
+                                  <Input type="file" accept="image/*" onChange={handleFileChange} />
                               </FormControl>
                                <FormDescription>
                                   Sube una imagen clara de tu residuo.
