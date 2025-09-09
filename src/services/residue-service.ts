@@ -1,4 +1,3 @@
-
 // src/services/residue-service.ts
 import type { Residue } from '@/lib/types';
 import { createClient } from '@/lib/supabase/client';
@@ -14,6 +13,8 @@ const rehydrateResidue = async (residue: any): Promise<Residue> => {
 
     if (error) console.error("Error fetching company for residue:", error);
     
+    const companyData: any = company;
+
     // Map from snake_case (db) to camelCase (ts)
     const mappedResidue: Residue = {
         id: residue.id,
@@ -27,7 +28,19 @@ const rehydrateResidue = async (residue: any): Promise<Residue> => {
         availabilityDate: residue.availability_date,
         pricePerUnit: residue.price_per_unit,
         status: residue.status,
-        company: company || undefined,
+        company: company ? {
+            id: companyData.id,
+            name: companyData.name,
+            type: companyData.type,
+            description: companyData.description,
+            contactEmail: companyData.contact_email,
+            phone: companyData.phone,
+            website: companyData.website,
+            address: companyData.address,
+            city: companyData.city,
+            country: companyData.country,
+            verificationStatus: companyData.verification_status,
+        } : undefined,
     }
     
     return mappedResidue;
@@ -133,5 +146,3 @@ export const deleteResidue = async (id: string): Promise<void> => {
         throw error;
     }
 };
-
-    

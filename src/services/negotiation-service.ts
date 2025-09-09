@@ -1,5 +1,5 @@
 // src/services/negotiation-service.ts
-import type { Negotiation, NegotiationMessage, Residue, Need, Company } from '@/lib/types';
+import type { Negotiation, NegotiationMessage, Residue, Need } from '@/lib/types';
 import { createClient } from '@/lib/supabase/client';
 import { getResidueById } from './residue-service';
 import { getCompanyById } from './company-service';
@@ -43,7 +43,13 @@ const rehydrateNegotiation = async (negotiation: any): Promise<Negotiation> => {
         residue: hydratedResidue,
         requester: requester,
         supplier: supplier,
-        messages: messages.data || [],
+        messages: (messages.data || []).map(msg => ({
+            id: msg.id,
+            negotiationId: msg.negotiation_id,
+            senderId: msg.sender_id,
+            content: msg.content,
+            createdAt: msg.created_at,
+        })),
     };
 };
 
@@ -233,7 +239,14 @@ export const addMessageToNegotiation = async (negotiationId: string, senderId: s
         console.error("Error sending message:", error);
         throw error;
     }
-    return data;
+    
+    return {
+        id: data.id,
+        negotiationId: data.negotiation_id,
+        senderId: data.sender_id,
+        content: data.content,
+        createdAt: data.created_at,
+    };
 }
 
 export const deleteNegotiation = async (id: string): Promise<void> => {

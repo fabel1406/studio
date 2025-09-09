@@ -1,4 +1,3 @@
-
 // src/services/need-service.ts
 import type { Need } from '@/lib/types';
 import { createClient } from '@/lib/supabase/client';
@@ -14,6 +13,8 @@ const rehydrateNeed = async (need: any): Promise<Need> => {
 
     if (error) console.error("Error fetching company for need:", error);
     
+    const companyData: any = company;
+
     // Map from snake_case (db) to camelCase (ts)
     const mappedNeed: Need = {
         id: need.id,
@@ -25,7 +26,19 @@ const rehydrateNeed = async (need: any): Promise<Need> => {
         frequency: need.frequency,
         specifications: need.specifications,
         status: need.status,
-        company: company || undefined,
+        company: company ? {
+            id: companyData.id,
+            name: companyData.name,
+            type: companyData.type,
+            description: companyData.description,
+            contactEmail: companyData.contact_email,
+            phone: companyData.phone,
+            website: companyData.website,
+            address: companyData.address,
+            city: companyData.city,
+            country: companyData.country,
+            verificationStatus: companyData.verification_status,
+        } : undefined,
     };
 
     return mappedNeed;
@@ -126,5 +139,3 @@ export const deleteNeed = async (id: string): Promise<void> => {
         throw error;
     }
 };
-
-    

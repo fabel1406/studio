@@ -1,7 +1,6 @@
 // src/services/company-service.ts
 import type { Company } from '@/lib/types';
 import { createClient } from '@/lib/supabase/client';
-import { type SupabaseClient } from '@supabase/supabase-js';
 
 const supabase = createClient();
 
@@ -58,3 +57,29 @@ export const getAllCompanies = async (): Promise<Company[]> => {
       verificationStatus: d.verification_status,
     })) as Company[];
 };
+
+export const updateCompany = async (companyId: string, values: any) => {
+    const { data, error } = await supabase
+      .from('companies')
+      .update({
+        name: values.companyName,
+        type: values.role,
+        description: values.description,
+        country: values.country,
+        city: values.city,
+        address: values.address,
+        contact_email: values.contactEmail,
+        phone: values.phone,
+        website: values.website,
+      })
+      .eq('id', companyId)
+      .select()
+      .single()
+
+      if (error) {
+        console.error('Error updating company:', error)
+        return { success: false, error: error.message, data: null };
+      }
+
+      return { success: true, error: null, data };
+}
