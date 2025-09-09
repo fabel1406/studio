@@ -59,28 +59,22 @@ export async function createOrUpdateResidueAction(formData: FormData) {
           .single();
 
         if (companyError || !companyData) {
-          console.error("Company fetch error:", companyError)
+          console.error("Server Action: Company fetch error:", companyError)
           return { error: 'No se pudo encontrar una empresa asociada a tu usuario. Completa tu perfil en los ajustes.' };
         }
         const companyId = companyData.id;
 
-        const rawData = {
-            residueId: formData.get('residueId') || undefined,
-            type: formData.get('type'),
-            customType: formData.get('customType') || undefined,
-            category: formData.get('category'),
-            quantity: formData.get('quantity'),
-            unit: formData.get('unit'),
-            pricePerUnit: formData.get('pricePerUnit'),
-            status: formData.get('status'),
-            description: formData.get('description') || undefined,
-            photoFile: formData.get('photoFile') as File | null,
-        };
+        const rawData = Object.fromEntries(formData.entries());
         
-        const validatedFields = residueFormSchema.safeParse(rawData);
+        const validatedFields = residueFormSchema.safeParse({
+            ...rawData,
+            quantity: rawData.quantity ? Number(rawData.quantity) : undefined,
+            pricePerUnit: rawData.pricePerUnit || null,
+            photoFile: rawData.photoFile instanceof File && rawData.photoFile.size > 0 ? rawData.photoFile : undefined,
+        });
         
         if (!validatedFields.success) {
-            console.error('Validation Error:', validatedFields.error.flatten().fieldErrors);
+            console.error('Server Action: Validation Error:', validatedFields.error.flatten().fieldErrors);
             return {
                 error: "Datos del formulario inválidos.",
                 fieldErrors: validatedFields.error.flatten().fieldErrors,
@@ -102,31 +96,30 @@ export async function createOrUpdateResidueAction(formData: FormData) {
         };
 
         let residueId = data.residueId;
+        let dbResidueData = null;
         
         if (residueId) {
-            const { error } = await supabase
+            const { data: updatedData, error } = await supabase
                 .from('residues')
                 .update(residueDbData)
-                .eq('id', residueId);
-            if (error) {
-              console.error("DB Update Error:", error);
-              throw error;
-            }
+                .eq('id', residueId)
+                .select('id')
+                .single();
+            if (error) throw error;
+            dbResidueData = updatedData;
         } else {
             const { data: createdData, error } = await supabase
                 .from('residues')
                 .insert(residueDbData)
                 .select('id')
                 .single();
-
-            if (error) {
-                console.error("DB Insert Error:", error);
-                throw error;
-            }
-            residueId = createdData.id;
+            if (error) throw error;
+            dbResidueData = createdData;
         }
 
-        if (data.photoFile && data.photoFile.size > 0 && residueId) {
+        residueId = dbResidueData.id;
+        
+        if (data.photoFile && residueId) {
             const fileExtension = data.photoFile.name.split('.').pop();
             const fileName = `${residueId}.${fileExtension}`;
             const filePath = `public/${fileName}`;

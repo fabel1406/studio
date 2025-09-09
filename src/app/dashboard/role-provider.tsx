@@ -1,4 +1,3 @@
-
 // src/app/dashboard/role-provider.tsx
 "use client";
 
@@ -40,102 +39,97 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
   const supabase = createClient();
 
-  const fetchCompanyData = useCallback(async (currentUser: User) => {
-    let { data: companyData, error: fetchError } = await supabase
-      .from('companies')
-      .select('id, name, type')
-      .eq('auth_id', currentUser.id)
-      .single();
+  useEffect(() => {
+    const initializeSession = async () => {
+      setIsLoading(true);
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error("Error getting session:", sessionError);
+        setIsLoading(false);
+        return;
+      }
+      
+      if (session?.user) {
+        setUser(session.user);
+        let { data: companyData, error: fetchError } = await supabase
+          .from('companies')
+          .select('id, name, type')
+          .eq('auth_id', session.user.id)
+          .single();
 
-    if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 = no rows returned
-        console.error("Error fetching company data:", fetchError);
-        return false;
-    }
+        if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 = no rows returned
+          console.error("Error fetching company data:", fetchError);
+          setIsLoading(false); // Stop loading on error
+          return;
+        }
 
-    // If company doesn't exist, create it from metadata
-    if (!companyData) {
-        const { company_name, app_role } = currentUser.user_metadata;
-        if (company_name && app_role) {
+        if (!companyData) {
+          // Company doesn't exist, try to create from metadata
+          const { company_name, app_role } = session.user.user_metadata;
+          if (company_name && app_role) {
             const { data: newCompany, error: createError } = await supabase
-                .from('companies')
-                .insert({
-                    auth_id: currentUser.id,
-                    name: company_name,
-                    type: app_role,
-                    contact_email: currentUser.email
-                })
-                .select('id, name, type')
-                .single();
-            
+              .from('companies')
+              .insert({ auth_id: session.user.id, name: company_name, type: app_role, contact_email: session.user.email })
+              .select('id, name, type')
+              .single();
+
             if (createError) {
-                console.error("Error creating company from metadata:", createError);
-                return false;
+              console.error("Error creating company from metadata:", createError);
+              setIsLoading(false); // Stop loading on error
+              return;
             }
             companyData = newCompany;
-        } else {
-             // If no metadata, user needs to complete profile
+          } else {
+            // No metadata, user needs to complete profile
             if (pathname !== '/dashboard/settings') {
                 router.push('/dashboard/settings?new=true');
             }
-            return false;
+            setIsLoading(false); // Stop loading, user needs to act
+            return;
+          }
         }
-    }
-    
-    setCompanyId(companyData.id);
-    setCompanyName(companyData.name);
-    setInternalRole(companyData.type as UserRole);
-    return true;
+        
+        setCompanyId(companyData.id);
+        setCompanyName(companyData.name);
+        setInternalRole(companyData.type as UserRole);
 
-  }, [supabase, router, pathname]);
-
-  useEffect(() => {
-    const checkUserAndFetchData = async () => {
-      setIsLoading(true);
-      const { data: { session } } = await supabase.auth.getSession();
-      const currentUser = session?.user;
-
-      if (currentUser) {
-        setUser(currentUser);
-        await fetchCompanyData(currentUser);
       } else {
         if (pathname.startsWith('/dashboard')) {
           router.push('/login');
         }
       }
+
       setIsLoading(false);
     };
 
-    checkUserAndFetchData();
+    initializeSession();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        const currentUser = session?.user || null;
-        setUser(currentUser);
-        setIsLoading(true);
-        if (currentUser) {
-            await fetchCompanyData(currentUser);
-        } else {
-            setCompanyId(null);
-            setCompanyName("");
-            setInternalRole("GENERATOR");
-            if (pathname.startsWith('/dashboard')) {
-              router.push('/login');
-            }
+      (event, session) => {
+        if (event === 'SIGNED_IN') {
+          initializeSession();
+        } else if (event === 'SIGNED_OUT') {
+          setUser(null);
+          setCompanyId(null);
+          setCompanyName("");
+          setInternalRole("GENERATOR");
+          router.push('/login');
         }
-        setIsLoading(false);
       }
     );
 
     return () => {
       subscription.unsubscribe();
     };
-  }, []);
+  }, []); // Run only once on mount
 
   const setRole = (newRole: UserRole) => {
     setInternalRole(newRole);
   }
   
   const logout = async () => {
+      setIsLoading(true);
       await supabase.auth.signOut();
   }
 
