@@ -9,7 +9,6 @@ const BUCKET_NAME = 'residue-photos';
 
 const residueFormSchema = z.object({
   residueId: z.string().optional(),
-  companyId: z.string().min(1, "Company ID is required."),
   type: z.string().min(1, { message: "Debes seleccionar o especificar un tipo." }),
   customType: z.string().optional(),
   category: z.enum(['BIOMASS', 'FOOD', 'AGRO', 'OTHERS']),
@@ -21,8 +20,6 @@ const residueFormSchema = z.object({
   ),
   status: z.enum(['ACTIVE', 'RESERVED', 'CLOSED']),
   description: z.string().optional(),
-  country: z.string().min(1, "El país es obligatorio."),
-  city: z.string().min(1, "La ciudad es obligatoria."),
   photoFile: z
     .instanceof(File)
     .optional()
@@ -40,34 +37,6 @@ const residueFormSchema = z.object({
 export async function createOrUpdateResidueAction(formData: FormData) {
     const supabase = createClient();
     
-    const rawData = {
-        residueId: formData.get('residueId') || undefined,
-        companyId: formData.get('companyId'),
-        type: formData.get('type'),
-        customType: formData.get('customType') || undefined,
-        category: formData.get('category'),
-        quantity: formData.get('quantity'),
-        unit: formData.get('unit'),
-        pricePerUnit: formData.get('pricePerUnit'),
-        status: formData.get('status'),
-        description: formData.get('description') || undefined,
-        country: formData.get('country'),
-        city: formData.get('city'),
-        photoFile: formData.get('photoFile') as File | null,
-    };
-    
-    const validatedFields = residueFormSchema.safeParse(rawData);
-    
-    if (!validatedFields.success) {
-        console.error('Validation Error:', validatedFields.error.flatten().fieldErrors);
-        return {
-            error: "Datos del formulario inválidos.",
-            fieldErrors: validatedFields.error.flatten().fieldErrors,
-        };
-    }
-    
-    const { data } = validatedFields;
-    
     try {
         const {
             data: { user },
@@ -77,6 +46,7 @@ export async function createOrUpdateResidueAction(formData: FormData) {
             return { error: 'No estás autenticado.' };
         }
         
+        // 1. Get the company_id from the companies table using the authenticated user's id (auth_id)
         const { data: companyData, error: companyError } = await supabase
           .from('companies')
           .select('id')
@@ -85,11 +55,37 @@ export async function createOrUpdateResidueAction(formData: FormData) {
 
         if (companyError || !companyData) {
           console.error("Company fetch error:", companyError)
-          return { error: 'No se pudo verificar la empresa del usuario.' };
+          return { error: 'No se pudo encontrar una empresa asociada a tu usuario. Completa tu perfil en los ajustes.' };
         }
+        const companyId = companyData.id;
 
-        const residueData: any = {
-            company_id: companyData.id,
+        const rawData = {
+            residueId: formData.get('residueId') || undefined,
+            type: formData.get('type'),
+            customType: formData.get('customType') || undefined,
+            category: formData.get('category'),
+            quantity: formData.get('quantity'),
+            unit: formData.get('unit'),
+            pricePerUnit: formData.get('pricePerUnit'),
+            status: formData.get('status'),
+            description: formData.get('description') || undefined,
+            photoFile: formData.get('photoFile') as File | null,
+        };
+        
+        const validatedFields = residueFormSchema.safeParse(rawData);
+        
+        if (!validatedFields.success) {
+            console.error('Validation Error:', validatedFields.error.flatten().fieldErrors);
+            return {
+                error: "Datos del formulario inválidos.",
+                fieldErrors: validatedFields.error.flatten().fieldErrors,
+            };
+        }
+        
+        const { data } = validatedFields;
+        
+        const residueDbData = {
+            company_id: companyId, // Use the fetched companyId
             type: data.type === 'Otro' ? data.customType! : data.type,
             category: data.category,
             quantity: data.quantity,
@@ -101,47 +97,37 @@ export async function createOrUpdateResidueAction(formData: FormData) {
         };
 
         let residueId = data.residueId;
-        let dbResidue: any;
         
         if (residueId) {
             // UPDATE
-            const { data: updatedData, error } = await supabase
+            const { error } = await supabase
                 .from('residues')
-                .update(residueData)
-                .eq('id', residueId)
-                .select()
-                .single();
-            if (error) throw error;
-            dbResidue = updatedData;
+                .update(residueDbData)
+                .eq('id', residueId);
+            if (error) {
+              console.error("DB Update Error:", error);
+              throw error;
+            }
         } else {
             // CREATE
             const { data: createdData, error } = await supabase
                 .from('residues')
-                .insert(residueData)
-                .select()
+                .insert(residueDbData)
+                .select('id')
                 .single();
 
             if (error) {
-                console.error("Database Insert Error:", error);
-                // Provide a more specific error message if possible
-                if (error.code === '23503') { // foreign key violation
-                    return { error: `Error al guardar: La compañía con ID ${companyData.id} no existe.` };
-                }
-                if (error.code === '42501') { // permission denied (RLS)
-                    return { error: `Error de Permiso: No tienes permiso para crear un residuo para la compañía ${companyData.id}. Revisa las políticas de seguridad (RLS) de la tabla 'residues'.`};
-                }
+                console.error("DB Insert Error:", error);
                 throw error;
             }
-
-            dbResidue = createdData;
-            residueId = dbResidue.id;
+            residueId = createdData.id;
         }
 
         // --- IMAGE UPLOAD ---
-        if (data.photoFile && data.photoFile.size > 0) {
+        if (data.photoFile && data.photoFile.size > 0 && residueId) {
             const fileExtension = data.photoFile.name.split('.').pop();
             const fileName = `${residueId}.${fileExtension}`;
-            const filePath = `${companyData.id}/${fileName}`;
+            const filePath = `${companyId}/${fileName}`;
 
             const { error: uploadError } = await supabase.storage
                 .from(BUCKET_NAME)
@@ -152,8 +138,6 @@ export async function createOrUpdateResidueAction(formData: FormData) {
 
             if (uploadError) {
                 console.error('Upload Error:', uploadError);
-                // Don't fail the whole operation if upload fails, just log it.
-                // The residue is already created/updated.
             } else {
                 const { data: { publicUrl } } = supabase.storage
                     .from(BUCKET_NAME)
@@ -166,7 +150,6 @@ export async function createOrUpdateResidueAction(formData: FormData) {
                 
                 if (updatePhotoError) {
                     console.error('Update Photo URL Error:', updatePhotoError);
-                    // Also don't fail the whole operation.
                 }
             }
         }

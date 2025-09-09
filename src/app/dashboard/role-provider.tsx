@@ -39,6 +39,7 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
   const supabase = createClient();
 
   const fetchCompanyData = useCallback(async (currentUser: User) => {
+    // This function fetches data from the `companies` table using the user's auth ID.
     const { data: companyData, error } = await supabase
       .from('companies')
       .select('id, name, type')
@@ -51,13 +52,18 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
       setInternalRole(companyData.type as UserRole);
     } else {
         console.warn("No company found for user:", currentUser.id, "Error:", error?.message);
-        // Handle case where company might not be created yet, maybe redirect to settings
+        // This case can happen right after registration, before the company row is created.
+        // It might be useful to redirect to the settings page to complete the profile.
+        if (router.pathname !== '/dashboard/settings') {
+          // router.push('/dashboard/settings');
+        }
     }
-  }, [supabase]);
+  }, [supabase, router]);
 
 
   useEffect(() => {
     const fetchSessionAndCompany = async () => {
+      setIsLoading(true);
       const { data: { session } } = await supabase.auth.getSession();
       const currentUser = session?.user || null;
       setUser(currentUser);
@@ -74,15 +80,19 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
       async (event, session) => {
         const currentUser = session?.user || null;
         setUser(currentUser);
+
         if (event === 'SIGNED_IN' && currentUser) {
+            setIsLoading(true);
             await fetchCompanyData(currentUser);
+            setIsLoading(false);
         } else if (event === 'SIGNED_OUT') {
             setCompanyId(null);
             setCompanyName("");
             setInternalRole("GENERATOR");
             router.push('/login');
-        } else if (event === 'USER_UPDATED' && currentUser) {
-            await fetchCompanyData(currentUser);
+        } else if ((event === 'USER_UPDATED' || event === 'TOKEN_REFRESHED') && currentUser) {
+           // Reload company data if user metadata might have changed
+           await fetchCompanyData(currentUser);
         }
       }
     );
@@ -101,7 +111,6 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
 
 
   const setRole = async (newRole: UserRole) => {
-    // This function might be more complex if role changes need DB updates
     setInternalRole(newRole);
   }
   
@@ -123,7 +132,7 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
   }
 
   if (!user && !isLoading) {
-      // This should be handled by the useEffect redirect, but as a fallback
+      // This is handled by the useEffect redirect, but as a fallback.
       return null;
   }
 
