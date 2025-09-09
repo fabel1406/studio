@@ -99,13 +99,10 @@ export function AuthForm({ mode, onVerificationSent }: AuthFormProps) {
             auth_id: signUpData.user.id, 
             name: companyName,
             type: role,
-            // Set default empty values for other required fields if any
             contact_email: signUpData.user.email,
           });
 
         if (insertError) {
-            // This is a critical error, we might need to decide how to handle it.
-            // For now, we'll just log it and inform the user.
             console.error("Error creating company profile:", insertError);
             toast({
                 title: "Error de registro",

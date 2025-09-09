@@ -50,32 +50,33 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
       setCompanyId(companyData.id);
       setCompanyName(companyData.name);
       setInternalRole(companyData.type as UserRole);
-      return true; // Indicate success
+      return true;
     } else {
       console.warn("No company found for user:", currentUser.id, "Error:", error?.message);
-      // If user is not on settings page, redirect them to complete their profile.
       if (pathname !== '/dashboard/settings') {
         router.push('/dashboard/settings?new=true');
       }
-      return false; // Indicate failure
+      return false;
     }
   }, [supabase, router, pathname]);
 
-
   useEffect(() => {
-    const fetchSessionAndCompany = async () => {
-      setIsLoading(true);
+    const checkUserAndFetchData = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      const currentUser = session?.user || null;
-      setUser(currentUser);
+      const currentUser = session?.user;
 
       if (currentUser) {
+        setUser(currentUser);
         await fetchCompanyData(currentUser);
+      } else {
+        if (pathname.startsWith('/dashboard')) {
+          router.push('/login');
+        }
       }
       setIsLoading(false);
     };
 
-    fetchSessionAndCompany();
+    checkUserAndFetchData();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
@@ -83,16 +84,14 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(currentUser);
 
         if (event === 'SIGNED_IN' && currentUser) {
-            setIsLoading(true);
-            await fetchCompanyData(currentUser);
-            setIsLoading(false);
+          setIsLoading(true);
+          await fetchCompanyData(currentUser);
+          setIsLoading(false);
         } else if (event === 'SIGNED_OUT') {
-            setCompanyId(null);
-            setCompanyName("");
-            setInternalRole("GENERATOR");
-            router.push('/login');
-        } else if ((event === 'USER_UPDATED' || event === 'TOKEN_REFRESHED') && currentUser) {
-           await fetchCompanyData(currentUser);
+          setCompanyId(null);
+          setCompanyName("");
+          setInternalRole("GENERATOR");
+          router.push('/login');
         }
       }
     );
@@ -100,17 +99,9 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
     return () => {
       subscription.unsubscribe();
     };
-  }, [supabase, fetchCompanyData, router]);
+  }, [supabase, fetchCompanyData, router, pathname]);
 
-  
-  useEffect(() => {
-    if (!isLoading && !user) {
-        router.push('/login');
-    }
-  }, [user, isLoading, router]);
-
-
-  const setRole = async (newRole: UserRole) => {
+  const setRole = (newRole: UserRole) => {
     setInternalRole(newRole);
   }
   
@@ -118,7 +109,7 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
       await supabase.auth.signOut();
   }
 
-  const value = useMemo(() => ({ user, role, setRole, companyId, isLoading, logout, companyName }), [user, role, companyId, isLoading, logout, companyName]);
+  const value = useMemo(() => ({ user, role, setRole, companyId, isLoading, logout, companyName }), [user, role, companyId, isLoading, companyName]);
   
   if (isLoading) {
     return (
@@ -130,8 +121,8 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
       </div>
     );
   }
-
-  if (!user && !isLoading) {
+  
+  if (!user && pathname.startsWith('/dashboard')) {
       return null;
   }
 
