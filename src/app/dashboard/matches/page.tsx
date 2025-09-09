@@ -30,7 +30,7 @@ type MatchResult = {
 export default function MatchesPage() {
     const { toast } = useToast();
     const router = useRouter();
-    const { role, currentUserId } = useRole();
+    const { role, companyId } = useRole();
     const [loadingSourceId, setLoadingSourceId] = useState<string | null>(null);
     const [matchResults, setMatchResults] = useState<MatchResult[]>([]);
     
@@ -41,18 +41,18 @@ export default function MatchesPage() {
 
     useEffect(() => {
         async function loadData() {
-            if(currentUserId) {
+            if(companyId) {
                 const fetchedAllResidues = await getAllResidues();
                 const fetchedAllNeeds = await getAllNeeds();
 
-                setUserResidues(fetchedAllResidues.filter(r => r.companyId === currentUserId));
-                setUserNeeds(fetchedAllNeeds.filter(n => n.companyId === currentUserId));
+                setUserResidues(fetchedAllResidues.filter(r => r.companyId === companyId));
+                setUserNeeds(fetchedAllNeeds.filter(n => n.companyId === companyId));
                 setAllResidues(fetchedAllResidues);
                 setAllNeeds(fetchedAllNeeds);
             }
         }
         loadData();
-    }, [currentUserId]);
+    }, [companyId]);
 
     const handleFindGeneratorMatches = async (need: Need) => {
         setLoadingSourceId(need.id);
@@ -122,7 +122,7 @@ export default function MatchesPage() {
     };
 
     const handleContact = async (sourceType: 'residue' | 'need', match: Match) => {
-        if (!currentUserId) return;
+        if (!companyId) return;
 
         if (sourceType === 'residue') {
             // A Generator is contacting a Transformer about a Need
@@ -134,7 +134,7 @@ export default function MatchesPage() {
                 type: 'offer',
                 residue: sourceResidue,
                 need: matchedNeed,
-                initiatorId: currentUserId,
+                initiatorId: companyId,
                 quantity: sourceResidue.quantity, // Defaults to full quantity for now
             });
             toast({ title: "Oferta Iniciada", description: `Se ha iniciado una negociación para "${sourceResidue.type}".` });
@@ -147,7 +147,7 @@ export default function MatchesPage() {
             await addNegotiation({
                 type: 'request',
                 residue: matchedResidue,
-                initiatorId: currentUserId,
+                initiatorId: companyId,
                 quantity: matchedResidue.quantity, // Defaults to full quantity for now
             });
             toast({ title: "Solicitud Iniciada", description: `Se ha iniciado una negociación para "${matchedResidue.type}".` });

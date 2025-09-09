@@ -1,3 +1,4 @@
+
 // src/components/offer-dialog.tsx
 "use client";
 
@@ -56,7 +57,7 @@ export function OfferDialog({
 }: OfferDialogProps) {
   const router = useRouter();
   const { toast } = useToast();
-  const { currentUserId } = useRole();
+  const { companyId } = useRole();
   
   const isEditMode = !!negotiationToEdit;
 
@@ -117,7 +118,7 @@ export function OfferDialog({
   const selectedResidue = compatibleResidues.find(r => r.id === selectedResidueId);
 
   const onSubmit = async (data: z.infer<typeof FormSchema>) => {
-    if (!currentUserId) {
+    if (!companyId) {
         toast({ title: "Error", description: "No se pudo identificar al usuario.", variant: "destructive" });
         return;
     }
@@ -136,7 +137,7 @@ export function OfferDialog({
           type: 'offer',
           residue: selectedResidue,
           need: need,
-          initiatorId: currentUserId,
+          initiatorId: companyId,
           quantity: data.quantity,
           offerPrice: data.price,
         });

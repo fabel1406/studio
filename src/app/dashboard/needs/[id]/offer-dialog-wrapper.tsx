@@ -12,18 +12,18 @@ import { PackageCheck } from "lucide-react";
 import { getAllResidues } from "@/services/residue-service";
 
 export function OfferDialogWrapper({ need }: { need: Need }) {
-    const { role, currentUserId } = useRole();
+    const { role, companyId } = useRole();
     const [isMounted, setIsMounted] = useState(false);
     const [userResidues, setUserResidues] = useState<Residue[]>([]);
     const [isOfferDialogOpen, setIsOfferDialogOpen] = useState(false);
 
-    const canOffer = (role === 'GENERATOR' || role === 'BOTH') && need.companyId !== currentUserId;
+    const canOffer = (role === 'GENERATOR' || role === 'BOTH') && need.companyId !== companyId;
 
     useEffect(() => {
         setIsMounted(true);
         async function loadResidues() {
-            if (canOffer && currentUserId) {
-                const generatorCompanyId = role === 'BOTH' ? 'comp-1' : currentUserId;
+            if (canOffer && companyId) {
+                const generatorCompanyId = role === 'BOTH' ? 'comp-1' : companyId;
                 const allResidues = await getAllResidues();
                 setUserResidues(allResidues.filter(r => 
                     r.companyId === generatorCompanyId && 
@@ -33,7 +33,7 @@ export function OfferDialogWrapper({ need }: { need: Need }) {
             }
         }
         loadResidues();
-    }, [canOffer, currentUserId, role, need.residueType]);
+    }, [canOffer, companyId, role, need.residueType]);
 
 
     if (!isMounted || !canOffer) {

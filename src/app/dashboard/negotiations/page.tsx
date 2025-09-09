@@ -25,20 +25,20 @@ const statusMap: {[key: string]: {text: string, variant: 'default' | 'secondary'
 };
 
 export default function NegotiationsPage() {
-  const { role, currentUserId } = useRole();
+  const { role, companyId } = useRole();
   const { toast } = useToast();
   const [sentNegotiations, setSentNegotiations] = useState<Negotiation[]>([]);
   const [receivedNegotiations, setReceivedNegotiations] = useState<Negotiation[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
   const fetchNegotiations = useCallback(async () => {
-    if (!currentUserId) {
+    if (!companyId) {
         setIsLoading(false);
         return;
     };
     setIsLoading(true);
     try {
-        const { sent, received } = await getAllNegotiationsForUser(currentUserId);
+        const { sent, received } = await getAllNegotiationsForUser(companyId);
         setSentNegotiations(sent);
         setReceivedNegotiations(received);
     } catch (error) {
@@ -51,7 +51,7 @@ export default function NegotiationsPage() {
     } finally {
         setIsLoading(false);
     }
-  }, [currentUserId, toast]);
+  }, [companyId, toast]);
 
   useEffect(() => {
     fetchNegotiations();
@@ -67,7 +67,7 @@ export default function NegotiationsPage() {
   }
 
   const renderNegotiationList = (negotiations: Negotiation[], listType: 'sent' | 'received') => {
-      if (!currentUserId) return null;
+      if (!companyId) return null;
 
       if (isLoading) return <p>Cargando negociaciones...</p>;
       
@@ -90,7 +90,7 @@ export default function NegotiationsPage() {
       }
 
       return negotiations.map((neg) => {
-            const isInitiator = neg.requesterId === currentUserId;
+            const isInitiator = neg.requesterId === companyId;
             const otherParty = isInitiator ? neg.supplier : neg.requester;
             
             const isRejected = neg.status === 'REJECTED';

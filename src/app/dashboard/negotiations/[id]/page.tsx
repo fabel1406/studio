@@ -155,7 +155,7 @@ export default function NegotiationDetailPage() {
                         <NegotiationChat
                             messages={negotiation.messages}
                             onSendMessage={handleSendMessage}
-                            currentUserId={companyId}
+                            companyId={companyId}
                         />
                     </div>
 

@@ -29,7 +29,7 @@ type ResidueActionPanelProps = {
 }
 
 export function ResidueActionPanel({ residue }: ResidueActionPanelProps) {
-  const { role, currentUserId } = useRole();
+  const { role, companyId } = useRole();
   
   const { toast } = useToast()
   const router = useRouter();
@@ -48,7 +48,7 @@ export function ResidueActionPanel({ residue }: ResidueActionPanelProps) {
   })
 
   const onSubmit = async (values: z.infer<typeof actionSchema>) => {
-    if (!currentUserId) {
+    if (!companyId) {
       toast({ title: "Error", description: "Usuario no identificado.", variant: "destructive" });
       return;
     }
@@ -56,7 +56,7 @@ export function ResidueActionPanel({ residue }: ResidueActionPanelProps) {
     const result = await addNegotiation({
       type: 'request',
       residue: residue,
-      initiatorId: currentUserId,
+      initiatorId: companyId,
       quantity: values.quantity,
       // Pass the residue's price as the initial offer price
       offerPrice: residue.pricePerUnit, 
@@ -80,7 +80,7 @@ export function ResidueActionPanel({ residue }: ResidueActionPanelProps) {
 
   // A Transformer or a user with BOTH roles can request a residue from another company.
   // They cannot request their own residue.
-  if ((role === "TRANSFORMER" || role === "BOTH") && residue.companyId !== currentUserId) {
+  if ((role === "TRANSFORMER" || role === "BOTH") && residue.companyId !== companyId) {
     return (
       <Card>
         <CardHeader>

@@ -1,3 +1,4 @@
+
 // src/components/negotiation-chat.tsx
 "use client";
 
@@ -15,10 +16,10 @@ import { cn } from "@/lib/utils";
 type NegotiationChatProps = {
     messages: NegotiationMessage[];
     onSendMessage: (content: string) => void;
-    currentUserId: string; // This should be companyId
+    companyId: string;
 };
 
-export function NegotiationChat({ messages, onSendMessage, currentUserId }: NegotiationChatProps) {
+export function NegotiationChat({ messages, onSendMessage, companyId }: NegotiationChatProps) {
     const [newMessage, setNewMessage] = useState("");
     const scrollAreaRef = useRef<HTMLDivElement>(null);
 
@@ -50,15 +51,15 @@ export function NegotiationChat({ messages, onSendMessage, currentUserId }: Nego
                     <div className="space-y-4">
                         {messages.length > 0 ? (
                              messages.map((msg) => (
-                                <div key={msg.id} className={cn("flex items-end gap-2", msg.sender_id === currentUserId ? "justify-end" : "justify-start")}>
+                                <div key={msg.id} className={cn("flex items-end gap-2", msg.sender_id === companyId ? "justify-end" : "justify-start")}>
                                      <div className={cn(
                                          "max-w-xs rounded-lg px-4 py-2 text-sm",
-                                         msg.sender_id === currentUserId 
+                                         msg.sender_id === companyId 
                                          ? "bg-primary text-primary-foreground" 
                                          : "bg-muted"
                                      )}>
                                         <p>{msg.content}</p>
-                                        <p className={cn("text-xs mt-1", msg.sender_id === currentUserId ? "text-primary-foreground/70" : "text-muted-foreground")}>
+                                        <p className={cn("text-xs mt-1", msg.sender_id === companyId ? "text-primary-foreground/70" : "text-muted-foreground")}>
                                             {format(new Date(msg.created_at), 'p', { locale: es })}
                                         </p>
                                      </div>

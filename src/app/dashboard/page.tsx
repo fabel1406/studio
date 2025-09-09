@@ -25,7 +25,7 @@ const mockImpactMetrics: ImpactMetric[] = [
 ];
 
 export default function DashboardOverviewPage() {
-    const { currentUserId } = useRole();
+    const { companyId } = useRole();
     const [activeListings, setActiveListings] = useState(0);
     const [activeNegotiationsCount, setActiveNegotiationsCount] = useState(0);
     const [totalCo2Avoided, setTotalCo2Avoided] = useState(0);
@@ -33,14 +33,14 @@ export default function DashboardOverviewPage() {
 
     useEffect(() => {
         async function loadDashboardData() {
-            if (currentUserId) {
+            if (companyId) {
                 // Fetch active listings
                 const allUserResidues = await getAllResidues();
-                const userResidues = allUserResidues.filter(r => r.companyId === currentUserId && r.status === 'ACTIVE');
+                const userResidues = allUserResidues.filter(r => r.companyId === companyId && r.status === 'ACTIVE');
                 setActiveListings(userResidues.length);
 
                 // Fetch negotiations
-                const { sent, received } = await getAllNegotiationsForUser(currentUserId);
+                const { sent, received } = await getAllNegotiationsForUser(companyId);
                 const allNegotiations = [...sent, ...received];
                 const activeNegotiations = allNegotiations.filter(n => n.status === 'SENT');
                 setActiveNegotiationsCount(activeNegotiations.length);
@@ -55,7 +55,7 @@ export default function DashboardOverviewPage() {
             }
         }
         loadDashboardData();
-    }, [currentUserId]);
+    }, [companyId]);
 
     return (
         <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -125,7 +125,7 @@ export default function DashboardOverviewPage() {
                         <div className="space-y-4">
                             {recentNegotiations.length > 0 ? (
                                 recentNegotiations.map((neg) => {
-                                    const otherParty = neg.requesterId === currentUserId ? neg.supplier : neg.requester;
+                                    const otherParty = neg.requesterId === companyId ? neg.supplier : neg.requester;
                                     return (
                                          <div key={neg.id} className="flex items-center">
                                             <Avatar className="h-9 w-9">

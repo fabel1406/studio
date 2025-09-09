@@ -1,3 +1,4 @@
+
 // src/components/need-card.tsx
 "use client";
 
@@ -15,20 +16,20 @@ import { getAllResidues } from "@/services/residue-service";
 export function NeedCard({ need, isRecommendation = false }: { need: Need, isRecommendation?: boolean }) {
   const company = need.company;
   const freqMap: {[key: string]: string} = { 'ONCE': 'una vez', 'WEEKLY': 'semanal', 'MONTHLY': 'mensual' };
-  const { role, currentUserId } = useRole();
+  const { role, companyId } = useRole();
   const [isMounted, setIsMounted] = useState(false);
   const [userResidues, setUserResidues] = useState<Residue[]>([]);
   const [isOfferDialogOpen, setIsOfferDialogOpen] = useState(false);
   
-  const canOffer = (role === 'GENERATOR' || role === 'BOTH') && need.companyId !== currentUserId;
+  const canOffer = (role === 'GENERATOR' || role === 'BOTH') && need.companyId !== companyId;
 
   useEffect(() => {
     setIsMounted(true);
     async function loadResidues() {
-        if (canOffer && currentUserId) {
+        if (canOffer && companyId) {
             // Mock logic: 'BOTH' user (comp-3) can offer residues from their generator counterpart (comp-1)
             // In a real app, a user with BOTH roles might have multiple company profiles associated with them.
-            const generatorCompanyId = role === 'BOTH' ? 'comp-1' : currentUserId;
+            const generatorCompanyId = role === 'BOTH' ? 'comp-1' : companyId;
             const allResidues = await getAllResidues();
             setUserResidues(allResidues.filter(r => 
                 r.companyId === generatorCompanyId && 
@@ -38,7 +39,7 @@ export function NeedCard({ need, isRecommendation = false }: { need: Need, isRec
         }
     }
     loadResidues();
-  }, [canOffer, currentUserId, role, need.residueType]);
+  }, [canOffer, companyId, role, need.residueType]);
 
   if (!isMounted) {
     return null; // or a skeleton loader

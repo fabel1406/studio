@@ -16,14 +16,14 @@ import { useRole } from '../role-provider';
 export default function NeedsPage() {
   const [needs, setNeeds] = useState<Need[]>([]);
   const { toast } = useToast();
-  const { role, currentUserId } = useRole();
+  const { role, companyId } = useRole();
 
   const loadNeeds = useCallback(async () => {
-    if (currentUserId) {
+    if (companyId) {
       const allNeeds = await getAllNeeds();
-      setNeeds(allNeeds.filter(n => n.companyId === currentUserId));
+      setNeeds(allNeeds.filter(n => n.companyId === companyId));
     }
-  }, [currentUserId]);
+  }, [companyId]);
 
   useEffect(() => {
     loadNeeds();

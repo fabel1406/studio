@@ -16,15 +16,15 @@ import { useRole } from '../role-provider';
 export default function ResiduesPage() {
   const [residues, setResidues] = useState<Residue[]>([]);
   const { toast } = useToast();
-  const { currentUserId } = useRole();
+  const { companyId } = useRole();
 
   const loadResidues = useCallback(async () => {
-    if (currentUserId) {
+    if (companyId) {
       const allResidues = await getAllResidues();
-      const userResidues = allResidues.filter(r => r.companyId === currentUserId);
+      const userResidues = allResidues.filter(r => r.companyId === companyId);
       setResidues(userResidues);
     }
-  }, [currentUserId]);
+  }, [companyId]);
 
   useEffect(() => {
     loadResidues();

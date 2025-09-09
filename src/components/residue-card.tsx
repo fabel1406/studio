@@ -1,3 +1,4 @@
+
 // src/components/residue-card.tsx
 "use client";
 
@@ -16,13 +17,13 @@ import { useRole } from "@/app/dashboard/role-provider";
 
 export function ResidueCard({ residue, isRecommendation = false, priority = false }: { residue: Residue, isRecommendation?: boolean, priority?: boolean }) {
   const [isMounted, setIsMounted] = useState(false);
-  const { role, currentUserId } = useRole();
+  const { role, companyId } = useRole();
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
 
-  const canRequest = (role === "TRANSFORMER" || role === "BOTH") && residue.companyId !== currentUserId;
+  const canRequest = (role === "TRANSFORMER" || role === "BOTH") && residue.companyId !== companyId;
   const aiHint = residue.type.toLowerCase().split(' ').slice(0, 2).join(' ');
 
   const imagePath = residue.photos?.[0] || `/images/residues/placeholder.jpg`;
