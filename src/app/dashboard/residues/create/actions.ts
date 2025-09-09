@@ -8,6 +8,10 @@ import { z } from 'zod'
 
 const BUCKET_NAME = 'residue-photos';
 
+// Validar que el archivo no sea mayor a 5MB
+const MAX_FILE_SIZE = 5 * 1024 * 1024; 
+const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+
 const residueFormSchema = z.object({
   residueId: z.string().optional(),
   type: z.string().min(1, { message: "Debes seleccionar o especificar un tipo." }),
@@ -16,15 +20,16 @@ const residueFormSchema = z.object({
   quantity: z.coerce.number().min(0),
   unit: z.enum(['KG', 'TON']),
   pricePerUnit: z.preprocess(
-    (val) => (val === "" || val === null || val === undefined) ? undefined : Number(val),
-    z.coerce.number().optional()
+    (val) => (val === "" || val === null || val === undefined) ? null : Number(val),
+    z.coerce.number().optional().nullable()
   ),
   status: z.enum(['ACTIVE', 'RESERVED', 'CLOSED']),
   description: z.string().optional(),
   photoFile: z
     .instanceof(File)
     .optional()
-    .refine(file => !file || file.size === 0 || file.type.startsWith("image/"), "Solo se aceptan imágenes."),
+    .refine(file => !file || file.size === 0 || file.size <= MAX_FILE_SIZE, `El tamaño máximo es de 5MB.`)
+    .refine(file => !file || file.size === 0 || ACCEPTED_IMAGE_TYPES.includes(file.type), "Solo se aceptan archivos .jpg, .jpeg, .png y .webp."),
 }).refine(data => {
     if (data.type === 'Otro' && (!data.customType || data.customType.length < 2)) {
         return false;
@@ -34,6 +39,7 @@ const residueFormSchema = z.object({
     message: "Por favor, especifica un tipo con al menos 2 caracteres.",
     path: ["customType"],
 });
+
 
 export async function createOrUpdateResidueAction(formData: FormData) {
     const supabase = createClient();
@@ -47,7 +53,6 @@ export async function createOrUpdateResidueAction(formData: FormData) {
             return { error: 'No estás autenticado.' };
         }
         
-        // 1. Get the company_id from the companies table using the authenticated user's id (auth_id)
         const { data: companyData, error: companyError } = await supabase
           .from('companies')
           .select('id')
@@ -86,7 +91,7 @@ export async function createOrUpdateResidueAction(formData: FormData) {
         const { data } = validatedFields;
         
         const residueDbData = {
-            company_id: companyId, // Use the fetched companyId
+            company_id: companyId,
             type: data.type === 'Otro' ? data.customType! : data.type,
             category: data.category,
             quantity: data.quantity,
@@ -100,7 +105,6 @@ export async function createOrUpdateResidueAction(formData: FormData) {
         let residueId = data.residueId;
         
         if (residueId) {
-            // UPDATE
             const { error } = await supabase
                 .from('residues')
                 .update(residueDbData)
@@ -110,7 +114,6 @@ export async function createOrUpdateResidueAction(formData: FormData) {
               throw error;
             }
         } else {
-            // CREATE
             const { data: createdData, error } = await supabase
                 .from('residues')
                 .insert(residueDbData)
@@ -124,7 +127,6 @@ export async function createOrUpdateResidueAction(formData: FormData) {
             residueId = createdData.id;
         }
 
-        // --- IMAGE UPLOAD ---
         if (data.photoFile && data.photoFile.size > 0 && residueId) {
             const fileExtension = data.photoFile.name.split('.').pop();
             const fileName = `${residueId}.${fileExtension}`;
@@ -139,19 +141,20 @@ export async function createOrUpdateResidueAction(formData: FormData) {
 
             if (uploadError) {
                 console.error('Upload Error:', uploadError);
-            } else {
-                const { data: { publicUrl } } = supabase.storage
-                    .from(BUCKET_NAME)
-                    .getPublicUrl(filePath);
+                throw uploadError;
+            }
+            
+            const { data: { publicUrl } } = supabase.storage
+                .from(BUCKET_NAME)
+                .getPublicUrl(filePath);
 
-                const { error: updatePhotoError } = await supabase
-                    .from('residues')
-                    .update({ photos: [publicUrl] })
-                    .eq('id', residueId);
-                
-                if (updatePhotoError) {
-                    console.error('Update Photo URL Error:', updatePhotoError);
-                }
+            const { error: updatePhotoError } = await supabase
+                .from('residues')
+                .update({ photos: [`${publicUrl}?t=${new Date().getTime()}`] })
+                .eq('id', residueId);
+            
+            if (updatePhotoError) {
+                console.error('Update Photo URL Error:', updatePhotoError);
             }
         }
         
@@ -163,7 +166,6 @@ export async function createOrUpdateResidueAction(formData: FormData) {
         return { error: `Error al guardar el residuo: ${e.message}` };
     }
 }
-
 
 export async function deleteResidueAction(residueId: string) {
     const supabase = createClient();

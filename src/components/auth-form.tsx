@@ -1,3 +1,4 @@
+
 // src/components/auth-form.tsx
 "use client";
 
@@ -78,6 +79,10 @@ export function AuthForm({ mode, onVerificationSent }: AuthFormProps) {
         password,
         options: {
           emailRedirectTo: `${location.origin}/auth/callback`,
+          data: {
+            company_name: companyName,
+            app_role: role,
+          }
         },
       });
 
@@ -87,37 +92,14 @@ export function AuthForm({ mode, onVerificationSent }: AuthFormProps) {
           description: signUpError.message || "No se pudo crear la cuenta.",
           variant: "destructive",
         });
-        setIsLoading(false);
-        return;
-      }
-
-      if (signUpData.user) {
-        // Now, insert into the public.companies table
-        const { error: insertError } = await supabase
-          .from('companies')
-          .insert({ 
-            auth_id: signUpData.user.id, 
-            name: companyName,
-            type: role,
-            contact_email: signUpData.user.email,
-          });
-
-        if (insertError) {
-            console.error("Error creating company profile:", insertError);
-            toast({
-                title: "Error de registro",
-                description: "Tu cuenta de usuario se creó, pero hubo un problema al crear el perfil de tu empresa. Por favor, contacta a soporte.",
-                variant: "destructive",
-            });
+      } else {
+        if (onVerificationSent) {
+          onVerificationSent();
         } else {
-          if (onVerificationSent) {
-            onVerificationSent();
-          } else {
-              toast({
-                  title: "¡Registro Exitoso!",
-                  description: "Revisa tu correo para verificar tu cuenta.",
-              });
-          }
+            toast({
+                title: "¡Registro Exitoso!",
+                description: "Revisa tu correo para verificar tu cuenta.",
+            });
         }
       }
 

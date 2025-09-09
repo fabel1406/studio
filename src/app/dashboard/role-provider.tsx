@@ -1,3 +1,4 @@
+
 // src/app/dashboard/role-provider.tsx
 "use client";
 
@@ -40,28 +41,56 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
   const supabase = createClient();
 
   const fetchCompanyData = useCallback(async (currentUser: User) => {
-    const { data: companyData, error } = await supabase
+    let { data: companyData, error: fetchError } = await supabase
       .from('companies')
       .select('id, name, type')
       .eq('auth_id', currentUser.id)
       .single();
-    
-    if (companyData) {
-      setCompanyId(companyData.id);
-      setCompanyName(companyData.name);
-      setInternalRole(companyData.type as UserRole);
-      return true;
-    } else {
-      console.warn("No company found for user:", currentUser.id, "Error:", error?.message);
-      if (pathname !== '/dashboard/settings') {
-        router.push('/dashboard/settings?new=true');
-      }
-      return false;
+
+    if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 = no rows returned
+        console.error("Error fetching company data:", fetchError);
+        return false;
     }
+
+    // If company doesn't exist, create it from metadata
+    if (!companyData) {
+        const { company_name, app_role } = currentUser.user_metadata;
+        if (company_name && app_role) {
+            const { data: newCompany, error: createError } = await supabase
+                .from('companies')
+                .insert({
+                    auth_id: currentUser.id,
+                    name: company_name,
+                    type: app_role,
+                    contact_email: currentUser.email
+                })
+                .select('id, name, type')
+                .single();
+            
+            if (createError) {
+                console.error("Error creating company from metadata:", createError);
+                return false;
+            }
+            companyData = newCompany;
+        } else {
+             // If no metadata, user needs to complete profile
+            if (pathname !== '/dashboard/settings') {
+                router.push('/dashboard/settings?new=true');
+            }
+            return false;
+        }
+    }
+    
+    setCompanyId(companyData.id);
+    setCompanyName(companyData.name);
+    setInternalRole(companyData.type as UserRole);
+    return true;
+
   }, [supabase, router, pathname]);
 
   useEffect(() => {
     const checkUserAndFetchData = async () => {
+      setIsLoading(true);
       const { data: { session } } = await supabase.auth.getSession();
       const currentUser = session?.user;
 
@@ -82,24 +111,25 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
       async (event, session) => {
         const currentUser = session?.user || null;
         setUser(currentUser);
-
-        if (event === 'SIGNED_IN' && currentUser) {
-          setIsLoading(true);
-          await fetchCompanyData(currentUser);
-          setIsLoading(false);
-        } else if (event === 'SIGNED_OUT') {
-          setCompanyId(null);
-          setCompanyName("");
-          setInternalRole("GENERATOR");
-          router.push('/login');
+        setIsLoading(true);
+        if (currentUser) {
+            await fetchCompanyData(currentUser);
+        } else {
+            setCompanyId(null);
+            setCompanyName("");
+            setInternalRole("GENERATOR");
+            if (pathname.startsWith('/dashboard')) {
+              router.push('/login');
+            }
         }
+        setIsLoading(false);
       }
     );
 
     return () => {
       subscription.unsubscribe();
     };
-  }, [supabase, fetchCompanyData, router, pathname]);
+  }, []);
 
   const setRole = (newRole: UserRole) => {
     setInternalRole(newRole);
