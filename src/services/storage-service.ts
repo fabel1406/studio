@@ -31,33 +31,44 @@ function dataURLtoFile(dataUrl: string, filename: string): File | null {
 
 
 /**
- * Sube una imagen de residuo a Supabase Storage.
+ * Sube una imagen de residuo a Supabase Storage usando una URL firmada.
  * @param companyId El ID de la empresa para organizar los archivos.
  * @param photoDataUrl La imagen en formato Data URL.
  * @returns La URL pública de la imagen subida.
  */
 export const uploadResidueImage = async (companyId: string, photoDataUrl: string): Promise<string> => {
     const fileExtension = photoDataUrl.substring(photoDataUrl.indexOf('/') + 1, photoDataUrl.indexOf(';base64'));
-    const fileName = `${companyId}/${Date.now()}.${fileExtension}`;
+    const filePath = `${companyId}/${Date.now()}.${fileExtension}`;
     
-    const file = dataURLtoFile(photoDataUrl, fileName);
+    const file = dataURLtoFile(photoDataUrl, filePath);
     if (!file) {
         throw new Error("No se pudo convertir el Data URL a un archivo.");
     }
 
-    const { data, error } = await supabase.storage
+    // 1. Crear una URL firmada para la subida
+    const { data: uploadUrlData, error: uploadUrlError } = await supabase.storage
         .from(BUCKET_NAME)
-        .upload(fileName, file);
+        .createSignedUploadUrl(filePath);
 
-    if (error) {
-        console.error("Error subiendo la imagen:", error);
-        throw error;
+    if (uploadUrlError) {
+        console.error("Error creando la URL firmada:", uploadUrlError);
+        throw uploadUrlError;
     }
 
-    // Obtener la URL pública de la imagen subida
+    // 2. Subir el archivo a la URL firmada
+    const { error: uploadError } = await supabase.storage
+        .from(BUCKET_NAME)
+        .uploadToSignedUrl(filePath, uploadUrlData.token, file);
+
+    if (uploadError) {
+        console.error("Error subiendo la imagen a la URL firmada:", uploadError);
+        throw uploadError;
+    }
+
+    // 3. Obtener la URL pública de la imagen subida
     const { data: { publicUrl } } = supabase.storage
         .from(BUCKET_NAME)
-        .getPublicUrl(data.path);
+        .getPublicUrl(filePath);
 
     return publicUrl;
 };
