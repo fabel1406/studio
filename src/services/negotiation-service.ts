@@ -134,7 +134,8 @@ export const addNegotiation = async (data: NewNegotiationFromResidue | NewNegoti
 
     await addMessageToNegotiation(newNegotiation.id, data.initiatorId, initialMessageContent);
     
-    return getNegotiationById(newNegotiation.id) as Promise<Negotiation>;
+    const finalNegotiation = await getNegotiationById(newNegotiation.id);
+    return finalNegotiation || null;
 };
 
 export const getAllNegotiationsForUser = async (userId: string): Promise<{ sent: Negotiation[], received: Negotiation[] }> => {
@@ -195,7 +196,7 @@ export const updateNegotiationStatus = async (id: string, status: Negotiation['s
     if (error) throw error;
 };
 
-export const updateNegotiationDetails = async (id: string, quantity: number, price?: number): Promise<void> => {
+export const updateNegotiationDetails = async (id: string, quantity: number, price?: number): Promise<Negotiation | null> => {
     const negotiation = await getNegotiationById(id);
     if (!negotiation) throw new Error("Negotiation not found");
     
@@ -214,6 +215,7 @@ export const updateNegotiationDetails = async (id: string, quantity: number, pri
     if (error) throw error;
     
     await addMessageToNegotiation(id, negotiation.initiatedBy, messageContent);
+    return getNegotiationById(id) as Promise<Negotiation | null>;
 };
 
 export const addMessageToNegotiation = async (negotiationId: string, senderId: string, content: string): Promise<void> => {

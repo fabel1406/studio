@@ -5,7 +5,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { getNegotiationById, updateNegotiationStatus, addMessageToNegotiation, updateNegotiationDetails } from "@/services/negotiation-service";
 import { useRole } from "../../role-provider";
-import type { Negotiation } from "@/lib/types";
+import type { Negotiation, NegotiationMessage } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Send, Pencil, XCircle, CheckCircle, DollarSign, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -69,14 +69,34 @@ export default function NegotiationDetailPage() {
 
     const handleSendMessage = async (content: string) => {
         if (!negotiation || !companyId) return;
-        await addMessageToNegotiation(negotiation.id, companyId, content);
-        await fetchNegotiation();
+
+        // Optimistic UI update
+        const optimisticMessage: NegotiationMessage = {
+            id: `temp-${Date.now()}`,
+            negotiationId: negotiation.id,
+            senderId: companyId,
+            content,
+            createdAt: new Date().toISOString(), // Use client time for immediate display
+        };
+        setNegotiation(prev => prev ? { ...prev, messages: [...prev.messages, optimisticMessage] } : null);
+
+        try {
+            await addMessageToNegotiation(negotiation.id, companyId, content);
+            // Re-fetch to sync with server, replacing the optimistic message
+            await fetchNegotiation();
+        } catch (error) {
+            console.error("Failed to send message, reverting optimistic update");
+            // Revert optimistic update on failure
+            await fetchNegotiation(); 
+        }
     };
     
     const handleOfferUpdated = async (quantity: number, price?: number) => {
         if (!negotiation) return;
-        await updateNegotiationDetails(negotiation.id, quantity, price);
-        await fetchNegotiation();
+        const updatedNegotiation = await updateNegotiationDetails(negotiation.id, quantity, price);
+        if (updatedNegotiation) {
+            setNegotiation(updatedNegotiation);
+        }
     }
 
     if (isLoading || !companyId) {
@@ -89,8 +109,7 @@ export default function NegotiationDetailPage() {
 
     if (!negotiation) {
         // notFound() is a server-side function, so we redirect on the client
-        router.push('/dashboard/negotiations');
-        return null;
+        return notFound();
     }
     
     // The user who initiated the negotiation.
