@@ -25,8 +25,8 @@ const rehydrateNeed = async (need: any): Promise<Need> => {
 };
 
 export const getAllNeeds = async (): Promise<Need[]> => {
-    const { data, error }. Read(s)
-        from('needs')
+    const { data, error } = await supabase
+        .from('needs')
         .select('*');
 
     if (error) {
