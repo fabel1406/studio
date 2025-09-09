@@ -26,8 +26,7 @@ const residueFormSchema = z.object({
   status: z.enum(['ACTIVE', 'RESERVED', 'CLOSED']),
   description: z.string().optional(),
   photoFile: z
-    .instanceof(File)
-    .optional()
+    .any()
     .refine(file => !file || file.size === 0 || file.size <= MAX_FILE_SIZE, `El tamaño máximo es de 5MB.`)
     .refine(file => !file || file.size === 0 || ACCEPTED_IMAGE_TYPES.includes(file.type), "Solo se aceptan archivos .jpg, .jpeg, .png y .webp."),
 }).refine(data => {
@@ -120,16 +119,15 @@ export async function createOrUpdateResidueAction(formData: FormData) {
 
         residueId = dbResidueData.id;
         
-        // Correctly handle file upload as per instructions
         if (data.photoFile && residueId) {
             const fileExtension = data.photoFile.name.split('.').pop();
             const fileName = `${Date.now()}.${fileExtension}`;
-            const filePath = `${user.id}/${fileName}`; // Use user.id for the folder path
+            const filePath = `${user.id}/${fileName}`; 
 
             const { error: uploadError } = await supabase.storage
                 .from(BUCKET_NAME)
                 .upload(filePath, data.photoFile, {
-                    upsert: false, // Don't upsert, create new file each time
+                    upsert: false,
                     contentType: data.photoFile.type,
                 });
 
@@ -144,13 +142,11 @@ export async function createOrUpdateResidueAction(formData: FormData) {
 
             const { error: updatePhotoError } = await supabase
                 .from('residues')
-                .update({ photos: [publicUrl] }) // Save the URL in the photos array
+                .update({ photos: [publicUrl] }) 
                 .eq('id', residueId);
             
             if (updatePhotoError) {
                 console.error('Update Photo URL Error:', updatePhotoError);
-                // Even if updating the photo URL fails, the residue was created.
-                // It's better to return a warning than to throw an error for the whole operation.
                  return { success: true, residueId: residueId, warning: 'El residuo se guardó, pero hubo un problema al asociar la imagen.' };
             }
         }
