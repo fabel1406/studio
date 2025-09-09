@@ -69,13 +69,12 @@ export default function NegotiationDetailPage() {
     const handleSendMessage = async (content: string) => {
         if (!negotiation || !companyId) return;
 
-        // Optimistic UI update
         const optimisticMessage: NegotiationMessage = {
             id: `temp-${Date.now()}`,
             negotiationId: negotiation.id,
             senderId: companyId,
             content,
-            createdAt: new Date().toISOString(), // Use client time for immediate display
+            createdAt: new Date().toISOString(),
         };
         
         setNegotiation(prev => {
@@ -85,7 +84,7 @@ export default function NegotiationDetailPage() {
 
         try {
             await addMessageToNegotiation(negotiation.id, companyId, content);
-            await fetchNegotiation(); // Re-fetch to sync with server, replacing the optimistic message
+            await fetchNegotiation(); 
         } catch (error) {
             console.error("Failed to send message, reverting optimistic update");
             await fetchNegotiation(); 

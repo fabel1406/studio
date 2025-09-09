@@ -8,10 +8,6 @@ const supabase = createClient();
 const rehydrateNeed = async (need: any): Promise<Need> => {
     const company = await getCompanyById(need.company_id);
 
-    if (!company) {
-      console.warn(`Company not found for need with company_id: ${need.company_id}`);
-    }
-
     const mappedNeed: Need = {
         id: need.id,
         companyId: need.company_id,
@@ -29,8 +25,8 @@ const rehydrateNeed = async (need: any): Promise<Need> => {
 };
 
 export const getAllNeeds = async (): Promise<Need[]> => {
-    const { data, error } = await supabase
-        .from('needs')
+    const { data, error }. Read(s)
+        from('needs')
         .select('*');
 
     if (error) {

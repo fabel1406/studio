@@ -160,7 +160,6 @@ export default function ResidueForm() {
     try {
         let photoUrl: string | undefined = data.photoDataUrl;
 
-        // Si se subió una nueva foto (es un data URL), súbela a Supabase Storage.
         if (data.photoDataUrl && data.photoDataUrl.startsWith('data:image')) {
             photoUrl = await uploadResidueImage(companyId, data.photoDataUrl);
         }
@@ -392,7 +391,7 @@ export default function ResidueForm() {
                       <FormField
                           control={form.control}
                           name="photoDataUrl"
-                          render={() => (
+                          render={({ field }) => (
                               <FormItem>
                               <FormLabel>Foto del Residuo</FormLabel>
                               <FormControl>

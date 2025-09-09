@@ -31,7 +31,7 @@ function dataURLtoFile(dataUrl: string, filename: string): File | null {
 
 
 /**
- * Sube una imagen de residuo a Supabase Storage usando una URL firmada.
+ * Sube una imagen de residuo a Supabase Storage.
  * @param companyId El ID de la empresa para organizar los archivos.
  * @param photoDataUrl La imagen en formato Data URL.
  * @returns La URL pública de la imagen subida.
@@ -45,30 +45,18 @@ export const uploadResidueImage = async (companyId: string, photoDataUrl: string
         throw new Error("No se pudo convertir el Data URL a un archivo.");
     }
 
-    // 1. Crear una URL firmada para la subida
-    const { data: uploadUrlData, error: uploadUrlError } = await supabase.storage
+    const { data: uploadData, error: uploadError } = await supabase.storage
         .from(BUCKET_NAME)
-        .createSignedUploadUrl(filePath);
-
-    if (uploadUrlError) {
-        console.error("Error creando la URL firmada:", uploadUrlError);
-        throw uploadUrlError;
-    }
-
-    // 2. Subir el archivo a la URL firmada
-    const { error: uploadError } = await supabase.storage
-        .from(BUCKET_NAME)
-        .uploadToSignedUrl(filePath, uploadUrlData.token, file);
+        .upload(filePath, file);
 
     if (uploadError) {
-        console.error("Error subiendo la imagen a la URL firmada:", uploadError);
+        console.error("Error subiendo la imagen:", uploadError);
         throw uploadError;
     }
 
-    // 3. Obtener la URL pública de la imagen subida
     const { data: { publicUrl } } = supabase.storage
         .from(BUCKET_NAME)
-        .getPublicUrl(filePath);
+        .getPublicUrl(uploadData.path);
 
     return publicUrl;
 };

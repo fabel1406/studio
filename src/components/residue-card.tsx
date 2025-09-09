@@ -25,7 +25,7 @@ export function ResidueCard({ residue, isRecommendation = false, priority = fals
   const canRequest = (role === "TRANSFORMER" || role === "BOTH") && residue.companyId !== companyId;
   const aiHint = residue.type.toLowerCase().split(' ').slice(0, 2).join(' ');
 
-  const imagePath = residue.photos?.[0] || `/images/residues/placeholder.jpg`;
+  const imagePath = residue.photos?.[0] || "/images/residues/placeholder.jpg";
 
   return (
     <Card className="flex flex-col h-full overflow-hidden transition-all duration-300 hover:shadow-lg hover:border-primary/50">
