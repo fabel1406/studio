@@ -29,7 +29,8 @@ export default async function ResiduePage({ params }: { params: Promise<{ id: st
   ];
 
   const aiHint = residue.type.toLowerCase().split(' ').slice(0, 2).join(' ');
-  const imagePath = residue.photos?.[0] || "/images/residues/placeholder.jpg";
+  const imagePath = residue.photos && residue.photos.length > 0 ? residue.photos[0] : "/images/residues/placeholder.jpg";
+
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -46,6 +47,7 @@ export default async function ResiduePage({ params }: { params: Promise<{ id: st
                         style={{objectFit: 'cover'}}
                         data-ai-hint={aiHint}
                         priority
+                        unoptimized={imagePath.startsWith('http')}
                     />
                     </div>
                 </CardContent>

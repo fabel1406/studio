@@ -25,7 +25,9 @@ export function ResidueCard({ residue, isRecommendation = false, priority = fals
   const canRequest = (role === "TRANSFORMER" || role === "BOTH") && residue.companyId !== companyId;
   const aiHint = residue.type.toLowerCase().split(' ').slice(0, 2).join(' ');
 
-  const imagePath = residue.photos?.[0] || "/images/residues/placeholder.jpg";
+  // Use the photo from Supabase if available, otherwise use the local placeholder.
+  const imagePath = residue.photos && residue.photos.length > 0 ? residue.photos[0] : "/images/residues/placeholder.jpg";
+
 
   return (
     <Card className="flex flex-col h-full overflow-hidden transition-all duration-300 hover:shadow-lg hover:border-primary/50">
@@ -38,6 +40,7 @@ export function ResidueCard({ residue, isRecommendation = false, priority = fals
             style={{objectFit: 'cover'}}
             data-ai-hint={aiHint}
             priority={priority}
+            unoptimized={imagePath.startsWith('http')} // Usar unoptimized para URLs externas como Supabase
           />
            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
            <div className="absolute bottom-4 left-4">

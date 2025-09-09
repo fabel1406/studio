@@ -36,6 +36,11 @@ import { uploadResidueImage } from "@/services/storage-service"
 
 const allCountries = getAllCountries();
 
+// Validar que el archivo no sea mayor a 5MB
+const MAX_FILE_SIZE = 5 * 1024 * 1024; 
+const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+
+
 const residueFormSchema = z.object({
   type: z.string().min(1, { message: "Debes seleccionar o especificar un tipo." }),
   customType: z.string().optional(),
@@ -50,7 +55,11 @@ const residueFormSchema = z.object({
   description: z.string().max(300, { message: "La descripción no puede exceder los 300 caracteres." }).optional(),
   country: z.string().min(1, "El país es obligatorio."),
   city: z.string().min(1, "La ciudad es obligatoria."),
-  photoDataUrl: z.string().optional(),
+  photoFile: z
+    .instanceof(File, { message: "Se requiere un archivo." })
+    .optional()
+    .refine(file => !file || file.size <= MAX_FILE_SIZE, `El tamaño máximo es de 5MB.`)
+    .refine(file => !file || ACCEPTED_IMAGE_TYPES.includes(file.type), "Solo se aceptan archivos .jpg, .jpeg, .png y .webp."),
 }).refine(data => {
     if (data.type === 'Otro' && (!data.customType || data.customType.length < 2)) {
         return false;
@@ -63,7 +72,7 @@ const residueFormSchema = z.object({
 
 type ResidueFormValues = z.infer<typeof residueFormSchema>
 
-const defaultFormValues: ResidueFormValues = {
+const defaultFormValues: Omit<ResidueFormValues, 'photoFile'> = {
     type: "",
     customType: "",
     quantity: 0,
@@ -74,7 +83,6 @@ const defaultFormValues: ResidueFormValues = {
     category: undefined,
     country: "España",
     city: "",
-    photoDataUrl: undefined,
 };
 
 
@@ -87,6 +95,7 @@ export default function ResidueForm() {
   const [uniqueResidueTypes, setUniqueResidueTypes] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [existingPhotoUrl, setExistingPhotoUrl] = useState<string | undefined>(undefined);
 
    useEffect(() => {
     async function fetchData() {
@@ -102,22 +111,23 @@ export default function ResidueForm() {
                 const residue = await getResidueById(id);
                 if (residue) {
                     const isStandardType = types.includes(residue.type);
+                    setExistingPhotoUrl(residue.photos?.[0]);
                     form.reset({
-                    type: isStandardType ? residue.type : 'Otro',
-                    customType: isStandardType ? '' : residue.type,
-                    category: residue.category,
-                    quantity: residue.quantity,
-                    unit: residue.unit,
-                    status: residue.status,
-                    pricePerUnit: residue.pricePerUnit,
-                    description: residue.description || "",
-                    country: residue.company?.country || 'España',
-                    city: residue.company?.city || '',
-                    photoDataUrl: residue.photos?.[0]
+                        type: isStandardType ? residue.type : 'Otro',
+                        customType: isStandardType ? '' : residue.type,
+                        category: residue.category,
+                        quantity: residue.quantity,
+                        unit: residue.unit,
+                        status: residue.status,
+                        pricePerUnit: residue.pricePerUnit,
+                        description: residue.description || "",
+                        country: residue.company?.country || 'España',
+                        city: residue.company?.city || '',
                     });
                 }
             } else {
               form.reset(defaultFormValues);
+              setExistingPhotoUrl(undefined);
             }
         } catch (error) {
             console.error("Error fetching initial data", error);
@@ -145,17 +155,6 @@ export default function ResidueForm() {
   }, [selectedCountry, form]);
 
 
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        form.setValue('photoDataUrl', reader.result as string, { shouldValidate: true });
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
   async function onSubmit(data: ResidueFormValues) {
     if (!companyId) {
       toast({ 
@@ -178,41 +177,41 @@ export default function ResidueForm() {
           pricePerUnit: data.pricePerUnit,
           status: data.status,
           description: data.description,
-          photos: residueId ? (await getResidueById(residueId))?.photos || [] : [],
+          photos: existingPhotoUrl ? [existingPhotoUrl] : [],
         };
 
         if (residueId) {
             // --- UPDATE LOGIC ---
             const updatedResidue = await updateResidue({ ...residueData, id: residueId });
+            let finalPhotoUrl = updatedResidue.photos?.[0];
+
+            if (data.photoFile) {
+                finalPhotoUrl = await uploadResidueImage(updatedResidue.id, companyId, data.photoFile);
+                await updateResidue({ id: updatedResidue.id, photos: [finalPhotoUrl] });
+            }
+
             toast({
                 title: "¡Residuo Actualizado!",
                 description: `El residuo "${updatedResidue.type}" ha sido actualizado.`,
             });
-            
-            if (data.photoDataUrl && data.photoDataUrl.startsWith('data:image')) {
-                const photoUrl = await uploadResidueImage(updatedResidue.id, companyId, data.photoDataUrl);
-                await updateResidue({ id: updatedResidue.id, photos: [photoUrl] });
-            }
-
         } else {
             // --- CREATE LOGIC ---
             const newResidue = await addResidue(residueData);
-            toast({
-                title: "¡Residuo Guardado!",
-                description: `El residuo "${newResidue.type}" ha sido guardado.`,
-            });
-            
-            if (data.photoDataUrl) {
-                const photoUrl = await uploadResidueImage(newResidue.id, companyId, data.photoDataUrl);
-                await updateResidue({ id: newResidue.id, photos: [photoUrl] });
-                 toast({
-                    title: "¡Imagen Subida!",
-                    description: `La imagen para "${newResidue.type}" se ha subido correctamente.`,
-                });
+            let finalPhotoUrl: string | undefined;
+
+            if (data.photoFile) {
+                finalPhotoUrl = await uploadResidueImage(newResidue.id, companyId, data.photoFile);
+                await updateResidue({ id: newResidue.id, photos: [finalPhotoUrl] });
             }
+
+            toast({
+                title: "¡Residuo Creado!",
+                description: `El residuo "${newResidue.type}" ha sido creado con éxito.`,
+            });
         }
         
-        router.push('/dashboard/residues');
+        // Use a router push and refresh to ensure everything is re-fetched.
+        router.push('/dashboard/residues', { scroll: false });
         router.refresh();
 
     } catch(e) {
@@ -414,15 +413,24 @@ export default function ResidueForm() {
                      <div className="md:col-span-2">
                       <FormField
                           control={form.control}
-                          name="photoDataUrl"
-                          render={({ field }) => (
+                          name="photoFile"
+                          render={({ field: { onChange, value, ...rest } }) => (
                               <FormItem>
                               <FormLabel>Foto del Residuo</FormLabel>
-                              <FormControl>
-                                  <Input type="file" accept="image/*" onChange={handleFileChange} disabled={isSubmitting} />
+                               <FormControl>
+                                  <Input 
+                                    type="file" 
+                                    accept="image/png, image/jpeg, image/jpg, image/webp" 
+                                    onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        onChange(file);
+                                    }}
+                                    disabled={isSubmitting} 
+                                    {...rest}
+                                  />
                               </FormControl>
                                <FormDescription>
-                                  Sube una imagen clara de tu residuo.
+                                  {existingPhotoUrl ? "Sube una nueva imagen para reemplazar la actual." : "Sube una imagen clara de tu residuo (Max. 5MB)."}
                               </FormDescription>
                               <FormMessage />
                               </FormItem>
