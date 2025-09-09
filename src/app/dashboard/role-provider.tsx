@@ -2,7 +2,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useMemo, useEffect, useCallback } from 'react';
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { type User } from "@supabase/supabase-js";
 import { Logo } from "@/components/logo";
 import { createClient } from "@/lib/supabase/client";
@@ -36,10 +36,10 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
   const [companyId, setCompanyId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
+  const pathname = usePathname();
   const supabase = createClient();
 
   const fetchCompanyData = useCallback(async (currentUser: User) => {
-    // This function fetches data from the `companies` table using the user's auth ID.
     const { data: companyData, error } = await supabase
       .from('companies')
       .select('id, name, type')
@@ -50,15 +50,16 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
       setCompanyId(companyData.id);
       setCompanyName(companyData.name);
       setInternalRole(companyData.type as UserRole);
+      return true; // Indicate success
     } else {
-        console.warn("No company found for user:", currentUser.id, "Error:", error?.message);
-        // This case can happen right after registration, before the company row is created.
-        // It might be useful to redirect to the settings page to complete the profile.
-        if (router.pathname !== '/dashboard/settings') {
-          // router.push('/dashboard/settings');
-        }
+      console.warn("No company found for user:", currentUser.id, "Error:", error?.message);
+      // If user is not on settings page, redirect them to complete their profile.
+      if (pathname !== '/dashboard/settings') {
+        router.push('/dashboard/settings?new=true');
+      }
+      return false; // Indicate failure
     }
-  }, [supabase, router]);
+  }, [supabase, router, pathname]);
 
 
   useEffect(() => {
@@ -91,7 +92,6 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
             setInternalRole("GENERATOR");
             router.push('/login');
         } else if ((event === 'USER_UPDATED' || event === 'TOKEN_REFRESHED') && currentUser) {
-           // Reload company data if user metadata might have changed
            await fetchCompanyData(currentUser);
         }
       }
@@ -132,7 +132,6 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
   }
 
   if (!user && !isLoading) {
-      // This is handled by the useEffect redirect, but as a fallback.
       return null;
   }
 

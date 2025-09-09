@@ -73,32 +73,54 @@ export function AuthForm({ mode, onVerificationSent }: AuthFormProps) {
     if (mode === 'register') {
       const { email, password, role, companyName } = values as z.infer<typeof registerSchema>;
       
-      const { error } = await supabase.auth.signUp({
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
         options: {
           emailRedirectTo: `${location.origin}/auth/callback`,
-          data: {
-            company_name: companyName,
-            app_role: role,
-          }
         },
-      })
+      });
 
-      if (error) {
+      if (signUpError) {
         toast({
           title: "Error en el registro",
-          description: error.message || "No se pudo crear la cuenta.",
+          description: signUpError.message || "No se pudo crear la cuenta.",
           variant: "destructive",
         });
-      } else {
-        if (onVerificationSent) {
-          onVerificationSent();
-        } else {
+        setIsLoading(false);
+        return;
+      }
+
+      if (signUpData.user) {
+        // Now, insert into the public.companies table
+        const { error: insertError } = await supabase
+          .from('companies')
+          .insert({ 
+            auth_id: signUpData.user.id, 
+            name: companyName,
+            type: role,
+            // Set default empty values for other required fields if any
+            contact_email: signUpData.user.email,
+          });
+
+        if (insertError) {
+            // This is a critical error, we might need to decide how to handle it.
+            // For now, we'll just log it and inform the user.
+            console.error("Error creating company profile:", insertError);
             toast({
-                title: "¡Registro Exitoso!",
-                description: "Revisa tu correo para verificar tu cuenta.",
+                title: "Error de registro",
+                description: "Tu cuenta de usuario se creó, pero hubo un problema al crear el perfil de tu empresa. Por favor, contacta a soporte.",
+                variant: "destructive",
             });
+        } else {
+          if (onVerificationSent) {
+            onVerificationSent();
+          } else {
+              toast({
+                  title: "¡Registro Exitoso!",
+                  description: "Revisa tu correo para verificar tu cuenta.",
+              });
+          }
         }
       }
 
