@@ -4,42 +4,44 @@
 
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import ImpactCharts from "@/components/impact-charts";
-import type { ImpactMetric } from "@/lib/types";
-import { BarChart, DollarSign, Globe, Trash2 } from "lucide-react";
+import { DollarSign, Globe, Trash2, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
-
-// Temporary mock data until a real service is implemented
-const mockImpactMetrics: ImpactMetric[] = [
-  { label: 'Ene', co2Avoided: 350, wasteDiverted: 500, savings: 2000 },
-  { label: 'Feb', co2Avoided: 400, wasteDiverted: 550, savings: 2200 },
-  { label: 'Mar', co2Avoided: 300, wasteDiverted: 480, savings: 1900 },
-  { label: 'Abr', co2Avoided: 500, wasteDiverted: 620, savings: 2500 },
-  { label: 'May', co2Avoided: 450, wasteDiverted: 600, savings: 2400 },
-  { label: 'Jun', co2Avoided: 600, wasteDiverted: 750, savings: 3000 },
-];
+import { getImpactMetrics, type CalculatedImpactMetrics } from "@/services/impact-service";
+import { useRole } from "../role-provider";
 
 export default function ImpactPage() {
-    const [totalWasteDiverted, setTotalWasteDiverted] = useState(0);
-    const [totalCo2Avoided, setTotalCo2Avoided] = useState(0);
-    const [totalSavings, setTotalSavings] = useState(0);
+    const { companyId } = useRole();
+    const [metrics, setMetrics] = useState<CalculatedImpactMetrics | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        // In a real app, this data would likely come from a dedicated service
-        // that aggregates historical data. For now, we sum the mock data.
-        const waste = mockImpactMetrics.reduce((sum, item) => sum + item.wasteDiverted, 0);
-        const co2 = mockImpactMetrics.reduce((sum, item) => sum + item.co2Avoided, 0);
-        const savings = mockImpactMetrics.reduce((sum, item) => sum + item.savings, 0);
-        
-        setTotalWasteDiverted(waste);
-        setTotalCo2Avoided(co2);
-        setTotalSavings(savings);
-    }, []);
+        async function loadImpactData() {
+            if (!companyId) return;
+            setIsLoading(true);
+            try {
+                const impactData = await getImpactMetrics(companyId);
+                setMetrics(impactData);
+            } catch (error) {
+                console.error("Failed to load impact data:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        }
+        loadImpactData();
+    }, [companyId]);
 
+    if (isLoading) {
+      return (
+        <div className="flex-1 space-y-4 p-4 md:p-8 pt-6 flex items-center justify-center">
+            <Loader2 className="h-16 w-16 animate-spin text-primary" />
+        </div>
+      )
+    }
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight">Tu Impacto</h2>
+        <h2 className="text-3xl font-bold tracking-tight">Tu Impacto Real</h2>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -49,8 +51,8 @@ export default function ImpactPage() {
                 <Trash2 className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-                <div className="text-2xl font-bold">{totalWasteDiverted.toLocaleString()} kg</div>
-                <p className="text-xs text-muted-foreground">De vertederos en los últimos 6 meses</p>
+                <div className="text-2xl font-bold">{metrics?.totalWasteDiverted.toLocaleString() || 0} kg</div>
+                <p className="text-xs text-muted-foreground">Total de tus negociaciones completadas</p>
             </CardContent>
         </Card>
         <Card>
@@ -59,8 +61,8 @@ export default function ImpactPage() {
                 <Globe className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-                <div className="text-2xl font-bold">{totalCo2Avoided.toLocaleString()} kg</div>
-                <p className="text-xs text-muted-foreground">Equivalente a plantar {Math.round(totalCo2Avoided / 21)} árboles</p>
+                <div className="text-2xl font-bold">{metrics?.totalCo2Avoided.toLocaleString() || 0} kg</div>
+                <p className="text-xs text-muted-foreground">Equivalente a plantar {metrics?.equivalentTreesPlanted || 0} árboles</p>
             </CardContent>
         </Card>
         <Card>
@@ -69,8 +71,8 @@ export default function ImpactPage() {
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-                <div className="text-2xl font-bold">${totalSavings.toLocaleString()}</div>
-                <p className="text-xs text-muted-foreground">Ahorros e ingresos totales</p>
+                <div className="text-2xl font-bold">${metrics?.totalEconomicValue.toLocaleString() || 0}</div>
+                <p className="text-xs text-muted-foreground">Ahorros e ingresos totales generados</p>
             </CardContent>
         </Card>
       </div>
@@ -80,7 +82,7 @@ export default function ImpactPage() {
           <CardTitle>Desglose de Impacto Mensual</CardTitle>
         </CardHeader>
         <CardContent className="pl-2">
-          <ImpactCharts />
+          <ImpactCharts monthlyData={metrics?.monthlyImpact || []} />
         </CardContent>
       </Card>
     </div>

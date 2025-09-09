@@ -3,17 +3,7 @@
 "use client";
 
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from "recharts";
-import type { ImpactMetric } from "@/lib/types";
-
-// Temporary mock data until a real service is implemented
-const mockImpactMetrics: ImpactMetric[] = [
-  { label: 'Ene', co2Avoided: 350, wasteDiverted: 500, savings: 2000 },
-  { label: 'Feb', co2Avoided: 400, wasteDiverted: 550, savings: 2200 },
-  { label: 'Mar', co2Avoided: 300, wasteDiverted: 480, savings: 1900 },
-  { label: 'Abr', co2Avoided: 500, wasteDiverted: 620, savings: 2500 },
-  { label: 'May', co2Avoided: 450, wasteDiverted: 600, savings: 2400 },
-  { label: 'Jun', co2Avoided: 600, wasteDiverted: 750, savings: 3000 },
-];
+import type { MonthlyImpact } from "@/services/impact-service";
 
 const chartConfig = {
   wasteDiverted: {
@@ -26,10 +16,18 @@ const chartConfig = {
   },
 };
 
-export default function ImpactCharts() {
+export default function ImpactCharts({ monthlyData }: { monthlyData: MonthlyImpact[] }) {
+  if (monthlyData.length === 0) {
+    return (
+      <div className="flex h-[350px] w-full items-center justify-center text-muted-foreground">
+        <p>Aún no hay datos suficientes para mostrar el gráfico. ¡Completa tu primera negociación!</p>
+      </div>
+    )
+  }
+
   return (
     <ResponsiveContainer width="100%" height={350}>
-      <BarChart data={mockImpactMetrics}>
+      <BarChart data={monthlyData}>
         <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
         <XAxis
           dataKey="label"

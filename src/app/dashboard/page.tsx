@@ -4,7 +4,7 @@
 
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, BarChart2, Handshake, Leaf } from "lucide-react";
+import { ArrowRight, BarChart2, Handshake, Leaf, Loader2 } from "lucide-react";
 import Link from "next/link";
 import ImpactCharts from "@/components/impact-charts";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -12,50 +12,65 @@ import { useRole } from "./role-provider";
 import { useEffect, useState } from "react";
 import { getAllResidues } from "@/services/residue-service";
 import { getAllNegotiationsForUser } from "@/services/negotiation-service";
+import { getImpactMetrics } from "@/services/impact-service";
 import type { Negotiation, ImpactMetric } from "@/lib/types";
 
-// Temporary mock data until a real service is implemented
-const mockImpactMetrics: ImpactMetric[] = [
-  { label: 'Ene', co2Avoided: 350, wasteDiverted: 500, savings: 2000 },
-  { label: 'Feb', co2Avoided: 400, wasteDiverted: 550, savings: 2200 },
-  { label: 'Mar', co2Avoided: 300, wasteDiverted: 480, savings: 1900 },
-  { label: 'Abr', co2Avoided: 500, wasteDiverted: 620, savings: 2500 },
-  { label: 'May', co2Avoided: 450, wasteDiverted: 600, savings: 2400 },
-  { label: 'Jun', co2Avoided: 600, wasteDiverted: 750, savings: 3000 },
-];
-
 export default function DashboardOverviewPage() {
-    const { companyId } = useRole();
+    const { companyId, user } = useRole();
+    const [isLoading, setIsLoading] = useState(true);
     const [activeListings, setActiveListings] = useState(0);
     const [activeNegotiationsCount, setActiveNegotiationsCount] = useState(0);
     const [totalCo2Avoided, setTotalCo2Avoided] = useState(0);
     const [recentNegotiations, setRecentNegotiations] = useState<Negotiation[]>([]);
+    const [monthlyImpact, setMonthlyImpact] = useState<any[]>([]);
 
     useEffect(() => {
         async function loadDashboardData() {
             if (companyId) {
-                // Fetch active listings
-                const allUserResidues = await getAllResidues();
-                const userResidues = allUserResidues.filter(r => r.companyId === companyId && r.status === 'ACTIVE');
-                setActiveListings(userResidues.length);
+                setIsLoading(true);
+                try {
+                    const [residues, negotiations, impact] = await Promise.all([
+                        getAllResidues(),
+                        getAllNegotiationsForUser(companyId),
+                        getImpactMetrics(companyId)
+                    ]);
+    
+                    // Filter active listings for the current user
+                    const userResidues = residues.filter(r => r.companyId === companyId && r.status === 'ACTIVE');
+                    setActiveListings(userResidues.length);
+    
+                    // Filter and count active negotiations
+                    const allNegotiations = [...negotiations.sent, ...negotiations.received];
+                    const activeNegotiations = allNegotiations.filter(n => n.status === 'SENT');
+                    setActiveNegotiationsCount(activeNegotiations.length);
+    
+                    // Set recent negotiations for display
+                    const sortedNegotiations = allNegotiations.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+                    setRecentNegotiations(sortedNegotiations.slice(0, 5));
+    
+                    // Set impact metrics
+                    setTotalCo2Avoided(impact.totalCo2Avoided);
+                    setMonthlyImpact(impact.monthlyImpact);
 
-                // Fetch negotiations
-                const { sent, received } = await getAllNegotiationsForUser(companyId);
-                const allNegotiations = [...sent, ...received];
-                const activeNegotiations = allNegotiations.filter(n => n.status === 'SENT');
-                setActiveNegotiationsCount(activeNegotiations.length);
-
-                // Set recent negotiations for display
-                const sortedNegotiations = allNegotiations.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-                setRecentNegotiations(sortedNegotiations.slice(0, 5));
-
-                // Calculate total CO2 avoided
-                const co2 = mockImpactMetrics.reduce((sum, item) => sum + item.co2Avoided, 0);
-                setTotalCo2Avoided(co2);
+                } catch (error) {
+                    console.error("Failed to load dashboard data:", error);
+                } finally {
+                    setIsLoading(false);
+                }
             }
         }
-        loadDashboardData();
-    }, [companyId]);
+        if (user) { // Only run if user is loaded
+            loadDashboardData();
+        }
+    }, [companyId, user]);
+
+    if (isLoading) {
+        return (
+            <div className="flex-1 flex items-center justify-center p-8">
+                <Loader2 className="h-10 w-10 animate-spin text-primary" />
+            </div>
+        );
+    }
 
     return (
         <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -102,7 +117,7 @@ export default function DashboardOverviewPage() {
                     <CardContent>
                         <div className="text-2xl font-bold">{totalCo2Avoided.toLocaleString()}</div>
                         <p className="text-xs text-muted-foreground">
-                            Total de los últimos 6 meses.
+                            Impacto total hasta la fecha.
                         </p>
                     </CardContent>
                 </Card>
@@ -111,10 +126,10 @@ export default function DashboardOverviewPage() {
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
                 <Card className="col-span-4">
                     <CardHeader>
-                        <CardTitle>Resumen de Impacto</CardTitle>
+                        <CardTitle>Resumen de Impacto Mensual</CardTitle>
                     </CardHeader>
                     <CardContent className="pl-2">
-                        <ImpactCharts />
+                        <ImpactCharts monthlyData={monthlyImpact} />
                     </CardContent>
                 </Card>
                 <Card className="col-span-4 lg:col-span-3">
