@@ -1,4 +1,3 @@
-
 // src/app/dashboard/residues/create/actions.ts
 'use server'
 
@@ -41,7 +40,7 @@ const residueFormSchema = z.object({
 
 
 export async function createOrUpdateResidueAction(formData: FormData) {
-    const supabase = createClient();
+    const supabase = await createClient();
     
     try {
         const {
@@ -163,7 +162,7 @@ export async function createOrUpdateResidueAction(formData: FormData) {
 }
 
 export async function deleteResidueAction(residueId: string) {
-    const supabase = createClient();
+    const supabase = await createClient();
     try {
         const { error } = await supabase
             .from('residues')

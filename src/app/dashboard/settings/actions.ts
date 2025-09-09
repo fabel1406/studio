@@ -8,7 +8,7 @@ export async function updateCompanyAction(
   companyId: string,
   values: ProfileFormValues
 ) {
-  const supabase = createClient()
+  const supabase = await createClient()
 
   try {
     // 1. Update the public companies table
