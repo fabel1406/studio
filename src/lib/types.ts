@@ -95,4 +95,6 @@ export type Negotiation = {
     messages: NegotiationMessage[];
     commissionRate?: number;
     commissionValue?: number;
+    requesterHidden?: boolean;
+    supplierHidden?: boolean;
 }

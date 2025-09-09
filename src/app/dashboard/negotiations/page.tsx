@@ -7,12 +7,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Handshake, ArrowRight, X, DollarSign } from "lucide-react";
+import { Handshake, ArrowRight, X } from "lucide-react";
 import Link from "next/link";
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useEffect, useState, useCallback } from "react";
-import { getAllNegotiationsForUser, deleteNegotiation as hideNegotiationFromUI } from "@/services/negotiation-service";
+import { getAllNegotiationsForUser, hideNegotiationForUser } from "@/services/negotiation-service";
 import type { Negotiation } from "@/lib/types";
 import { useRole } from "../role-provider";
 import { useToast } from "@/hooks/use-toast";
@@ -58,7 +58,8 @@ export default function NegotiationsPage() {
   }, [fetchNegotiations]);
 
   const handleHideNegotiation = async (id: string) => {
-    await hideNegotiationFromUI(id);
+    if (!companyId) return;
+    await hideNegotiationForUser(id, companyId);
     await fetchNegotiations(); // Re-fetch to update the list
     toast({
         title: "Negociación Ocultada",
@@ -90,9 +91,7 @@ export default function NegotiationsPage() {
       }
 
       return negotiations.map((neg) => {
-            const isInitiator = neg.requesterId === companyId;
-            const otherParty = isInitiator ? neg.supplier : neg.requester;
-            
+            const otherParty = neg.requesterId === companyId ? neg.supplier : neg.requester;
             const isRejected = neg.status === 'REJECTED';
             const statusInfo = statusMap[neg.status];
 
@@ -117,7 +116,7 @@ export default function NegotiationsPage() {
                         <p className="font-bold text-lg">{neg.quantity} {neg.unit}</p>
                         <p className="text-sm text-muted-foreground">Cantidad</p>
                     </div>
-                    {neg.offerPrice !== undefined && (
+                    {neg.offerPrice !== undefined && neg.offerPrice !== null && (
                         <div className="text-center">
                             <p className="font-bold text-lg">${neg.offerPrice.toFixed(2)}</p>
                             <p className="text-sm text-muted-foreground">Precio/{neg.unit}</p>
@@ -234,5 +233,3 @@ export default function NegotiationsPage() {
     </div>
   );
 }
-
-    
