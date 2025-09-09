@@ -1,10 +1,9 @@
-
 // src/app/dashboard/negotiations/[id]/page.tsx
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { getNegotiationById, updateNegotiationStatus, addMessageToNegotiation } from "@/services/negotiation-service";
+import { getNegotiationById, updateNegotiationStatus, addMessageToNegotiation, updateNegotiationDetails } from "@/services/negotiation-service";
 import { useRole } from "../../role-provider";
 import type { Negotiation } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -74,7 +73,9 @@ export default function NegotiationDetailPage() {
         await fetchNegotiation();
     };
     
-    const handleOfferUpdated = (updatedNegotiation: Negotiation) => {
+    const handleOfferUpdated = async (quantity: number, price?: number) => {
+        if (!negotiation) return;
+        const updatedNegotiation = await updateNegotiationDetails(negotiation.id, quantity, price);
         setNegotiation(updatedNegotiation);
     }
 
@@ -248,4 +249,3 @@ export default function NegotiationDetailPage() {
         </>
     );
 }
-

@@ -1,4 +1,3 @@
-
 // src/components/offer-dialog.tsx
 "use client";
 
@@ -33,7 +32,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import type { Need, Residue, Negotiation } from "@/lib/types";
-import { addNegotiation, updateNegotiationDetails } from "@/services/negotiation-service";
+import { addNegotiation } from "@/services/negotiation-service";
 import { useRouter } from "next/navigation";
 import { useMemo, useEffect } from "react";
 import { useRole } from "@/app/dashboard/role-provider";
@@ -43,7 +42,7 @@ type OfferDialogProps = {
   onOpenChange: (open: boolean) => void;
   need?: Need; // For creating a new offer
   negotiationToEdit?: Negotiation; // For editing an existing offer
-  onOfferUpdated?: (negotiation: Negotiation) => void;
+  onOfferUpdated?: (quantity: number, price?: number) => void;
   userResidues?: Residue[];
 };
 
@@ -123,15 +122,12 @@ export function OfferDialog({
         return;
     }
       
-    if (isEditMode && negotiationToEdit) {
-        const updatedNegotiation = await updateNegotiationDetails(negotiationToEdit.id, data.quantity, data.price);
+    if (isEditMode && onOfferUpdated) {
+        onOfferUpdated(data.quantity, data.price);
         toast({
             title: "¡Oferta Modificada!",
-            description: `Tu oferta ha sido actualizada a ${data.quantity} ${updatedNegotiation.unit}.`,
+            description: `Tu oferta ha sido actualizada.`,
         });
-        if (onOfferUpdated) {
-            onOfferUpdated(updatedNegotiation);
-        }
     } else if (need && selectedResidue) {
         const result = await addNegotiation({
           type: 'offer',
@@ -147,7 +143,7 @@ export function OfferDialog({
               title: "¡Oferta Enviada!",
               description: `Tu oferta para ${need.residueType} ha sido enviada.`,
             });
-            router.push('/dashboard/negotiations');
+            router.push(`/dashboard/negotiations/${result.id}`);
             router.refresh();
         } else {
              toast({

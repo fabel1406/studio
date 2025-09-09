@@ -1,5 +1,5 @@
 // src/services/negotiation-service.ts
-import type { Negotiation, NegotiationMessage, Residue, Need } from '@/lib/types';
+import type { Negotiation, NegotiationMessage, Residue, Need, Company } from '@/lib/types';
 import { createClient } from '@/lib/supabase/client';
 import { getResidueById } from './residue-service';
 import { getCompanyById } from './company-service';
@@ -41,8 +41,8 @@ const rehydrateNegotiation = async (negotiation: any): Promise<Negotiation> => {
         commissionRate: negotiation.commission_rate,
         commissionValue: negotiation.commission_value,
         residue: hydratedResidue,
-        requester: requester,
-        supplier: supplier,
+        requester: requester as Company,
+        supplier: supplier as Company,
         messages: (messages.data || []).map(msg => ({
             id: msg.id,
             negotiationId: msg.negotiation_id,
@@ -89,7 +89,6 @@ const checkExistingNegotiation = async (requesterId: string, supplierId: string,
 };
 
 export const addNegotiation = async (data: NewNegotiationFromResidue | NewNegotiationFromNeed): Promise<Negotiation | null> => {
-    let negotiationData;
     let requesterId: string, supplierId: string, residueId: string;
 
     if (data.type === 'request') {
@@ -111,7 +110,7 @@ export const addNegotiation = async (data: NewNegotiationFromResidue | NewNegoti
         ? `Ha solicitado ${data.quantity} ${data.residue.unit} de ${data.residue.type}${data.offerPrice ? ` al precio de $${data.offerPrice}/${data.residue.unit}` : ''}.`
         : `Ha ofrecido ${data.quantity} ${data.residue.unit} de ${data.residue.type}${data.offerPrice ? ` a $${data.offerPrice}/${data.residue.unit}`: ''} para cubrir tu necesidad.`;
 
-    negotiationData = {
+    const negotiationData = {
         residue_id: residueId,
         requester_id: requesterId,
         supplier_id: supplierId,
@@ -135,8 +134,9 @@ export const addNegotiation = async (data: NewNegotiationFromResidue | NewNegoti
 
     // Now, add the initial message to the new messages table
     await addMessageToNegotiation(newNegotiation.id, data.initiatorId, initialMessageContent);
-
-    return rehydrateNegotiation(newNegotiation);
+    
+    // IMPORTANT: Re-fetch the negotiation to get all hydrated data including the new message.
+    return getNegotiationById(newNegotiation.id) as Promise<Negotiation>;
 };
 
 export const getAllNegotiationsForUser = async (userId: string): Promise<{ sent: Negotiation[], received: Negotiation[] }> => {
@@ -211,17 +211,18 @@ export const updateNegotiationDetails = async (id: string, quantity: number, pri
     if (quantity !== originalQuantity) messageContent += ` Nueva cantidad: ${quantity} ${negotiation.unit}.`;
     if (price !== originalPrice) messageContent += ` Nuevo precio: ${price !== undefined ? `$${price}` : 'Negociable'}.`;
 
-    await addMessageToNegotiation(id, negotiation.initiatedBy, messageContent);
-
     const { data, error } = await supabase
         .from('negotiations')
         .update({ quantity, offer_price: price })
         .eq('id', id)
         .select()
         .single();
-    
+
     if (error) throw error;
-    return rehydrateNegotiation(data);
+    
+    await addMessageToNegotiation(id, negotiation.initiatedBy, messageContent);
+
+    return getNegotiationById(id) as Promise<Negotiation>;
 };
 
 export const addMessageToNegotiation = async (negotiationId: string, senderId: string, content: string): Promise<NegotiationMessage> => {
